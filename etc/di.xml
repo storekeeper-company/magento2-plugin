@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <preference for="StoreKeeper\StoreKeeper\Api\Webhook\WebhookInterface" type="StoreKeeper\StoreKeeper\Api\Webhook\Webhook"/>
+
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="storeKeepeerSyncProducts" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Products</item>
+                <item name="storeKeepeerSyncCategories" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Categories</item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

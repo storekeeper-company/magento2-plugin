@@ -1,0 +1,8 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/queue.xsd">
+    <broker topic="storekeeper.queue.events" exchange="magento-db" type="db">
+        <queue name="storekeeper.queue.events"
+               consumer="storekeeper.queue.events"
+               consumerInstance="Magento\Framework\MessageQueue\Consumer"
+               handler="StoreKeeper\StoreKeeper\Model\Consumer::process"/>
+    </broker>
+</config>
