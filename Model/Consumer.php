@@ -64,11 +64,23 @@ class Consumer
                 }
             } else if ($type == "deactivated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->deactivate($storeId, $value);
+                    $this->productsHelper->onDeactivate($storeId, $value);
+                } else if ($entity == 'Category') {
+                    $this->categoriesHelper->onDeactivate($storeId, $value);
                 }
             } else if ($type == "activated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->activate($storeId, $value);
+                    $this->productsHelper->onActivate($storeId, $value);
+                } else if ($entity == 'Category') {
+                    $this->categoriesHelper->onActivate($storeId, $value);
+                }
+            } else if ($type == "deleted") {
+                if ($entity == 'Category') {
+                    $this->categoriesHelper->onDeleted($storeId, $value);
+                }
+            } else if ($type == "created") {
+                if ($entity == 'Category') {
+                    $this->categoriesHelper->onCreated($storeId, $value);
                 }
             }
         } catch (\Exception $e) {

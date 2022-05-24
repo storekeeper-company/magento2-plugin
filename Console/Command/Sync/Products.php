@@ -64,8 +64,7 @@ class Products extends Command
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
         $storeId = 1;
-
-        $lang = $this->productsHelper->getLanguageForStore($storeId);
+        $language = $this->productsHelper->getLanguageForStore($storeId);
 
         $current = 0;
         $total = null;
@@ -75,7 +74,7 @@ class Products extends Command
             $response = $this->productsHelper->naturalSearchShopFlatProductForHooks(
                 $storeId,
                 ' ',
-                $lang,
+                $language,
                 $current,
                 5,
                 [],

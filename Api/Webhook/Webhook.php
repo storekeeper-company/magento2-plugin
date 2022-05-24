@@ -1,6 +1,8 @@
 <?php 
 namespace StoreKeeper\StoreKeeper\Api\Webhook;
- 
+
+use SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser;
+
 class Webhook
 {
 
@@ -62,15 +64,21 @@ class Webhook
 
             list($group, $module, $entity, $key, $value) = $matches;
 
-            foreach ($payload['events'] as $id => $eventData) {
+            $eventNames = array_map(function ($event) {
+                return $event['event'];
+            }, $payload['events']);
+            $eventNames = array_unique($eventNames);
+
+            foreach ($eventNames as $eventName) {
                 $n = [
-                    "type" => $eventData['event'],
+                    "type" => $eventName,
                     "entity" => $entity,
                     "storeId" => $storeId,
                     "module" => $module,
                     "key" => $key,
                     "value" => $value
                 ];
+                file_put_contents("queue.log", $this->json->serialize($n) . "\n", FILE_APPEND);
                 $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
             }
         } else if ($action == "deactivated") {
@@ -90,8 +98,6 @@ class Webhook
                 $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
             }
         }
-
-
 
         http_response_code(200);
         header("Content-Type: application/json");

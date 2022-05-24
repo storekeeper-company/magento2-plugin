@@ -56,7 +56,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $json = json_encode(
             [
                 'token' => "abc123", // Needs to the same over the applications lifespan.
-                'webhook_url' => 'http://storekeeper.m2.dev1.dnovo-dev.eu/rest/V1/storekeeper/webhook?storeId=' . $storeId, // Endpoint
+                'webhook_url' => "{$this->storeManager->getStore()->getBaseUrl()}/rest/V1/storekeeper/webhook?storeId={$storeId}", // Endpoint
             ]
         );
 

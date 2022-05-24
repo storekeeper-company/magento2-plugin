@@ -16,6 +16,8 @@ use Magento\Catalog\Api\CategoryLinkRepositoryInterface;
 use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\ProductLink\Repository as ProductLinkRepository;
 use Magento\Store\Model\StoreManager;
+use Magento\Store\Model\Store;
+use Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper\AttributeFilter;
 
 class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -29,7 +31,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         CategoryLinkRepositoryInterface $categoryLinkRepository,
         CategoryRepository $categoryRepository,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\CatalogInventory\Model\Stock\Item $stockItem
+        \Magento\CatalogInventory\Model\Stock\Item $stockItem,
+        AttributeFilter $attributeFilter
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -43,6 +46,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->storeShopIds = $this->authHelper->getStoreShopIds();
         $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
         $this->stockItem = $stockItem;
+        $this->attributeFilter = $attributeFilter;
     }
 
     public function authCheck($storeId)
@@ -110,15 +114,16 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function updateById($storeId, $storeKeeperId)
     {
+        $language = $this->authHelper->getLanguageForStore($storeId);
+
         $results = $this->authHelper->getModule('ShopModule', $storeId)->naturalSearchShopFlatProductForHooks(
-            ' ',
-            ' ',
+            $language,
             0,
             1,
             [],
             [
                 [
-                    'name' => 'flat_product/id__=',
+                    'name' => 'flat_product/product_id__=',
                     'val' => $storeKeeperId
                 ]
             ]
@@ -126,6 +131,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
+            file_put_contents("update_products.{$storeId}.json", json_encode($result, JSON_PRETTY_PRINT), FILE_APPEND);
             if ($product = $this->exists($storeId, $result)) {
                 $this->update($storeId, $product, $result);
             } else {
@@ -202,12 +208,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->websiteIds[$storeId];
     }
 
-    public function create($storeId, array $result) //, array $shopProductAssigns)
+    public function onCreate($storeId, array $result) //, array $shopProductAssigns)
     {
         return $this->update($storeId, null, $result); //, $shopProductAssigns);
     }
 
-    public function deactivate($storeId, $targetId)
+    public function onDeactivate($storeId, $targetId)
     {
         $websiteId = $this->getStoreWebsiteId($storeId);
 
@@ -244,6 +250,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $this->storeManager->setCurrentStore($storeId);
 
+        $language = $this->authHelper->getLanguageForStore($storeId);
 
         $websiteId = $this->getStoreWebsiteId($storeId);
 
@@ -278,7 +285,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target = $this->productFactory->create();
             }
 
-            $target->setStoreId($storeId);
+            if ($language == " ") {
+                $target->setStoreId(Store::DEFAULT_STORE_ID);
+            }        
 
             $newStatus = $product['active'] ?
                 Status::STATUS_ENABLED :
@@ -297,19 +306,17 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $shouldUpdate = true;
                 $target->setName($title);
             }
+
             if ((float) $target->getPrice() != (float) $price_wt) {
                 $shouldUpdate = true;
                 $target->setPrice($price_wt);
             }
-
-
 
             $storekeeper_id = $this->getResultStoreKeeperId($result);
 
             if ($target->getStoreKeeperProductId() != $storekeeper_id) {
                 $target->setStorekeeperProductId($storekeeper_id);
             }
-
 
             $seo_title = $flat_product['seo_title'] ?? null;
             if ($target->getMetaTitle() != $seo_title) {
@@ -355,8 +362,15 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($shouldUpdate) {
                 $this->productRepository->save($target);
+                
                 if ($update) {
+
                     echo "  Updated {$sku} ({$title})\n";
+
+                    if ($language == ' ') {
+                        $this->setProductToUseDefaultValues($target, $storeId);
+                    }   
+
                 } else {
                     echo "  Created {$sku} ({$title})\n";
                 }
@@ -452,7 +466,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function getResultSku($result)
     {
-        var_dump($result);
         return $result['flat_product']['product']['sku'];
     }
 
@@ -461,5 +474,25 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         return array_map(function ($cat) {
             return $cat['id'];
         }, $result['flat_product']['categories'] ?? []);
+    }
+
+    private function setProductToUseDefaultValues($target, $storeId)
+    {
+        echo "      Setting \"{$target->getSku()}\" for store \"{$storeId}\" to use default values\n";
+
+        $target->setStoreId($storeId);
+
+        $productData = $target->getData();
+
+        $productData['name'] = null;
+        $productData['description'] = false;
+        $productData['short_description'] = false;
+        $productData['meta_title'] = false;
+        $productData['meta_description'] = false;
+        $productData['url_key'] = false;
+
+        $target->setData($productData);
+
+        $this->productRepository->save($target);
     }
 }

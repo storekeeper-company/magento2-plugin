@@ -63,26 +63,26 @@ class Categories extends Command
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
         $storeId = 1;
+        $language = $this->categoriesHelper->getLanguageForStore($storeId);
 
         $current = 0;
         $total = null;
 
-        // $this->categoriesHelper->updateById(1, 8);
-        // die;
-
         while (is_null($total) || $current < $total) {
-            $response = $this->categoriesHelper->listCategories(
+            $response = $this->categoriesHelper->listTranslatedCategoryForHooks(
                 $storeId,
+                $language,
                 $current,
                 2,
                 [
-                    [
-                        "name" => "category_tree/path",
-                        "dir" => "asc"
-                    ]
+                    // [
+                    //     "name" => "category_tree/path",
+                    //     "dir" => "asc"
+                    // ]
                 ],
                 []
             );
+
 
             echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";
 
