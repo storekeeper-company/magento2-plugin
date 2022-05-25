@@ -75,10 +75,10 @@ class Categories extends Command
                 $current,
                 2,
                 [
-                    // [
-                    //     "name" => "category_tree/path",
-                    //     "dir" => "asc"
-                    // ]
+                    [
+                        "name" => "category_tree/path",
+                        "dir" => "asc"
+                    ]
                 ],
                 []
             );
