@@ -156,13 +156,13 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function update($storeId, $target = null, array $result)
+    public function update($storeId, $target = null, array $result = [])
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
 
         $shouldUpdate = false;
 
-        $storekeeper_id = $this->getResultStoreKeeperId($result);        
+        $storekeeper_id = $this->getResultStoreKeeperId($result);
 
         $update = !is_null($target);
         $create = !$update;
@@ -186,7 +186,7 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
                 $description = $result['translation']['description'];
             }
         }
-        
+
         if ($language == ' ') {
             $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
             $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);

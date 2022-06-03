@@ -18,12 +18,12 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getAuthEmail()
     {
-        return $this->getScopeConfigValue('storekeeper-general/general/auth_email');
+        return $this->getScopeConfigValue('storekeeper_general/general/auth_email');
     }
 
     public function getAuthPassword()
     {
-        return $this->getScopeConfigValue('storekeeper-general/general/auth_password');
+        return $this->getScopeConfigValue('storekeeper_general/general/auth_password');
     }
 
     // public function getScopeConfigValue(string $key)

@@ -246,7 +246,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function update($storeId, $target = null, array $result) //, array $shopProductAssigns)
+    public function update($storeId, $target = null, array $result = []) //, array $shopProductAssigns)
     {
         $this->storeManager->setCurrentStore($storeId);
 

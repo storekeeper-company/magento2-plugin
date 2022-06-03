@@ -21,11 +21,11 @@ class AuthKey extends \Magento\Framework\Data\Form\Element\AbstractElement
         Factory $factoryElement,
         CollectionFactory $factoryCollection,
         Escaper $escaper,
-        $data = [],
-        ?SecureHtmlRenderer $secureRenderer = null,
-        ?Random $random = null,
+        ?SecureHtmlRenderer $secureRenderer,
+        ?Random $random,
         Auth $authHelper,
-        \Magento\Framework\App\Request\Http $request
+        \Magento\Framework\App\Request\Http $request,
+        $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
