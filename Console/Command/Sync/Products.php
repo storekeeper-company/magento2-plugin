@@ -93,7 +93,7 @@ class Products extends Command
                 if ($product = $this->productsHelper->exists($storeId, $result)) {
                     $product = $this->productsHelper->update($storeId, $product, $result);
                 } else {
-                    $product = $this->productsHelper->create($storeId, $result);
+                    $product = $this->productsHelper->onCreate($storeId, $result);
                 }
             }
         }

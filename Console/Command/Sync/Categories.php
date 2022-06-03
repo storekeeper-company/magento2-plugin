@@ -68,6 +68,8 @@ class Categories extends Command
         $current = 0;
         $total = null;
 
+        echo "  \nWorking...\n";
+
         while (is_null($total) || $current < $total) {
             $response = $this->categoriesHelper->listTranslatedCategoryForHooks(
                 $storeId,
@@ -78,6 +80,10 @@ class Categories extends Command
                     [
                         "name" => "category_tree/path",
                         "dir" => "asc"
+                    ],
+                    [
+                        'name' => 'id',
+                        'dir' => 'asc'
                     ]
                 ],
                 []
@@ -92,10 +98,32 @@ class Categories extends Command
             $results = $response['data'];
 
             foreach ($results as $result) {
-                if ($category = $this->categoriesHelper->exists($storeId, $result)) {
-                    $category = $this->categoriesHelper->update($storeId, $category, $result);
-                } else {
-                    $category = $this->categoriesHelper->create($storeId, $result);
+                try {
+                    if ($category = $this->categoriesHelper->exists($storeId, $result)) {
+                        $category = $this->categoriesHelper->update($storeId, $category, $result);
+                    } else {
+                        $category = $this->categoriesHelper->create($storeId, $result);
+                    }
+                } catch (\Exception $e) {
+                    echo "  An error occurred: {$e->getMessage()} in {$e->getFile()} on {$e->getLine()}\n";
+                    $i = 0;
+                    foreach($e->getTrace() as $trace) {
+                        echo "      ";
+                        if (isset($trace['file'])) {
+                            echo $trace['file'];
+                        }
+
+                        if (isset($trace['line'])) {
+                            echo " at " . $trace['line'];
+                        }
+
+                        echo "\n";
+                        if ($i > 10) {
+                            break;
+                        }
+                        $i++;
+                    }
+                    die;
                 }
             }
         }

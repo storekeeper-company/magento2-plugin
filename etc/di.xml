@@ -8,6 +8,8 @@
             <argument name="commands" xsi:type="array">
                 <item name="storeKeepeerSyncProducts" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Products</item>
                 <item name="storeKeepeerSyncCategories" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Categories</item>
+                <item name="storeKeepeerSyncOrders" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Orders</item>
+                <item name="storeKeepeerSyncCustomers" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Customers</item>
             </argument>
         </arguments>
     </type>

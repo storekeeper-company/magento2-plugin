@@ -117,6 +117,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $language = $this->authHelper->getLanguageForStore($storeId);
 
         $results = $this->authHelper->getModule('ShopModule', $storeId)->naturalSearchShopFlatProductForHooks(
+            ' ',
             $language,
             0,
             1,
@@ -135,7 +136,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             if ($product = $this->exists($storeId, $result)) {
                 $this->update($storeId, $product, $result);
             } else {
-                $this->create($storeId, $result);
+                $this->onCreate($storeId, $result);
             }
         } else {
             echo "does not exist in storekeeper\n";
@@ -146,7 +147,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
         try {
-
             $collection = $this->productCollectionFactory->create();
             $collection
                 ->addAttributeToSelect('*')
@@ -418,7 +418,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 echo "\n";
             }
 
-            if (!empty($storeIds) && !empty($categoryIds = $this->getResultCategoryIds($result))) {
+            if (!empty($categoryIds = $this->getResultCategoryIds($result))) {
                 // assign the store to the first available, otherwise delete operations will go wrong
 
                 // check if categories exist
