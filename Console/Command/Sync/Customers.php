@@ -78,7 +78,7 @@ class Customers extends Command
         $customers = $this->getCustomers($storeId);
 
         foreach ($customers->getItems() as $customer) {
-            /** @var CustomerInterface $customer */
+            $customer = $this->customerRepository->getById($customer->getId());
             $customerEmail = $customer->getEmail();
             $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($customerEmail, $storeId);
 
@@ -87,21 +87,13 @@ class Customers extends Command
                 $relationDataId = $this->customersHelper->createStorekeeperCustomer($customer);
             }
 
-            var_dump($customer->getCustomAttribute('relation_data_id'));
-
-            if ($customer->getCustomAttribute('relation_data_id')) {
-                var_dump('yolo');
-                die();
-            }
-
             try {
-                var_dump('set data');
-                $customer->setCustomAttribute('relation_data_id', $relationDataId);
-                var_dump($customer->getCustomAttribute('relation_data_id'));
-                var_dump($customer->getRelationDataId());
-                var_dump('before');
+                $customer->setCustomAttribute("relation_data_id", $relationDataId);
+                $extensionAttributes = $customer->getExtensionAttributes();
+                $extensionAttributes->setRelationDataId(14);
+                $customer->setExtensionAttributes($extensionAttributes);
                 $this->customerRepository->save($customer);
-                var_dump('after');
+                var_dump($customer->getCustomAttributes());
             } catch (\Exception $e) {
                 $output->writeln('<error>' . $e->getMessage() . '</error>');
             }

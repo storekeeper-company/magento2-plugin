@@ -57,25 +57,29 @@ class RelationDataId implements DataPatchInterface
         try {
             $salesSetup = $this->salesSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
-            $salesSetup->addAttribute(
-                Order::ENTITY,
-                'relation_data_id',
-                [
-                    'type' => 'int',
-                    'visible' => false,
-                    'required' => true
-                ]
-            );
+//            $salesSetup->addAttribute(
+//                Order::ENTITY,
+//                'relation_data_id',
+//                [
+//                    'type' => 'int',
+//                    'visible' => false,
+//                    'required' => true
+//                ]
+//            );
 
             $this->customerSetup->addAttribute(
                 CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER,
                 'relation_data_id',
                 [
-                    'type' => 'int',
                     'label' => __('Relation Data ID'),
-                    'required' => false,
-                    'user_defined' => false,
-                    'visible' => true
+                    'required' => 0,
+                    'position' => 200,
+                    'system' => 0,
+                    'user_defined' => 1,
+                    'is_used_in_grid' => 1,
+                    'is_visible_in_grid' => 1,
+                    'is_filterable_in_grid' => 1,
+                    'is_searchable_in_grid' => 1,
                 ]
             );
 

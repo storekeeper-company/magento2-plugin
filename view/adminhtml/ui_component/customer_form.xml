@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <fieldset name="storekeeper" sortOrder="10">
+        <settings>
+            <collapsible>true</collapsible>
+            <label translate="true">Storekeeper</label>
+        </settings>
+        <field name="storekeeper_category_id" sortOrder="10000" formElement="input">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="source" xsi:type="string">category</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+</form>
