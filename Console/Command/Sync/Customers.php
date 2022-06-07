@@ -79,21 +79,19 @@ class Customers extends Command
 
         foreach ($customers->getItems() as $customer) {
             $customer = $this->customerRepository->getById($customer->getId());
+            var_dump($customer->getId());
             $customerEmail = $customer->getEmail();
             $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($customerEmail, $storeId);
 
-            var_dump($relationDataId);
             if (!$relationDataId) {
                 $relationDataId = $this->customersHelper->createStorekeeperCustomer($customer);
             }
 
             try {
-                $customer->setCustomAttribute("relation_data_id", $relationDataId);
                 $extensionAttributes = $customer->getExtensionAttributes();
-                $extensionAttributes->setRelationDataId(14);
+                $extensionAttributes->setRelationDataId($relationDataId);
                 $customer->setExtensionAttributes($extensionAttributes);
                 $this->customerRepository->save($customer);
-                var_dump($customer->getCustomAttributes());
             } catch (\Exception $e) {
                 $output->writeln('<error>' . $e->getMessage() . '</error>');
             }

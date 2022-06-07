@@ -2,7 +2,8 @@
 
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
-use Magento\Customer\Model\Customer;
+use Magento\Customer\Model\AddressFactory;
+use Magento\Customer\Model\Data\Customer;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Sales\Model\Order;
@@ -11,20 +12,22 @@ use StoreKeeper\ApiWrapper\Exception\GeneralException;
 class Customers extends AbstractHelper
 {
 
-    /**
-     * @var Auth
-     */
     private $authHelper;
+
+    private AddressFactory $addressFactory;
 
     /**
      * @param Auth $authHelper
+     * @param AddressFactory $addressFactory
      * @param Context $context
      */
     public function __construct(
         Auth $authHelper,
+        AddressFactory $addressFactory,
         Context $context
     ) {
         $this->authHelper = $authHelper;
+        $this->addressFactory = $addressFactory;
 
         parent::__construct($context);
     }
@@ -51,23 +54,42 @@ class Customers extends AbstractHelper
         return $id;
     }
 
-    public function createStoreKeeperCustomer(Customer $customer)
+    /**
+     * @param Customer $customer
+     * @return int
+     */
+    public function createStoreKeeperCustomer(Customer $customer): int
     {
+        $billingAddress = $this->getDefaultBillingAddress($customer);
+        $shippingAddress = $this->getDefaultShippingAddress($customer);
+
+        if (!$shippingAddress) {
+            $shippingAddress = $billingAddress;
+        }
+
         $data = [
             'relation' => [
                 'business_data' => $this->getBusinessData($customer),
-                'contact_person' => '',
-                'contact_set' => '',
-                'contact_address' => '',
-                'address_billing' => '',
+                'contact_person' => [
+                    'familyname' => $customer->getLastname(),
+                    'firstname' => $customer->getFirstname(),
+                    'contact_set' => [
+                        'email' => $customer->getEmail(),
+                        'phone' => '',
+                        'name' => $customer->getLastname()
+                    ]
+                ],
+                'contact_set' => $this->getContactSetFromCustomer($customer),
+                'contact_address' => $this->mapAddress($shippingAddress),
+                'address_billing' => $this->mapAddress($billingAddress),
                 'subuser' => [
-                    'login' => '',
-                    'email' => '',
+                    'login' => $customer->getEmail(),
+                    'email' => $customer->getEmail()
                 ]
             ]
         ];
 
-        $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
+        $relationDataId = $this->authHelper->getModule('ShopModule', $customer->getStoreId())->newShopCustomer($data);
 
         return (int) $relationDataId;
     }
@@ -97,17 +119,13 @@ class Customers extends AbstractHelper
         return (int) $relationDataId;
     }
 
-
-
     /**
      * @param Order $order
      * @return array|null
      */
-    private function getBusinessData(Customer $customer): ?array
+    private function getBusinessDataFromOrder(Order $order): ?array
     {
-//        $companyName = $customer->getBillingAddress()->getCompany();
-        $companyName = $customer->getPrimaryAddresses();
-        var_dump($companyName);
+        $companyName = $order->getBillingAddress()->getCompany();
         if (!empty($companyName)) {
             return [
                 'name' => $companyName,
@@ -156,6 +174,54 @@ class Customers extends AbstractHelper
             'email' => $order->getCustomerEmail(),
             'phone' => $order->getBillingAddress()->getTelephone(),
             'name' => $order->getCustomerName()
+        ];
+    }
+
+    /**
+     * @param Customer $customer
+     * @return array|null
+     */
+    private function getBusinessData(Customer $customer): ?array
+    {
+        $billingAddress = $this->getDefaultBillingAddress($customer);
+        $companyName = $billingAddress->getCompany();
+
+        if (!empty($companyName)) {
+            return [
+                'name' => $companyName,
+                'country_iso2' => $billingAddress->getCountryId()
+            ];
+        }
+
+        return null;
+    }
+
+    private function getDefaultBillingAddress($customer): \Magento\Customer\Model\Address
+    {
+        $billingAddressId = $customer->getDefaultBilling();
+
+        return $this->addressFactory->create()->load($billingAddressId);
+    }
+
+    private function getDefaultShippingAddress($customer): \Magento\Customer\Model\Address
+    {
+        $shippingAddressId = $customer->getDefaultShipping();
+
+        return $this->addressFactory->create()->load($shippingAddressId);
+    }
+
+    /**
+     * @param Customer $customer
+     * @return array
+     */
+    private function getContactSetFromCustomer(Customer $customer): array
+    {
+        $billingAddress = $this->getDefaultBillingAddress($customer);
+
+        return [
+            'email' => $customer->getEmail(),
+            'phone' => $billingAddress->getTelephone(),
+            'name' => $customer->getLastname()
         ];
     }
 }
