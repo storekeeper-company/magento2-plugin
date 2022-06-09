@@ -89,7 +89,6 @@ class Products extends Command
             $results = $response['data'];
 
             foreach ($results as $result) {
-
                 if ($product = $this->productsHelper->exists($storeId, $result)) {
                     $product = $this->productsHelper->update($storeId, $product, $result);
                 } else {

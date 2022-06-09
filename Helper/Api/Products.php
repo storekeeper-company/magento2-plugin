@@ -3,7 +3,11 @@
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
 use Exception;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Api\FilterFactory;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filesystem\Io\File;
 use Parsedown;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -21,6 +25,8 @@ use Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper\Attribute
 
 class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    const API_URL = 'https://api-creativectdev.storekeepercloud.com';
+
     public function __construct(
         Auth $authHelper,
         ProductFactory $productFactory,
@@ -32,7 +38,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         CategoryRepository $categoryRepository,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\CatalogInventory\Model\Stock\Item $stockItem,
-        AttributeFilter $attributeFilter
+        AttributeFilter $attributeFilter,
+        DirectoryList $directoryList,
+        File $file
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -47,6 +55,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
         $this->stockItem = $stockItem;
         $this->attributeFilter = $attributeFilter;
+        $this->directoryList = $directoryList;
+        $this->file = $file;
     }
 
     public function authCheck($storeId)
@@ -274,7 +284,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $shouldUpdate = false;
 
         if ($type == 'simple') {
-
             $update = !is_null($target);
             $create = !$update;
 
@@ -287,7 +296,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($language == " ") {
                 $target->setStoreId(Store::DEFAULT_STORE_ID);
-            }        
+            }
 
             $newStatus = $product['active'] ?
                 Status::STATUS_ENABLED :
@@ -335,8 +344,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setUrlKey($slug);
             }
 
-
-
             $parseDown = new Parsedown();
 
             $newDescription = $parseDown->text($body);
@@ -360,17 +367,59 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setWebsiteIds($websiteIds);
             }
 
+            if (isset($flat_product['main_image'])) {
+                $existingImage = null;
+                $newImagePath = explode('/', parse_url($flat_product['main_image']['big_url'], PHP_URL_PATH));
+                $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
+
+                if ($target->getImage()) {
+                    $existingImagePath = explode('/', $target->getImage());
+                    $existingImage = pathinfo(end($existingImagePath), PATHINFO_FILENAME);
+                }
+
+                if ($existingImage == 'no_selection' || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)) {
+                    $shouldUpdate = true;
+                    $this->setGalleryImage($flat_product['main_image']['big_url'], $target, true);
+                }
+            } else {
+                //ToDo: remove main image
+            }
+
+            $galleryImages = $target->getMediaGalleryImages()->getItems();
+            $existingImagesArray = [];
+            foreach ($galleryImages as $image) {
+                $imagePath = explode('/', parse_url($image->getFile(), PHP_URL_PATH));
+                $imageName = pathinfo(end($imagePath), PATHINFO_FILENAME);
+                $existingImagesArray[] = $imageName;
+            }
+
+            if (isset($flat_product['product_images'])) {
+                $mainImage = explode('/', $flat_product['main_image']['big_url']);
+                $mainImageName = pathinfo(end($mainImage), PATHINFO_FILENAME);
+                foreach ($flat_product['product_images'] as $product_image) {
+                    $newImagePath = explode('/', parse_url($product_image['big_url'], PHP_URL_PATH));
+                    $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
+
+                    $countDuplicates = count(preg_grep("/^{$newImageName}\_[0-9]+/", $existingImagesArray));
+                    $shouldUpdate = true;
+
+                    if ($newImageName !== $mainImageName && !preg_match("/^{$newImageName}\_[0-9]+/", $mainImageName)) {
+                        if (!in_array($newImageName, $existingImagesArray) && $countDuplicates <= 0) {
+                            $this->setGalleryImage($product_image['big_url'], $target, false);
+                        }
+                    }
+                }
+            }
+
             if ($shouldUpdate) {
                 $this->productRepository->save($target);
-                
-                if ($update) {
 
+                if ($update) {
                     echo "  Updated {$sku} ({$title})\n";
 
                     if ($language == ' ') {
                         $this->setProductToUseDefaultValues($target, $storeId);
-                    }   
-
+                    }
                 } else {
                     echo "  Created {$sku} ({$title})\n";
                 }
@@ -385,14 +434,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $product_stock_in_stock = $product['product_stock']['in_stock'];
             $product_stock_unlimited = $product['product_stock']['unlimited'];
 
-            if (
-                $product_stock_unlimited &&
+            if ($product_stock_unlimited &&
                 ($stockItem->GetBackorders() == false || $stockItem->getUseConfigBackOrders() == true)
             ) {
                 $stockItem->setBackorders(true);
                 $stockItem->setUseConfigBackorders(false);
-            } else if (
-                !$product_stock_unlimited &&
+            } elseif (!$product_stock_unlimited &&
                 ($stockItem->GetBackorders() == true || $stockItem->getUseConfigBackOrders() == false)
             ) {
                 $stockItem->setBackorders(false);
@@ -457,6 +504,45 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         } else {
             return "Skipping product type {$type} with sku {$sku}\n";
         }
+    }
+
+    /**
+     * @param $image
+     * @param $target Product
+     * @param $mainImage
+     */
+    private function setGalleryImage($image, Product $target, $mainImage)
+    {
+        $tmpDir = $this->getMediaTmpDir();
+        $url = self::API_URL . parse_url($image, PHP_URL_PATH);
+        $newImage = $tmpDir . baseName($url);
+        $result = $this->file->read($url, $newImage);
+        $imageTypes = [];
+
+        if ($mainImage) {
+            $imageTypes = ['image', 'small_image', 'thumbnail'];
+        }
+//        var_dump('url');
+//        var_dump($url);
+//        var_dump("result");
+//        var_dump($result);
+
+        if ($result) {
+            try {
+                $target->addImageToMediaGallery($newImage, $imageTypes, true, false);
+            } catch (LocalizedException $e) {
+                var_dump($e->getMessage());
+                var_dump($e->getTraceAsString());
+            }
+        }
+    }
+
+    private function getMediaTmpDir()
+    {
+        $tmpDir = $this->directoryList->getPath(DirectoryList::MEDIA) . DIRECTORY_SEPARATOR . 'import/';
+        $this->file->checkAndCreateFolder($tmpDir);
+
+        return $tmpDir;
     }
 
     private function getResultStoreKeeperId($result)
