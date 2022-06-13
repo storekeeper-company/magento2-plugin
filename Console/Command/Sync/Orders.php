@@ -7,6 +7,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
+use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
 use Symfony\Component\Console\Command\Command;
@@ -18,31 +19,24 @@ class Orders extends Command
 {
     const STORES = 'stores';
 
-    /**
-     * @var SearchCriteriaBuilder
-     */
-    private $searchCriteriaBuilder;
+    private SearchCriteriaBuilder $searchCriteriaBuilder;
+
+    private State $state;
+
+    private OrderRepositoryInterface $orderRepository;
+
+    private Auth $authHelper;
+
+    private \OrdersHelper|OrdersHelper $ordersHelper;
 
     /**
-     * @var State
+     * @param State $state
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param OrderRepositoryInterface $orderRepository
+     * @param Auth $authHelper
+     * @param OrdersHelper $ordersHelper
+     * @param string|null $name
      */
-    private $state;
-
-    /**
-     * @var OrderRepositoryInterface
-     */
-    private $orderRepository;
-
-    /**
-     * @var Auth
-     */
-    private $authHelper;
-
-    /**
-     * @var \OrdersHelper
-     */
-    private $ordersHelper;
-
     public function __construct(
         State $state,
         SearchCriteriaBuilder $searchCriteriaBuilder,
@@ -60,7 +54,10 @@ class Orders extends Command
         $this->ordersHelper = $ordersHelper;
     }
 
-    protected function configure()
+    /**
+     * @return void
+     */
+    protected function configure(): void
     {
         $this->setName("storekeeper:sync:orders");
         $this->setDescription('Sync orders');
@@ -76,6 +73,12 @@ class Orders extends Command
         parent::configure();
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int|void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     protected function execute(
         InputInterface $input,
         OutputInterface $output
@@ -87,6 +90,7 @@ class Orders extends Command
         $output->writeln('<info>Start order sync</info>');
         $orders = $this->getOrders($storeId);
         $output->writeln('<info>' . $orders->getTotalCount() . '</info>');
+
         foreach ($orders as $order) {
             /** @var $order Order */
             $payload = $this->ordersHelper->prepareOrder($order, $storeId);
@@ -106,11 +110,38 @@ class Orders extends Command
                 $storekeeper_id = $this->authHelper->getModule('ShopModule', $storeId)->newOrder($payload);
                 $order->setStorekeeperId($storekeeper_id);
                 $this->orderRepository->save($order);
+
+                if ($order->getPaymentsCollection()->count() && $order->getStatus() !== 'canceled') {
+                    $paymentId = $this->authHelper->getModule('PaymentModule', $storeId)->newWebPayment([
+                        'amount' => $order->getGrandTotal(),
+                        'description' => $order->getCustomerNote()
+                    ]);
+
+                    if ($order->getStorekeeperId()) {
+                        $storekeeper_id = $order->getStorekeeperId();
+                    }
+
+                    if ($paymentId) {
+                        try {
+                            $this->authHelper->getModule('ShopModule', $storeId)->attachPaymentIdsToOrder(['payment_ids' => [$paymentId]], $storekeeper_id);
+                        } catch (GeneralException $e) {
+                            throw $e;
+                        }
+                    }
+                }
+            }
+
+            if ($order->getShipmentsCollection()->count()) {
+                $this->authHelper->getModule('ShopModule', $storeId)->updateOrderStatus(['status' => array_search($order->getStatus(), $statusMapping)], $order->getStorekeeperId());
             }
         }
     }
 
-    private function getOrders($storeId)
+    /**
+     * @param $storeId
+     * @return \Magento\Sales\Api\Data\OrderSearchResultInterface
+     */
+    private function getOrders($storeId): \Magento\Sales\Api\Data\OrderSearchResultInterface
     {
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter(
@@ -120,7 +151,7 @@ class Orders extends Command
             )
             ->addFilter(
                 'status',
-                ['processing', 'canceled'],
+                ['processing', 'canceled', 'complete'],
                 'in'
             )
             ->create();
@@ -128,10 +159,13 @@ class Orders extends Command
         return $this->orderRepository->getList($searchCriteria);
     }
 
-    private function statusMapping()
+    /**
+     * @return string[]
+     */
+    private function statusMapping(): array
     {
         return [
-            'complete' => 'completed',
+            'complete' => 'complete',
             'processing' => 'processing',
             'cancelled' => 'canceled',
             'new' => 'new'

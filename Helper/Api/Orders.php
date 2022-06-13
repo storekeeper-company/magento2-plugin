@@ -9,13 +9,13 @@ use Magento\Sales\Model\Order;
 class Orders extends AbstractHelper
 {
 
-    /**
-     * @var Auth
-     */
-    private $authHelper;
+    private Auth $authHelper;
+
+    private Customers $customersHelper;
 
     /**
      * @param Auth $authHelper
+     * @param Customers $customersHelper
      * @param Context $context
      */
     public function __construct(
@@ -38,7 +38,7 @@ class Orders extends AbstractHelper
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
-        $orderItemsPayload = $this->prepareOrderItems($order->getItems());
+        $orderItemsPayload = $this->prepareOrderItems($order);
 
         if ($order->getCustomerIsGuest()) {
             $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
@@ -48,7 +48,7 @@ class Orders extends AbstractHelper
             }
         }
 
-        $payload = [
+        return [
             'order_items' => $orderItemsPayload,
             'billing_address__merge' => 'false',
             'shipping_address__merge' => 'false',
@@ -76,23 +76,17 @@ class Orders extends AbstractHelper
                 ]
             ]
         ];
-
-        if (!$order->getStorekeeperId()) {
-            $payload['shop_order_number'] = $order->getId();
-        }
-
-        return $payload;
     }
 
     /**
-     * @param $orderItems
+     * @param Order $order
      * @return array
      */
-    private function prepareOrderItems($orderItems): array
+    private function prepareOrderItems(Order $order): array
     {
         $payload = [];
 
-        foreach ($orderItems as $item) {
+        foreach ($order->getItems() as $item) {
             $payloadItem = [
                 'sku' => $item->getSku(),
                 'ppu_wt' => $item->getPrice(),
@@ -104,6 +98,14 @@ class Orders extends AbstractHelper
 
             $payload[] = $payloadItem;
         }
+
+        $payload[] = [
+            'sku' => $order->getShippingMethod(),
+            'ppu_wt' => $order->getShippingAmount(),
+            'quantity' => 1,
+            'name' => $order->getShippingMethod(),
+            'is_shipping' => true
+        ];
 
         return $payload;
     }
