@@ -377,9 +377,11 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     $existingImage = pathinfo(end($existingImagePath), PATHINFO_FILENAME);
                 }
 
-                if ($existingImage == 'no_selection' || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)) {
-                    $shouldUpdate = true;
-                    $this->setGalleryImage($flat_product['main_image']['big_url'], $target, true);
+                if ($existingImage) {
+                    if ($existingImage == 'no_selection' || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)) {
+                        $shouldUpdate = true;
+                        $this->setGalleryImage($flat_product['main_image']['big_url'], $target, true);
+                    }
                 }
             } else {
                 //ToDo: remove main image

@@ -57,15 +57,15 @@ class RelationDataId implements DataPatchInterface
         try {
             $salesSetup = $this->salesSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
-//            $salesSetup->addAttribute(
-//                Order::ENTITY,
-//                'relation_data_id',
-//                [
-//                    'type' => 'int',
-//                    'visible' => false,
-//                    'required' => true
-//                ]
-//            );
+            $salesSetup->addAttribute(
+                Order::ENTITY,
+                'relation_data_id',
+                [
+                    'type' => 'int',
+                    'visible' => false,
+                    'required' => true
+                ]
+            );
 
             $this->customerSetup->addAttribute(
                 CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER,
