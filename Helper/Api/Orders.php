@@ -31,9 +31,10 @@ class Orders extends AbstractHelper
 
     /**
      * @param $order
+     * @param $isUpdate
      * @return array
      */
-    public function prepareOrder($order): array
+    public function prepareOrder($order, $isUpdate): array
     {
         /** @var $order Order */
         $email = $order->getCustomerEmail();
@@ -48,8 +49,7 @@ class Orders extends AbstractHelper
             }
         }
 
-        return [
-            'order_items' => $orderItemsPayload,
+        $payload = [
             'billing_address__merge' => 'false',
             'shipping_address__merge' => 'false',
             'relation_data_id' => $relationDataId,
@@ -76,6 +76,15 @@ class Orders extends AbstractHelper
                 ]
             ]
         ];
+
+        if (!$isUpdate) {
+            $payload['order_items'] = $orderItemsPayload;
+        } else {
+            $payload['order_items__remove'] = null;
+            $payload['order_items__do_not_change'] = true;
+        }
+
+        return $payload;
     }
 
     /**
