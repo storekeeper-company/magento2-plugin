@@ -207,7 +207,8 @@ class Orders extends Command
     private function handleShipping($storeKeeperOrder, Order $order): void
     {
         var_dump($storeKeeperOrder['shipped_item_no']);
-        var_dump($storeKeeperOrder);
+//        var_dump($storeKeeperOrder);
+        file_put_contents('/var/www/storekeeper.log', print_r($storeKeeperOrder, true));
         var_dump($order->getStorekeeperId());
         die();
         if (isset($storeKeeperOrder['shipped_item_no']) && !$order->hasShipments()) {
