@@ -63,7 +63,7 @@ class Products extends Command
     ) {
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
-        $storeId = 1;
+        $storeId = $input->getOption(self::STORES);
         $language = $this->productsHelper->getLanguageForStore($storeId);
 
         $current = 0;

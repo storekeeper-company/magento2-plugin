@@ -2,10 +2,11 @@
 
 
 namespace StoreKeeper\StoreKeeper\Model;
- 
+
 use Magento\Framework\MessageQueue\ConsumerConfiguration;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
+use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
 
 /**
@@ -14,34 +15,34 @@ use StoreKeeper\StoreKeeper\Helper\Api\Products;
 class Consumer
 {
     const CONSUMER_NAME = "storekeeper.queue.events";
- 
+
     const QUEUE_NAME = "storekeeper.queue.events";
-    
+
     public function __construct(
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         Products $productsHelper,
         Categories $categoriesHelper,
+        Orders $ordersHelper,
         \Magento\Framework\App\State $state
     ) {
-        
+
         $this->jsonHelper = $jsonHelper;
         $this->productsHelper = $productsHelper;
-        $this->categoriesHelper = $categoriesHelper;    
-        $this->state = $state; 
+        $this->categoriesHelper = $categoriesHelper;
+        $this->ordersHelper = $ordersHelper;
+        $this->state = $state;
         echo "construct";
     }
- 
+
     /**
-     * Process 
-     * 
+     * Process
+     *
      * @param string $request
      * @return void
      */
     public function process($request)
-    {   
+    {
         // $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
-
-        echo "work\n";
 
         $data = json_decode($request, true);
         $storeId = $data['storeId'] ?? null;
@@ -61,6 +62,8 @@ class Consumer
                     $this->productsHelper->updateById($storeId, $value);
                 } else if ($entity == 'Category') {
                     $this->categoriesHelper->updateById($storeId, $value);
+                } else if ($entity == "Order") {
+                    $this->ordersHelper->updateById($storeId, $value);
                 }
             } else if ($type == "deactivated") {
                 if ($entity == "ShopProduct") {

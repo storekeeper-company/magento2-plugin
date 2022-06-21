@@ -78,12 +78,12 @@ class Customers extends Command
         $customers = $this->getCustomers($storeId);
 
         foreach ($customers->getItems() as $customer) {
+            $output->writeln('<info>Sync customer with id: ' . $customer->getId() .  '</info>');
             $customer = $this->customerRepository->getById($customer->getId());
-            var_dump($customer->getId());
             $customerEmail = $customer->getEmail();
             $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($customerEmail, $storeId);
 
-            if (!$relationDataId) {
+            if (!$relationDataId && $customer->getDefaultBilling()) {
                 $relationDataId = $this->customersHelper->createStorekeeperCustomer($customer);
             }
 
@@ -96,6 +96,7 @@ class Customers extends Command
                 $output->writeln('<error>' . $e->getMessage() . '</error>');
             }
         }
+        $output->writeln('<info>Finished customer sync</info>');
     }
 
     private function getCustomers($storeId)

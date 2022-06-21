@@ -75,7 +75,7 @@ class Categories extends Command
                 $storeId,
                 $language,
                 $current,
-                2,
+                99,
                 [
                     [
                         "name" => "category_tree/path",
@@ -88,6 +88,8 @@ class Categories extends Command
                 ],
                 []
             );
+
+            var_dump($response);
 
 
             echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";

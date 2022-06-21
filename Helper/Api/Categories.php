@@ -176,7 +176,11 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 
         $title = $result['title'] ?? null;
         $slug = $result['slug'] ?? null;
-        $description = $result['description'] ?? null;
+        $description = '';
+
+        if (isset($result['description'])) {
+            $description = $result['description'];
+        }
 
         if (isset($result['translation'])) {
             if (isset($result['translation']['title'])) {
@@ -201,7 +205,7 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $parseDown = new Parsedown();
-        $newDescription = $parseDown->text($description ?? null);
+        $newDescription = $parseDown->text($description);
 
         $newDescription = <<<HTML
 <style>
@@ -218,7 +222,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 <div data-content-type="row" data-appearance="contained" data-element="main">
   <div data-enable-parallax="0" data-parallax-speed="0.5" data-background-images="{}" data-background-type="image" data-video-loop="true" data-video-play-only-visible="true" data-video-lazy-load="true" data-video-fallback-src="" data-element="inner" data-pb-style="H1A4J0C">
     <div data-content-type="text" data-appearance="default" data-element="main">
-        <p>test</p>
       $newDescription
     </div>
   </div>

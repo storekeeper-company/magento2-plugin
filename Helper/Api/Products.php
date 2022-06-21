@@ -524,10 +524,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if ($mainImage) {
             $imageTypes = ['image', 'small_image', 'thumbnail'];
         }
-//        var_dump('url');
-//        var_dump($url);
-//        var_dump("result");
-//        var_dump($result);
 
         if ($result) {
             try {
