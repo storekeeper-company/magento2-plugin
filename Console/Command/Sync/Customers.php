@@ -76,7 +76,6 @@ class Customers extends Command
 
         $output->writeln('<info>Start customer sync</info>');
         $customers = $this->getCustomers($storeId);
-
         foreach ($customers->getItems() as $customer) {
             $output->writeln('<info>Sync customer with id: ' . $customer->getId() .  '</info>');
             $customer = $this->customerRepository->getById($customer->getId());

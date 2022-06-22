@@ -70,7 +70,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
         // website 1
         // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz93ZWJzaXRlSWQ9MSJ9
-        
+
         // store 3
         // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz9zdG9yZUlkPTMifQ==
         return $base64;
@@ -106,7 +106,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->websiteShopIds[$value] = $website->getId();
             }
         }
-        return $this->websiteShopIds; 
+        return $this->websiteShopIds;
     }
 
     public function getAdapter()

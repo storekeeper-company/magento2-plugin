@@ -9,6 +9,8 @@ use Parsedown;
 
 class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    private CategoryRepository $categoryRepository;
+
     public function __construct(
         Auth $authHelper,
         CategoryFactory $categoryFactory,
@@ -90,7 +92,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
-
         $collection = $this->categoryCollectionFactory->create();
         $collection
             ->addAttributeToSelect('*')
@@ -159,11 +160,8 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
     public function update($storeId, $target = null, array $result = [])
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
-
         $shouldUpdate = false;
-
         $storekeeper_id = $this->getResultStoreKeeperId($result);
-
         $update = !is_null($target);
         $create = !$update;
 
@@ -247,12 +245,13 @@ HTML;
         }
 
         $storeKeeperCategoryIdAttribute = $target->getCustomAttribute('storekeeper_category_id');
+
         if (
             empty($storeKeeperCategoryIdAttribute) ||
             $storeKeeperCategoryIdAttribute->getValue() != $storekeeper_id
         ) {
             $shouldUpdate = true;
-            $target->setStoreKeeperCategoryId($storekeeper_id);
+            $target->setCustomAttribute('storekeeper_category_id', $storekeeper_id);
         }
 
         $shouldMove = false;
@@ -292,10 +291,12 @@ HTML;
                     $target->move($parent->getId(), null);
                 }
             }
+
             $target = $this->categoryRepository->save($target);
 
             if ($shouldMove && $create) {
                 // categories can only be moved if they exist
+
                 if ($parent) {
                     $target->move($parent->getId(), null);
                     $target = $this->categoryRepository->save($target);

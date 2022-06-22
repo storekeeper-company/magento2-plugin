@@ -62,7 +62,7 @@ class Categories extends Command
     ) {
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
-        $storeId = 1;
+        $storeId = $input->getOption(self::STORES);
         $language = $this->categoriesHelper->getLanguageForStore($storeId);
 
         $current = 0;
@@ -75,7 +75,7 @@ class Categories extends Command
                 $storeId,
                 $language,
                 $current,
-                99,
+                2,
                 [
                     [
                         "name" => "category_tree/path",
@@ -88,9 +88,6 @@ class Categories extends Command
                 ],
                 []
             );
-
-            var_dump($response);
-
 
             echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";
 
