@@ -73,9 +73,9 @@ class Consumer
                 }
             } else if ($type == "activated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->onActivate($storeId, $value);
+                    $this->productsHelper->activate($storeId, $value);
                 } else if ($entity == 'Category') {
-                    $this->categoriesHelper->onActivate($storeId, $value);
+                    $this->categoriesHelper->activate($storeId, $value);
                 }
             } else if ($type == "deleted") {
                 if ($entity == 'Category') {
