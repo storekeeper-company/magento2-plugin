@@ -286,7 +286,7 @@ class Orders extends AbstractHelper
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
         $statusMapping = $this->statusMapping();
 
-        if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus()) {
+        if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
             $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
         }
 
