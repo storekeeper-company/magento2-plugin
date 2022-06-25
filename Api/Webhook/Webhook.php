@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace StoreKeeper\StoreKeeper\Api\Webhook;
 
 use SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser;
@@ -44,7 +44,6 @@ class Webhook
         $response = [
             "success" => true
         ];
-
 
         if ($action == "init") {
             $this->authHelper->setAuthDataForWebsite($storeId, $payload);
@@ -103,6 +102,6 @@ class Webhook
         header("Content-Type: application/json");
         echo json_encode($response);
         exit;
-        
+
     }
 }
