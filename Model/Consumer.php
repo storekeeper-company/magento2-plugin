@@ -50,7 +50,6 @@ class Consumer
      */
     public function process($request)
     {
-        var_dump('start');
         $data = json_decode($request, true);
         $storeId = $data['storeId'] ?? null;
         $module = $data['module'];
