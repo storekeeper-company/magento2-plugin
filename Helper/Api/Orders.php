@@ -80,12 +80,10 @@ class Orders extends AbstractHelper
         $relationDataId = null;
         $orderItemsPayload = $this->prepareOrderItems($order);
 
-        if ($order->getCustomerIsGuest()) {
-            $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
+        $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
 
-            if (!$relationDataId) {
-                $relationDataId = $this->customersHelper->createStorekeeperCustomerByOrder($order);
-            }
+        if (!$relationDataId) {
+            $relationDataId = $this->customersHelper->createStorekeeperCustomerByOrder($order);
         }
 
         $payload = [
