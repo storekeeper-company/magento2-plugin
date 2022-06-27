@@ -1,21 +1,23 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Helper;
 
+use Magento\Store\Model\ScopeInterface;
+
 class Config extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const STOREKEEPER_PAYMENT_METHODS_ACTIVE = 'storekeeper_payment_methods/payment_methods/enabled	';
+
+    const STOREKEEPER_SYNC_MODE = 'storekeeper_general/general/storekeeper_sync_mode';
 
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
-        // $this->stockItemRepository = $stockItemRepository;
-        // $this->stockRegistryInterface = $stockRegistryInterface;
     }
 
-    private function getScopeConfigValue(string $key, $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+    private function getScopeConfigValue(string $key, $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId = null)
     {
-        return $this->scopeConfig->getValue($key, $scope);
+        return $this->scopeConfig->getValue($key, $scope, $storeId);
     }
 
     public function getAuthEmail()
@@ -39,4 +41,16 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         return true;
     }
 
+    public function getMode($storeId)
+    {
+        $mode = $this->getScopeConfigValue(self::STOREKEEPER_SYNC_MODE, ScopeInterface::SCOPE_STORE, $storeId);
+
+        switch ($mode) {
+            case 0:
+            case 1:
+                return 'order_only_mode';
+            default:
+                return 'default';
+        }
+    }
 }

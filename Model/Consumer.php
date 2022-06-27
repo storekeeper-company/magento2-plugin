@@ -3,11 +3,10 @@
 
 namespace StoreKeeper\StoreKeeper\Model;
 
-use Magento\Framework\MessageQueue\ConsumerConfiguration;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class Consumer used to process OperationInterface messages.
@@ -18,20 +17,29 @@ class Consumer
 
     const QUEUE_NAME = "storekeeper.queue.events";
 
+    private Products $productsHelper;
+
+    private Categories $categoriesHelper;
+
+    private Orders $ordersHelper;
+
+    private Config $configHelper;
+
     public function __construct(
-        \Magento\Framework\Json\Helper\Data $jsonHelper,
         Products $productsHelper,
         Categories $categoriesHelper,
         Orders $ordersHelper,
-        \Magento\Framework\App\State $state
+        Config $configHelper
     ) {
-
-        $this->jsonHelper = $jsonHelper;
         $this->productsHelper = $productsHelper;
         $this->categoriesHelper = $categoriesHelper;
         $this->ordersHelper = $ordersHelper;
-        $this->state = $state;
-        echo "construct";
+        $this->configHelper = $configHelper;
+    }
+
+    private function getMode($storeId)
+    {
+        return $this->configHelper->getMode($storeId);
     }
 
     /**
@@ -42,8 +50,6 @@ class Consumer
      */
     public function process($request)
     {
-        // $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
-
         $data = json_decode($request, true);
         $storeId = $data['storeId'] ?? null;
         $module = $data['module'];
@@ -56,35 +62,43 @@ class Consumer
             throw new \Exception("Missing store ID");
         }
 
+        $mode = $this->getMode($storeId);
+
         try {
             if ($type == "updated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->updateById($storeId, $value);
-                } else if ($entity == 'Category') {
+                    if ($mode === 'default') {
+                        $this->productsHelper->updateById($storeId, $value);
+                    } elseif ($mode === 'order_only_mode') {
+                        $this->productsHelper->updateStock($storeId, $value);
+                    }
+                } else if ($entity == 'Category' && $mode === 'default') {
                     $this->categoriesHelper->updateById($storeId, $value);
-                } else if ($entity == "Order") {
+                } else if ($entity == "Order" && ($mode === 'order_only_mode' || $mode === 'default')) {
                     $this->ordersHelper->updateById($storeId, $value);
                 }
-            } else if ($type == "deactivated") {
+            } else if ($type == "deactivated" && $mode === 'default') {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->onDeactivate($storeId, $value);
-                } else if ($entity == 'Category') {
+                } else if ($entity == 'Category' && $mode === 'default') {
                     $this->categoriesHelper->onDeactivate($storeId, $value);
                 }
-            } else if ($type == "activated") {
+            } else if ($type == "activated" && $mode === 'default') {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->activate($storeId, $value);
                 } else if ($entity == 'Category') {
                     $this->categoriesHelper->activate($storeId, $value);
                 }
-            } else if ($type == "deleted") {
+            } else if ($type == "deleted" && $mode === 'default') {
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onDeleted($storeId, $value);
                 }
-            } else if ($type == "created") {
+            } else if ($type == "created" && $mode === 'default') {
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onCreated($storeId, $value);
                 }
+            } else if ($type == 'stock_change' && $mode === 'order_only_mode') {
+                $this->productsHelper->updateStock($storeId, $value);
             }
         } catch (\Exception $e) {
             var_dump($e->getMessage());

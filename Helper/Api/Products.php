@@ -8,6 +8,8 @@ use Magento\Framework\Api\FilterFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
+use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
+use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Parsedown;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -27,6 +29,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const API_URL = 'https://api-creativectdev.storekeepercloud.com';
 
+    private SourceItemsSaveInterface $sourceItemsSave;
+
+    private SourceItemInterfaceFactory $sourceItemFactory;
+
     public function __construct(
         Auth $authHelper,
         ProductFactory $productFactory,
@@ -40,7 +46,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\CatalogInventory\Model\Stock\Item $stockItem,
         AttributeFilter $attributeFilter,
         DirectoryList $directoryList,
-        File $file
+        File $file,
+        SourceItemsSaveInterface $sourceItemsSave,
+        SourceItemInterfaceFactory $sourceItemFactory
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -57,6 +65,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attributeFilter = $attributeFilter;
         $this->directoryList = $directoryList;
         $this->file = $file;
+        $this->sourceItemsSave = $sourceItemsSave;
+        $this->sourceItemFactory = $sourceItemFactory;
     }
 
     public function authCheck($storeId)
@@ -122,6 +132,52 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    public function updateStock($storeId, $storeKeeperId)
+    {
+        $language = $this->authHelper->getLanguageForStore($storeId);
+
+        $results = $this->authHelper->getModule('ShopModule', $storeId)->naturalSearchShopFlatProductForHooks(
+            ' ',
+            $language,
+            0,
+            1,
+            [],
+            [
+                [
+                    'name' => 'flat_product/product_id__=',
+                    'val' => $storeKeeperId
+                ]
+            ]
+        );
+
+        if (isset($results['data']) && count($results['data']) > 0) {
+            $result = $results['data'][0];
+            $product_stock = $result['flat_product']['product']['product_stock'];
+
+            if ($product = $this->exists($storeId, $result)) {
+                $this->updateProductStock($storeId, $product, $product_stock);
+            } else {
+                echo "Can't update product because it doesn't exist\n";
+            }
+        } else {
+            echo "does not exist in storekeeper\n";
+        }
+    }
+
+    /**
+     * @throws \Magento\Framework\Validation\ValidationException
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws Exception
+     */
+    private function updateProductStock($storeId, $product, $product_stock)
+    {
+        echo "update product stock\n";
+        $stockItem = $this->stockItem->load($product->getId(), 'product_id');
+        $stockItem->setQty($product_stock['value']);
+        $stockItem->save();
+    }
+
     public function updateById($storeId, $storeKeeperId)
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
@@ -139,6 +195,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 ]
             ]
         );
+
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
