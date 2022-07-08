@@ -13,32 +13,4 @@
             </argument>
         </arguments>
     </type>
-
-    <type name="StoreKeeper\StoreKeeper\Model\StoreKeeperPaymentMethods">
-        <arguments>
-            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
-            <argument name="infoBlockType" xsi:type="string">Magento\Payment\Block\Info</argument>
-            <argument name="valueHandlerPool" xsi:type="object">StoreKeeperValueHandlerPool</argument>
-        </arguments>
-    </type>
-
-    <virtualType name="StoreKeeperValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
-        <arguments>
-            <argument name="handlers" xsi:type="array">
-                <item name="default" xsi:type="string">StoreKeeperConfigValueHandler</item>
-            </argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="StoreKeeperConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
-        <arguments>
-            <argument name="configInterface" xsi:type="object">StoreKeeperGenericConfig</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="StoreKeeperGenericConfig" type="Magento\Payment\Gateway\Config\Config">
-        <arguments>
-            <argument name="methodCode" xsi:type="const">StoreKeeper\StoreKeeper\Model\StoreKeeperPaymentMethods::CODE</argument>
-        </arguments>
-    </virtualType>
 </config>
