@@ -16,6 +16,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Orders extends Command
 {
@@ -31,15 +32,17 @@ class Orders extends Command
      * @param string|null $name
      */
     public function __construct(
-        State                       $state,
-        OrdersHelper                $ordersHelper,
-        string                      $name = null
+        State $state,
+        OrdersHelper $ordersHelper,
+        Config $configHelper,
+        string $name = null
     )
     {
         parent::__construct($name);
 
         $this->state = $state;
         $this->ordersHelper = $ordersHelper;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -75,6 +78,11 @@ class Orders extends Command
         $this->state->setAreaCode(Area::AREA_ADMINHTML);
 
         $storeId = $input->getOption(self::STORES);
+
+        if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+            echo "  Skipping order sync: mode not allowed\n";
+            return;
+        }
 
         $output->writeln('<info>Start order sync</info>');
         $page = 1;

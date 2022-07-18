@@ -8,6 +8,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class SomeCommand
@@ -21,13 +22,15 @@ class Products extends Command
     public function __construct(
         \Magento\Framework\App\State $state,
         \StoreKeeper\StoreKeeper\Helper\Api\Products $productsHelper,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        Config $configHelper
     ) {
         parent::__construct();
 
         $this->state = $state;
         $this->productsHelper = $productsHelper;
         $this->storeManager = $storeManager;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -64,6 +67,12 @@ class Products extends Command
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
         $storeId = $input->getOption(self::STORES);
+
+        if (!$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+            echo "  Skipping product sync: mode not allowed\n";
+            return;
+        }
+
         $language = $this->productsHelper->getLanguageForStore($storeId);
 
         $current = 0;

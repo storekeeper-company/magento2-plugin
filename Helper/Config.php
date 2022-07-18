@@ -5,6 +5,11 @@ use Magento\Store\Model\ScopeInterface;
 
 class Config extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    public const SYNC_NONE = 1;
+    public const SYNC_PRODUCTS = 2;
+    public const SYNC_ORDERS = 4;
+    public const SYNC_ALL = 8;
+
     const STOREKEEPER_PAYMENT_METHODS_ACTIVE = 'storekeeper_payment_methods/payment_methods/enabled	';
 
     const STOREKEEPER_SYNC_MODE = 'storekeeper_general/general/storekeeper_sync_mode';
@@ -41,16 +46,10 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         return true;
     }
 
-    public function getMode($storeId)
+    public function hasMode($storeId, $flags)
     {
         $mode = $this->getScopeConfigValue(self::STOREKEEPER_SYNC_MODE, ScopeInterface::SCOPE_STORE, $storeId);
 
-        switch ($mode) {
-            case 0:
-            case 1:
-                return 'order_only_mode';
-            default:
-                return 'default';
-        }
+        return ($mode & $flags) != 0;
     }
 }

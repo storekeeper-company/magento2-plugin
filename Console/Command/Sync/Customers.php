@@ -12,6 +12,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Customers extends Command
 {
@@ -42,6 +43,7 @@ class Customers extends Command
         SearchCriteriaBuilder $searchCriteriaBuilder,
         CustomerRepositoryInterface $customerRepository,
         CustomersHelper $customersHelper,
+        Config $configHelper,
         string $name = null
     ) {
         parent::__construct($name);
@@ -50,6 +52,7 @@ class Customers extends Command
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->customerRepository = $customerRepository;
         $this->customersHelper = $customersHelper;
+        $this->configHelper = $configHelper;
     }
 
     protected function configure()
@@ -73,6 +76,11 @@ class Customers extends Command
         $this->state->setAreaCode(Area::AREA_ADMINHTML);
 
         $storeId = $input->getOption(self::STORES);
+
+        if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+            echo "  Skipping customer sync: mode not allowed\n";
+            return;
+        }
 
         $output->writeln('<info>Start customer sync</info>');
         $customers = $this->getCustomers($storeId);

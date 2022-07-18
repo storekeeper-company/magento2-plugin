@@ -8,6 +8,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class SomeCommand
@@ -20,12 +21,14 @@ class Categories extends Command
 
     public function __construct(
         \Magento\Framework\App\State $state,
-        \StoreKeeper\StoreKeeper\Helper\Api\Categories $categoriesHelper
+        \StoreKeeper\StoreKeeper\Helper\Api\Categories $categoriesHelper,
+        Config $configHelper
     ) {
         parent::__construct();
 
         $this->state = $state;
         $this->categoriesHelper = $categoriesHelper;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -60,9 +63,16 @@ class Categories extends Command
         InputInterface $input,
         OutputInterface $output
     ) {
+        
         $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
         $storeId = $input->getOption(self::STORES);
+
+        if (!$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+            echo "  Skipping category sync: mode not allowed\n";
+            return;
+        }
+
         $language = $this->categoriesHelper->getLanguageForStore($storeId);
 
         $current = 0;

@@ -4,6 +4,8 @@ namespace StoreKeeper\StoreKeeper\Model\Config\Source;
 
 use Magento\Framework\Data\OptionSourceInterface;
 
+use StoreKeeper\StoreKeeper\Helper\Config;
+
 class SyncModes implements OptionSourceInterface
 {
 
@@ -11,12 +13,20 @@ class SyncModes implements OptionSourceInterface
     {
         return [
             [
-                'value' => 0,
-                'label' => __('Default')
+                'value' => Config::SYNC_NONE,
+                'label' => __('None')
             ],
             [
-                'value' => 1,
-                'label' => __('Order only mode')
+                'value' => Config::SYNC_PRODUCTS,
+                'label' => __('Products Only')
+            ],
+            [
+                'value' => Config::SYNC_ORDERS,
+                'label' => __('Orders Only')
+            ],
+            [
+                'value' => Config::SYNC_ALL,
+                'label' => __('All')
             ]
         ];
     }
