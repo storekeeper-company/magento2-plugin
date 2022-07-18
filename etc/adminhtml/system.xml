@@ -32,6 +32,10 @@
                     <label>Guest Auth</label>
                 </field>
 
+                <field id="storekeeper_store_information" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Store Information</label>
+                </field>
+
                 <field id="storekeeper_shop_id" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Shop ID</label>
                 </field>
@@ -47,6 +51,12 @@
                 <field id="storekeeper_sync_mode" type="select" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Sync mode</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\SyncModes</source_model>
+                </field>
+
+                <field id="storekeeper_refresh_store"
+                    type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\RefreshStore"
+                    translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Store</label>
                 </field>
 
                 <field id="storekeeper_auth_key"

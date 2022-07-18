@@ -51,6 +51,22 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     }
 
+    public function getStoreInformation($storeId)
+    {
+        return $this->getModule('ShopModule', $storeId)->getShopSettingsForHooks();
+    }
+
+    public function setStoreInformation($storeId, array $data)
+    {
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_store_information",
+            json_encode($data),
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+        return true;
+    }
+
     public function authCheck($storeId)
     {
         $json = json_encode(
