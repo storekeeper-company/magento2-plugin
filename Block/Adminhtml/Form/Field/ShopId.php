@@ -15,7 +15,7 @@ use Magento\Framework\Data\Form\Element\CollectionFactory;
 
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class AuthKey extends \Magento\Framework\Data\Form\Element\AbstractElement
+class ShopId extends \Magento\Framework\Data\Form\Element\AbstractElement
 {
     public function __construct(
         Factory $factoryElement,
@@ -25,19 +25,25 @@ class AuthKey extends \Magento\Framework\Data\Form\Element\AbstractElement
         ?Random $random,
         Auth $authHelper,
         \Magento\Framework\App\Request\Http $request,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
         $this->request = $request;
+        $this->scopeConfig = $scopeConfig;
     }
 
     public function getElementHtml()
     {
-        return "
-            <span style='word-break: break-all'>" . $this->authHelper->authCheck($this->request->getParam('store')) . "</span>
-        ";
-    }
+        $storeInformation = json_decode($this->scopeConfig->getValue(
+            'storekeeper_general/general/storekeeper_store_information',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $this->request->getParam('store')
+        ), true);
 
-    
+        $shopId = $storeInformation['shop']['id'];
+
+        return "<input type='text' class='input-text admin__control-text' value='{$shopId}' readonly />";
+    }
 }

@@ -20,28 +20,28 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     public function setAuthDataForWebsite($storeId, $authData)
     {
         $this->configWriter->save(
-            "storekeeper-general/general/storekeeper_sync_auth",
+            "storekeeper_general/general/storekeeper_sync_auth",
             json_encode($authData['sync_auth']),
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $storeId
         );
 
         $this->configWriter->save(
-            "storekeeper-general/general/storekeeper_guest_auth",
+            "storekeeper_general/general/storekeeper_guest_auth",
             json_encode($authData['guest_auth']),
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $storeId
         );
 
         $this->configWriter->save(
-            "storekeeper-general/general/storekeeper_shop_id",
+            "storekeeper_general/general/storekeeper_shop_id",
             $authData['shop']['id'],
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $storeId
         );
 
         $this->configWriter->save(
-            "storekeeper-general/general/storekeeper_shop_name",
+            "storekeeper_general/general/storekeeper_shop_name",
             $authData['shop']['name'],
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $storeId
@@ -51,12 +51,28 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     }
 
+    public function getStoreInformation($storeId)
+    {
+        return $this->getModule('ShopModule', $storeId)->getShopSettingsForHooks();
+    }
+
+    public function setStoreInformation($storeId, array $data)
+    {
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_store_information",
+            json_encode($data),
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+        return true;
+    }
+
     public function authCheck($storeId)
     {
         $json = json_encode(
             [
                 'token' => "abc123", // Needs to the same over the applications lifespan.
-                'webhook_url' => 'http://storekeeper.m2.dev1.dnovo-dev.eu/rest/V1/storekeeper/webhook?storeId=' . $storeId, // Endpoint
+                'webhook_url' => "{$this->storeManager->getStore()->getBaseUrl()}/rest/V1/storekeeper/webhook?storeId={$storeId}", // Endpoint
             ]
         );
 
@@ -70,7 +86,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
         // website 1
         // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz93ZWJzaXRlSWQ9MSJ9
-        
+
         // store 3
         // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz9zdG9yZUlkPTMifQ==
         return $base64;
@@ -84,7 +100,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         if (is_null($this->storeShopIds)) {
             $this->storeShopIds = [];
             foreach ($this->storeManager->getStores() as $store) {
-                $value = $this->getScopeConfigValue('storekeeper-general/general/storekeeper_shop_id', $store->getId());
+                $value = $this->getScopeConfigValue('storekeeper_general/general/storekeeper_shop_id', $store->getId());
                 $this->storeShopIds[$value] = $store->getId();
             }
         }
@@ -99,14 +115,14 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             $this->websiteShopIds = [];
             foreach ($this->storeManager->getWebsites() as $website) {
                 $value = $this->getScopeConfigValue(
-                    'storekeeper-general/general/storekeeper_shop_id',
+                    'storekeeper_general/general/storekeeper_shop_id',
                     $website->getId(),
                     \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE
                 );
                 $this->websiteShopIds[$value] = $website->getId();
             }
         }
-        return $this->websiteShopIds; 
+        return $this->websiteShopIds;
     }
 
     public function getAdapter()
@@ -142,7 +158,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return json_decode(
             $this->getScopeConfigValue(
-                "storekeeper-general/general/storekeeper_sync_auth",
+                "storekeeper_general/general/storekeeper_sync_auth",
                 $storeId,
                 \Magento\Store\Model\ScopeInterface::SCOPE_STORES
             ),
@@ -153,7 +169,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     public function getLanguageForStore($storeId)
     {
         $lang = $this->getScopeConfigValue(
-            'storekeeper-general/general/storekeeper_shop_language',
+            'storekeeper_general/general/storekeeper_shop_language',
             $storeId,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES
         );

@@ -9,6 +9,8 @@ use Parsedown;
 
 class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    private CategoryRepository $categoryRepository;
+
     public function __construct(
         Auth $authHelper,
         CategoryFactory $categoryFactory,
@@ -27,15 +29,21 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
     }
 
-    public function listCategories(
+    public function getLanguageForStore($storeId)
+    {
+        return $this->authHelper->getLanguageForStore($storeId);
+    }
+
+    public function listTranslatedCategoryForHooks(
         $storeId,
+        $language,
         int $offset,
         int $limit,
         array $order,
         array $filters
     ) {
-        return $this->authHelper->getModule('ProductsModule', $storeId)->listCategories(
-            $storeId,
+        return $this->authHelper->getModule('ShopModule', $storeId)->listTranslatedCategoryForHooks(
+            $language,
             $offset,
             $limit,
             $order,
@@ -45,7 +53,10 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function updateById($storeId, $storeKeeperId)
     {
-        $results = $this->authHelper->getModule('ProductsModule', $storeId)->listCategories(
+        $language = $this->authHelper->getLanguageForStore($storeId);
+
+        $results = $this->authHelper->getModule('ShopModule', $storeId)->listTranslatedCategoryForHooks(
+            $language,
             0,
             1,
             array(
@@ -81,7 +92,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
-var_dump("storekeeper id = {$storekeeper_id}");
         $collection = $this->categoryCollectionFactory->create();
         $collection
             ->addAttributeToSelect('*')
@@ -119,15 +129,39 @@ var_dump("storekeeper id = {$storekeeper_id}");
         return $this->update($storeId, null, $result);
     }
 
-    public function update($storeId, $target = null, array $result)
+    public function onDeleted($storeId, $targetId)
     {
+        if ($target = $this->exists($storeId, [
+            'id' => $targetId
+        ])) {
+            $this->storeManager->setCurrentStore($storeId);
+            $target->setStoreId($storeId);
+            $target->setIsActive(false);
+            $this->categoryRepository->save($target);
+        } else {
+            $this->updateById($storeId, $targetId);
+        }
+    }
+
+    public function onCreated($storeId, $targetId)
+    {
+        if ($target = $this->exists($storeId, [
+            'id' => $targetId
+        ])) {
+            $this->storeManager->setCurrentStore($storeId);
+            $target->setStoreId($storeId);
+            $target->setIsActive(true);
+            $this->categoryRepository->save($target);
+        } else {
+            $this->updateById($storeId, $targetId);
+        }
+    }
+
+    public function update($storeId, $target = null, array $result = [])
+    {
+        $language = $this->authHelper->getLanguageForStore($storeId);
         $shouldUpdate = false;
-
         $storekeeper_id = $this->getResultStoreKeeperId($result);
-        $title = $result['title'];
-        $slug = $result['slug'];
-
-
         $update = !is_null($target);
         $create = !$update;
 
@@ -138,7 +172,30 @@ var_dump("storekeeper id = {$storekeeper_id}");
             $target = $this->categoryFactory->create();
         }
 
-        $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+        $title = $result['title'] ?? null;
+        $slug = $result['slug'] ?? null;
+        $description = '';
+
+        if (isset($result['description'])) {
+            $description = $result['description'];
+        }
+
+        if (isset($result['translation'])) {
+            if (isset($result['translation']['title'])) {
+                $title = $result['translation']['title'];
+            }
+            if (isset($result['translation']['description'])) {
+                $description = $result['translation']['description'];
+            }
+        }
+
+        if ($language == ' ') {
+            $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+            $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+        } else {
+            $target->setStoreId($storeId);
+            $this->storeManager->setCurrentStore($storeId);
+        }
 
         if ($target->getName() != $title) {
             $shouldUpdate = true;
@@ -146,7 +203,7 @@ var_dump("storekeeper id = {$storekeeper_id}");
         }
 
         $parseDown = new Parsedown();
-        $newDescription = $parseDown->text($result['description'] ?? null);
+        $newDescription = $parseDown->text($description);
 
         $newDescription = <<<HTML
 <style>
@@ -163,7 +220,6 @@ var_dump("storekeeper id = {$storekeeper_id}");
 <div data-content-type="row" data-appearance="contained" data-element="main">
   <div data-enable-parallax="0" data-parallax-speed="0.5" data-background-images="{}" data-background-type="image" data-video-loop="true" data-video-play-only-visible="true" data-video-lazy-load="true" data-video-fallback-src="" data-element="inner" data-pb-style="H1A4J0C">
     <div data-content-type="text" data-appearance="default" data-element="main">
-        <p>test</p>
       $newDescription
     </div>
   </div>
@@ -189,6 +245,7 @@ HTML;
         }
 
         $storeKeeperCategoryIdAttribute = $target->getCustomAttribute('storekeeper_category_id');
+
         if (
             empty($storeKeeperCategoryIdAttribute) ||
             $storeKeeperCategoryIdAttribute->getValue() != $storekeeper_id
@@ -235,14 +292,11 @@ HTML;
                 }
             }
 
-            if ($update) {
-                $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-            }
-
             $target = $this->categoryRepository->save($target);
 
             if ($shouldMove && $create) {
                 // categories can only be moved if they exist
+
                 if ($parent) {
                     $target->move($parent->getId(), null);
                     $target = $this->categoryRepository->save($target);
@@ -254,6 +308,12 @@ HTML;
             } else {
                 echo "  Created {$title}\n";
             }
+
+            if ($update && $language == ' ') {
+                $this->setCategoryToUseDefaultValues($target, $storeId);
+            }
+
+
         } else {
             echo "  Skipped {$title}, no changes\n";
         }
@@ -267,5 +327,24 @@ HTML;
     private function getResultParentId(array $result)
     {
         return $result['parent_id'] ?? false;
+    }
+
+    private function setCategoryToUseDefaultValues($target, $storeId)
+    {
+        $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+
+        echo "      Setting \"{$target->getName()}\" for store \"{$storeId}\" to use default values\n";
+
+        $target->setStoreId($storeId);
+
+        $productData = $target->getData();
+
+        $productData['name'] = null;
+        $productData['description'] = false;
+
+        $target->setData($productData);
+
+        $target->save();
+        $this->categoryRepository->save($target);
     }
 }
