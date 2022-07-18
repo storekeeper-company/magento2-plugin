@@ -25,8 +25,8 @@ class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
         ?Random $random,
         Auth $authHelper,
         \Magento\Framework\App\Request\Http $request,
-        $data = [],
-        \Magento\Backend\Model\Url $backendUrlManager
+        \Magento\Backend\Model\Url $backendUrlManager,
+        $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
