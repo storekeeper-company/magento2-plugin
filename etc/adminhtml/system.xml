@@ -36,12 +36,18 @@
                     <label>Store Information</label>
                 </field>
 
-                <field id="storekeeper_shop_id" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
-                    <label>Shop ID</label>
+                <field
+                    id="storekeeper_shop_id"
+                    type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\ShopId"
+                    translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Store ID</label>
                 </field>
 
-                <field id="storekeeper_shop_name" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
-                    <label>Shop Name</label>
+                <field
+                    id="storekeeper_store_name"
+                    type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\StoreName"
+                    translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Store Name</label>
                 </field>
 
                 <field id="storekeeper_shop_language" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
