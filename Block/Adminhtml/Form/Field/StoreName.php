@@ -36,14 +36,18 @@ class StoreName extends \Magento\Framework\Data\Form\Element\AbstractElement
 
     public function getElementHtml()
     {
-        $storeInformation = json_decode($this->scopeConfig->getValue(
+        $storeName = null;
+
+        if ($storekeeperStoreInformation = $this->scopeConfig->getValue(
             'storekeeper_general/general/storekeeper_store_information',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $this->request->getParam('store')
-        ), true);
+        )) {
+            if ($storekeeperStoreInformation = json_decode($storekeeperStoreInformation, true)) {
+                $storeName = $storekeeperStoreInformation['shop']['site']['title'] ?? null;
+            }
+        }
 
-        $title = $storeInformation['shop']['site']['title'];
-
-        return "<input type='text' class='input-text admin__control-text' value='{$title}' readonly />";
+        return "<input type='text' class='input-text admin__control-text' value='{$storeName}' readonly />";
     }
 }

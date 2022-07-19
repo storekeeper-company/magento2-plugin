@@ -36,13 +36,17 @@ class ShopId extends \Magento\Framework\Data\Form\Element\AbstractElement
 
     public function getElementHtml()
     {
-        $storeInformation = json_decode($this->scopeConfig->getValue(
+        $shopId = null;
+
+        if ($storekeeperStoreInformation = $this->scopeConfig->getValue(
             'storekeeper_general/general/storekeeper_store_information',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $this->request->getParam('store')
-        ), true);
-
-        $shopId = $storeInformation['shop']['id'];
+        )) {
+            if ($storekeeperStoreInformation = json_decode($storekeeperStoreInformation, true)) {
+                $shopId = $storekeeperStoreInformation['shop']['id'] ?? null;
+            }
+        }
 
         return "<input type='text' class='input-text admin__control-text' value='{$shopId}' readonly />";
     }
