@@ -83,7 +83,7 @@ class Webhook
                         return $this->response(['success' => true, 'message' => "Skipping categories: mode not allowed"]);
                     } else if ($entity == "Order" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
                         return $this->response(['success' => true, 'message' => "Skipping orders: mode not allowed"]);
-                    } else if ($eventName == "stock_change" && !$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                    } else if ($eventName == "stock_change" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                         return $this->response(['success' => true, 'message' => "Skipping stock changes: mode not allowed"]);
                     }
 
