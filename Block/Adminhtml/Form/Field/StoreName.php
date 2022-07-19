@@ -48,6 +48,7 @@ class StoreName extends \Magento\Framework\Data\Form\Element\AbstractElement
             }
         }
 
+        
         return "<input type='text' class='input-text admin__control-text' value='{$storeName}' readonly />";
     }
 }
