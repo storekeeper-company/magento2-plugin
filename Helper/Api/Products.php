@@ -25,6 +25,8 @@ use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\Store;
 use Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper\AttributeFilter;
 
+use Magento\Catalog\Api\Data\ProductLinkInterfaceFactory;
+
 class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const API_URL = 'https://api-creativectdev.storekeepercloud.com';
@@ -48,7 +50,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         DirectoryList $directoryList,
         File $file,
         SourceItemsSaveInterface $sourceItemsSave,
-        SourceItemInterfaceFactory $sourceItemFactory
+        SourceItemInterfaceFactory $sourceItemFactory,
+        ProductLinkInterfaceFactory $productLinkFactory
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -67,6 +70,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->file = $file;
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItemFactory = $sourceItemFactory;
+
+        $this->productLinkFactory = $productLinkFactory;
     }
 
     public function authCheck($storeId)
@@ -210,7 +215,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function updateUpsells($storeId, $target)
+    public function updateProductLinks($storeId, $target, $storeKeeperEndpoint = 'getUpsellShopProductIds', $linkType = 'upsell')
     {
         $storekeeperProductId = $target->getStorekeeperProductId();
         if (empty($storeKeeperProductId)) {
@@ -220,26 +225,150 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if (empty($storekeeperProductId)) {
             throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
         }
-        $upsellProductIds = $this->authHelper->getModule('ShopModule', $storeId)->getUpsellShopProductIds($storekeeperProductId);
+        $storekeeperLinkIds = $this->authHelper->getModule('ShopModule', $storeId)->$storeKeeperEndpoint($storekeeperProductId);
 
-        $upSellIds = [];
-        foreach ($upsellProductIds as $upsellProductId) {
-            if ($upsell = $this->exists($storeId, [ 'product_id' => $upsellProductId ])) {
-                $upSellIds[] = $upsell->getId();
+        $storekeeperLinkSkus = [];
+        foreach ($storekeeperLinkIds as $storekeeperLinkId) {
+            if ($linkedProduct = $this->exists($storeId, ['product_id' => $storekeeperLinkId])) {
+                $storekeeperLinkSkus[] = $linkedProduct->getSku();
             }
         }
 
-        // var_dump($upSellIds);
-        // die;
+        $filtered = array_filter($target->getProductLinks(), function ($link) use ($linkType) {
+            return $link->getLinkType() == $linkType;
+        });
 
-        // $x = $module
-        // var_dump(get_class($module), $x);
-        // die;
-        // file_put_contents("product.json", json_encode($result, JSON_PRETTY_PRINT));
-        // die;
-        // var_dump($upsellProductIds);
-        // die;
+        $currentLinkSkus = array_map(function ($link) {
+            return $link->getLinkedProductSku();
+        }, $filtered);
+
+        if ($storekeeperLinkSkus !== $currentLinkSkus) {
+
+            // filter all upsell
+            $linkData = array_filter($target->getProductLinks(), function ($link) use ($linkType) {
+                return $link->getLinkType() != $linkType;
+            });
+
+            foreach ($storekeeperLinkSkus as $index => $storekeeperLinkSku) {
+                $productLink = $this->productLinkFactory->create();
+                $linkData[] = $productLink->setSku($target->getSku())
+                    ->setLinkedProductSku($storekeeperLinkSku)
+                    ->setPosition($index)
+                    ->setLinkType($linkType);
+            }
+
+            $target->setProductLinks($linkData);
+
+
+            return true;
+        }
+
+        return false;
     }
+
+    // public function updateUpsells($storeId, $target)
+    // {
+    //     $storekeeperProductId = $target->getStorekeeperProductId();
+    //     if (empty($storeKeeperProductId)) {
+    //         $storekeeperProductId = $target->getData()['storekeeper_product_id'];
+    //     }
+
+    //     if (empty($storekeeperProductId)) {
+    //         throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
+    //     }
+    //     $upsellProductIds = $this->authHelper->getModule('ShopModule', $storeId)->getUpsellShopProductIds($storekeeperProductId);
+
+    //     $upsellSkus = [];
+    //     foreach ($upsellProductIds as $upsellProductId) {
+    //         if ($upsell = $this->exists($storeId, [ 'product_id' => $upsellProductId ])) {
+    //             $upsellSkus[] = $upsell->getSku();
+    //         }
+    //     }
+
+    //     $filtered = array_filter($target->getProductLinks(), function ($link) {
+    //         return $link->getLinkType() == "upsell";
+    //     });
+
+    //     $currentUpsellSkus = array_map(function ($link) {
+    //         return $link->getLinkedProductSku();
+    //     }, $filtered);
+
+    //     if ($upsellSkus !== $currentUpsellSkus) {
+
+    //         // filter all upsell
+    //         $linkData = array_filter($target->getProductLinks(), function ($link) {
+    //             return $link->getLinkType() != 'upsell';
+    //         });
+
+    //         foreach ($upsellSkus as $index => $upsellSku) {
+    //             $productLink = $this->productLinkFactory->create();
+    //             $linkData[] = $productLink->setSku($target->getSku())
+    //                 ->setLinkedProductSku($upsellSku)
+    //                 ->setPosition($index)
+    //                 ->setLinkType('upsell');
+    //         }
+
+    //         $target->setProductLinks($linkData);
+
+
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
+
+    // public function updateCrosssells($storeId, $target)
+    // {
+    //     $storekeeperProductId = $target->getStorekeeperProductId();
+    //     if (empty($storeKeeperProductId)) {
+    //         $storekeeperProductId = $target->getData()['storekeeper_product_id'];
+    //     }
+
+    //     if (empty($storekeeperProductId)) {
+    //         throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
+    //     }
+    //     $crosssellProductIds = $this->authHelper->getModule('ShopModule', $storeId)->getCrossSellShopProductIds($storekeeperProductId);
+
+    //     $crossellSkus = [];
+    //     foreach ($crosssellProductIds as $crosssellProductId) {
+    //         if ($crossell = $this->exists($storeId, ['product_id' => $crosssellProductId])) {
+    //             $crossellSkus[] = $crossell->getSku();
+    //         }
+    //     }
+
+
+    //     $filtered = array_filter($target->getProductLinks(), function ($link) {
+    //         return $link->getLinkType() == "crosssell";
+    //     });
+
+    //     $currentCrosssellSkus = array_map(function ($link) {
+    //         return $link->getLinkedProductSku();
+    //     }, $filtered);
+
+
+    //     if ($crossellSkus !== $currentCrosssellSkus) {
+
+    //         // filter all related
+    //         $linkData = array_filter($target->getProductLinks(), function($link) {
+    //             return $link->getLinkType() != 'crosssell';
+    //         });
+
+    //         foreach ($crossellSkus as $index => $upsellSku) {
+    //             $productLink = $this->productLinkFactory->create();
+    //             $linkData[] = $productLink->setSku($target->getSku())
+    //                 ->setLinkedProductSku($upsellSku)
+    //                 ->setPosition($index)
+    //                 ->setLinkType('crosssell');
+    //         }
+
+    //         $target->setProductLinks($linkData);
+
+
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
 
     public function exists($storeId, array $result)
     {
@@ -415,7 +544,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setStorekeeperProductId($storekeeper_id);
             }
 
-            $this->updateUpsells($storeId, $target);
 
             $seo_title = $flat_product['seo_title'] ?? null;
             if ($target->getMetaTitle() != $seo_title) {
@@ -503,6 +631,16 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 }
             }
 
+            if ($this->updateProductLinks($storeId, $target, 'getUpsellShopProductIds', 'upsell')) {
+                $shouldUpdate = true;
+                echo "  Should update upsells\n";
+            }
+
+            if ($this->updateProductLinks($storeId, $target, 'getCrossSellShopProductIds', 'crosssell')) {
+                $shouldUpdate = true;
+                echo "  Should update crosssells\n";
+            }
+
             if ($shouldUpdate) {
                 $this->productRepository->save($target);
 
@@ -549,6 +687,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $shouldUpdateStock = true;
                 $stockItem->setQty($product_stock_value);
             }
+
 
             if ($shouldUpdateStock) {
                 $stockItem->save();
