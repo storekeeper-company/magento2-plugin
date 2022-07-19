@@ -210,6 +210,37 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
+    public function updateUpsells($storeId, $target)
+    {
+        $storekeeperProductId = $target->getStorekeeperProductId();
+        if (empty($storeKeeperProductId)) {
+            $storekeeperProductId = $target->getData()['storekeeper_product_id'];
+        }
+
+        if (empty($storekeeperProductId)) {
+            throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
+        }
+        $upsellProductIds = $this->authHelper->getModule('ShopModule', $storeId)->getUpsellShopProductIds($storekeeperProductId);
+
+        $upSellIds = [];
+        foreach ($upsellProductIds as $upsellProductId) {
+            if ($upsell = $this->exists($storeId, [ 'product_id' => $upsellProductId ])) {
+                $upSellIds[] = $upsell->getId();
+            }
+        }
+
+        // var_dump($upSellIds);
+        // die;
+
+        // $x = $module
+        // var_dump(get_class($module), $x);
+        // die;
+        // file_put_contents("product.json", json_encode($result, JSON_PRETTY_PRINT));
+        // die;
+        // var_dump($upsellProductIds);
+        // die;
+    }
+
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
@@ -383,6 +414,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             if ($target->getStoreKeeperProductId() != $storekeeper_id) {
                 $target->setStorekeeperProductId($storekeeper_id);
             }
+
+            $this->updateUpsells($storeId, $target);
 
             $seo_title = $flat_product['seo_title'] ?? null;
             if ($target->getMetaTitle() != $seo_title) {
