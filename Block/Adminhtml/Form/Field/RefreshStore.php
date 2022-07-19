@@ -37,6 +37,6 @@ class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
     public function getElementHtml()
     {
         $url = $this->backendUrlManager->getUrl('storekeeper/index/index', ['storeId' =>$this->request->getParam('store')]);
-        return "<a href='{$url}'>Refresh store information</a>";
+        return "<a href='{$url}'>" . __("Refresh store information") . "</a>";
     }
 }

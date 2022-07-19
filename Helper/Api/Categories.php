@@ -73,20 +73,17 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             ]
         );
 
-        try {
-            if (isset($results['data']) && count($results['data']) > 0) {
-                $result = $results['data'][0];
-                if ($category = $this->exists($storeId, $result)) {
-                    $this->update($storeId, $category, $result);
-                } else {
-                    $this->create($storeId, $result);
-                }
+        if (isset($results['data']) && count($results['data']) > 0) {
+            $result = $results['data'][0];
+            if ($category = $this->exists($storeId, $result)) {
+                $this->update($storeId, $category, $result);
             } else {
-                echo 'does not eixst';
+                $this->create($storeId, $result);
             }
-        } catch (\Exception $e) {
-            var_dump($e->getMessage());
+        } else {
+            echo 'does not eixst';
         }
+
     }
 
     public function exists($storeId, array $result)
@@ -102,12 +99,12 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             return $collection->getFirstItem();
         }
 
+
         return false;
     }
 
     public function parentExists($storeId, array $result)
     {
-
         if ($storekeeper_parent_id = $this->getResultParentId($result)) {
 
             $collection = $this->categoryCollectionFactory->create();
@@ -164,7 +161,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         $storekeeper_id = $this->getResultStoreKeeperId($result);
         $update = !is_null($target);
         $create = !$update;
-
         if ($update) {
             $target = $this->categoryFactory->create()->load($target->getId());
         } else {
@@ -189,13 +185,13 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        if ($language == ' ') {
-            $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-            $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-        } else {
+        // if ($language == ' ') {
+        //     $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+        //     $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+        // } else {
             $target->setStoreId($storeId);
             $this->storeManager->setCurrentStore($storeId);
-        }
+        // }
 
         if ($target->getName() != $title) {
             $shouldUpdate = true;

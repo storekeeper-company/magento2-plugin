@@ -119,8 +119,8 @@ class Products extends Command
             echo "\nDone!\n";
 
         } catch(\Exception|\Error $e) {
-            $output->writeln('<error>' . $e->getMessage() . '</error>');
-            $this->logger->error($e->getMessage());
+            $output->writeln('<error>' .$e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage() . '</error>');
+            $this->logger->error($e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage());
         }
     }
 }

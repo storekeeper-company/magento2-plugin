@@ -55,7 +55,7 @@
                 </field>
 
                 <field id="storekeeper_sync_mode" type="select" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
-                    <label>Sync mode</label>
+                    <label>Sync Mode</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\SyncModes</source_model>
                 </field>
 

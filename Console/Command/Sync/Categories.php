@@ -85,6 +85,7 @@ class Categories extends Command
             echo "  \nWorking...\n";
 
             while (is_null($total) || $current < $total) {
+
                 $response = $this->categoriesHelper->listTranslatedCategoryForHooks(
                     $storeId,
                     $language,
@@ -119,13 +120,16 @@ class Categories extends Command
                         }
                     } catch (\Exception $e) {
                         $this->logger->error($e->getMessage());
-                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                        $output->writeln('<error>' . $e->getFile() . ' at ' . $e->getLine() . ' ' . $e->getMessage() . '</error>');
+                        foreach ($e->getTrace() as $trace) {
+                            $output->writeln('<error>   ' . ($trace['file'] ?? '') . ' at ' . ($trace['line'] ?? '') . '</error>');
+                        }
                     }
                 }
             }
         } catch (\Exception|\Error $e) {
             $this->logger->error($e->getMessage());
-            $output->writeln('<error>' . $e->getMessage() . '</error>');
+            $output->writeln('<error>' . $e->getFile() . ' at ' . $e->getLine() . ' ' . $e->getMessage() . '</error>');
         }
     }
 }
