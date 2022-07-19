@@ -7,6 +7,7 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
+use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Customers as CustomersHelper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,6 +45,7 @@ class Customers extends Command
         CustomerRepositoryInterface $customerRepository,
         CustomersHelper $customersHelper,
         Config $configHelper,
+        LoggerInterface $logger,
         string $name = null
     ) {
         parent::__construct($name);
@@ -53,6 +55,7 @@ class Customers extends Command
         $this->customerRepository = $customerRepository;
         $this->customersHelper = $customersHelper;
         $this->configHelper = $configHelper;
+        $this->logger = $logger;
     }
 
     protected function configure()
@@ -73,37 +76,43 @@ class Customers extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->state->setAreaCode(Area::AREA_ADMINHTML);
+        try {
+            $this->state->setAreaCode(Area::AREA_ADMINHTML);
 
-        $storeId = $input->getOption(self::STORES);
+            $storeId = $input->getOption(self::STORES);
 
-        if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
-            echo "  Skipping customer sync: mode not allowed\n";
-            return;
-        }
-
-        $output->writeln('<info>Start customer sync</info>');
-        $customers = $this->getCustomers($storeId);
-        foreach ($customers->getItems() as $customer) {
-            $output->writeln('<info>Sync customer with id: ' . $customer->getId() .  '</info>');
-            $customer = $this->customerRepository->getById($customer->getId());
-            $customerEmail = $customer->getEmail();
-            $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($customerEmail, $storeId);
-
-            if (!$relationDataId && $customer->getDefaultBilling()) {
-                $relationDataId = $this->customersHelper->createStorekeeperCustomer($customer);
+            if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+                echo "  Skipping customer sync: mode not allowed\n";
+                return;
             }
 
-            try {
-                $extensionAttributes = $customer->getExtensionAttributes();
-                $extensionAttributes->setRelationDataId($relationDataId);
-                $customer->setExtensionAttributes($extensionAttributes);
-                $this->customerRepository->save($customer);
-            } catch (\Exception $e) {
-                $output->writeln('<error>' . $e->getMessage() . '</error>');
+            $output->writeln('<info>Start customer sync</info>');
+            $customers = $this->getCustomers($storeId);
+            foreach ($customers->getItems() as $customer) {
+                try {
+                    $output->writeln('<info>Sync customer with id: ' . $customer->getId() .  '</info>');
+                    $customer = $this->customerRepository->getById($customer->getId());
+                    $customerEmail = $customer->getEmail();
+                    $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($customerEmail, $storeId);
+
+                    if (!$relationDataId && $customer->getDefaultBilling()) {
+                        $relationDataId = $this->customersHelper->createStorekeeperCustomer($customer);
+                    }
+
+                    $extensionAttributes = $customer->getExtensionAttributes();
+                    $extensionAttributes->setRelationDataId($relationDataId);
+                    $customer->setExtensionAttributes($extensionAttributes);
+                    $this->customerRepository->save($customer);
+                } catch (\Exception|\Error $e) {
+                    $output->writeln('<error>' . $e->getMessage() . '</error>');
+                    $this->logger->error($e->getMessage());
+                }
             }
+            $output->writeln('<info>Finished customer sync</info>');
+        } catch (\Exception|\Error $e) {
+            $output->writeln('<error>' . $e->getMessage() . '</error>');
+            $this->logger->error($e->getMessage());
         }
-        $output->writeln('<info>Finished customer sync</info>');
     }
 
     private function getCustomers($storeId)

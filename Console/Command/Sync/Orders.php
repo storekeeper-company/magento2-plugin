@@ -10,6 +10,7 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Convert\Order as ConvertOrder;
 use Magento\Shipping\Model\ShipmentNotifier;
+use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
 use Symfony\Component\Console\Command\Command;
@@ -35,6 +36,7 @@ class Orders extends Command
         State $state,
         OrdersHelper $ordersHelper,
         Config $configHelper,
+        LoggerInterface $logger,
         string $name = null
     )
     {
@@ -43,6 +45,7 @@ class Orders extends Command
         $this->state = $state;
         $this->ordersHelper = $ordersHelper;
         $this->configHelper = $configHelper;
+        $this->logger = $logger;
     }
 
     /**
@@ -73,38 +76,47 @@ class Orders extends Command
     protected function execute(
         InputInterface  $input,
         OutputInterface $output
-    )
-    {
-        $this->state->setAreaCode(Area::AREA_ADMINHTML);
+    ) {
+        try {
+            $this->state->setAreaCode(Area::AREA_ADMINHTML);
 
-        $storeId = $input->getOption(self::STORES);
+            $storeId = $input->getOption(self::STORES);
 
-        if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
-            echo "  Skipping order sync: mode not allowed\n";
-            return;
-        }
-
-        $output->writeln('<info>Start order sync</info>');
-        $page = 1;
-        $pageSize = 3;
-        $current = 0;
-        $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
-
-        $output->writeln('<info>Number of Orders ' . $orders->getTotalCount() . '</info>');
-
-        while ($current < $orders->getTotalCount()) {
-            foreach ($orders as $order) {
-                if ($storeKeeperId = $this->ordersHelper->exists($order)) {
-                    $this->ordersHelper->update($order, $storeKeeperId);
-                } else {
-                    $this->ordersHelper->onCreate($order);
-                }
+            if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+                echo "  Skipping order sync: mode not allowed\n";
+                return;
             }
-            $current += count($orders);
-            $page++;
-            $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
-        }
 
-        $output->writeln('<info>Finish order sync</info>');
+            $output->writeln('<info>Start order sync</info>');
+            $page = 1;
+            $pageSize = 3;
+            $current = 0;
+            $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
+
+            $output->writeln('<info>Number of Orders ' . $orders->getTotalCount() . '</info>');
+
+            while ($current < $orders->getTotalCount()) {
+                foreach ($orders as $order) {
+                    try {
+                        if ($storeKeeperId = $this->ordersHelper->exists($order)) {
+                            $this->ordersHelper->update($order, $storeKeeperId);
+                        } else {
+                            $this->ordersHelper->onCreate($order);
+                        }
+                    } catch(\Exception|\Error $e) {
+                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                        $this->logger->error($e->getMessage());
+                    }
+                }
+                $current += count($orders);
+                $page++;
+                $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
+            }
+
+            $output->writeln('<info>Finish order sync</info>');
+        } catch (\Exception|\Error $e) {
+            $output->writeln('<error>' . $e->getMessage() . '</error>');
+            $this->logger->error($e->getMessage());
+        }
     }
 }

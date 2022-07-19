@@ -3,6 +3,42 @@
 
     <preference for="StoreKeeper\StoreKeeper\Api\Webhook\WebhookInterface" type="StoreKeeper\StoreKeeper\Api\Webhook\Webhook"/>
 
+    <type name="StoreKeeper\StoreKeeper\Api\Webhook\Webhook">
+        <arguments>
+            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="StoreKeeper\StoreKeeper\Model\Consumer">
+        <arguments>
+            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="StoreKeeper\StoreKeeper\Console\Command\Sync\Categories">
+        <arguments>
+            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="StoreKeeper\StoreKeeper\Console\Command\Sync\Customers">
+        <arguments>
+            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="StoreKeeper\StoreKeeper\Console\Command\Sync\Orders">
+        <arguments>
+            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="StoreKeeper\StoreKeeper\Console\Command\Sync\Products">
+        <arguments>
+            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Framework\Console\CommandListInterface">
         <arguments>
             <argument name="commands" xsi:type="array">
@@ -13,4 +49,19 @@
             </argument>
         </arguments>
     </type>
+
+   <type name="StoreKeeper\StoreKeeper\Logger\Handler">
+        <arguments>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <virtualType name="StoreKeeper\StoreKeeper\Logger\Logger" type="Monolog\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">StoreKeeper_StoreKeeper_Logger</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
 </config>
