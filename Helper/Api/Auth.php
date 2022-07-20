@@ -47,7 +47,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             $storeId
         );
 
-        file_put_contents("webhook.log", "Added auth data for website {$storeId}\n" . gettype($authData['guest_auth']) . "\n", FILE_APPEND);
+        file_put_contents("webhook.log", "Added auth data for website {$storeId}\n" . json_encode($authData['sync_auth'], JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
 
     }
 
