@@ -81,7 +81,7 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->create($storeId, $result);
             }
         } else {
-            echo 'does not eixst';
+            throw new \Exception("Category {$storeKeeperId} does not exist in StoreKeeper");
         }
 
     }
@@ -334,10 +334,9 @@ HTML;
         $target->setStoreId($storeId);
 
         $productData = $target->getData();
-
+        
         $productData['name'] = null;
         $productData['description'] = false;
-
         $target->setData($productData);
 
         $target->save();

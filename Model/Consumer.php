@@ -49,7 +49,6 @@ class Consumer
     {
         try {
 
-            // echo "Working!\n";
 
             $data = json_decode($request, true);
             $storeId = $data['storeId'] ?? null;
@@ -59,6 +58,8 @@ class Consumer
             $value = $data['value'];
             $type = $data['type'];
 
+            echo "[{$type}] {$entity}({$value}): Starting... ";
+
             if (is_null($storeId)) {
                 throw new \Exception("Missing store ID");
             }
@@ -66,7 +67,6 @@ class Consumer
             if ($type == "updated") {
 
                 if ($entity == "ShopProduct") {
-
                     $this->productsHelper->updateById($storeId, $value);
                     $this->productsHelper->updateStock($storeId, $value);
 
@@ -75,6 +75,8 @@ class Consumer
 
                 } else if ($entity == "Order") {
                     $this->ordersHelper->updateById($storeId, $value);
+                } else {
+                    echo "  Unknown entity: {$entity}\n";
                 }
 
             } else if ($type == "deactivated") {
@@ -83,6 +85,8 @@ class Consumer
                     $this->productsHelper->onDeactivate($storeId, $value);
                 } else if ($entity == 'Category') {
                     $this->categoriesHelper->onDeactivate($storeId, $value);
+                } else {
+                    echo "  Unknown entity: {$entity}\n";
                 }
 
             } else if ($type == "activated") {
@@ -91,18 +95,26 @@ class Consumer
                     $this->productsHelper->activate($storeId, $value);
                 } else if ($entity == 'Category') {
                     $this->categoriesHelper->activate($storeId, $value);
+                } else {
+                    echo "  Unknown entity: {$entity}\n";
                 }
 
             } else if ($type == "deleted") {
 
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onDeleted($storeId, $value);
+                } else {
+                    echo "  Unknown entity: {$entity}\n";
                 }
 
             } else if ($type == "created") {
 
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onCreated($storeId, $value);
+                } else if ($entity == "ShopProduct") {
+                    $this->productsHelper->updateById($storeId, $value);
+                } else {
+                    echo "  Unknown entity: {$entity}\n";
                 }
 
             } else if ($type == 'stock_change') {
@@ -111,8 +123,11 @@ class Consumer
 
             }
 
+            echo "done!\n";
+
         } catch (\Exception|\Error $e) {
-            $this->logger->error($e->getMessage());
+            echo "{$e->getMessage()}\n";
+            $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
         }
     }
 }

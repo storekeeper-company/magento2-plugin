@@ -165,7 +165,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 echo "Can't update product because it doesn't exist\n";
             }
         } else {
-            echo "does not exist in storekeeper\n";
+            throw new \Exception("Product {$storeKeeperId} does not exist in StoreKeeper");
         }
     }
 
@@ -211,7 +211,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->onCreate($storeId, $result);
             }
         } else {
-            echo "does not exist in storekeeper\n";
+            throw new \Exception("Product {$storeKeeperId} does not exist in StoreKeeper");
         }
     }
 
