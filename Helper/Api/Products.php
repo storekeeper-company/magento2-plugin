@@ -228,6 +228,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $storekeeperLinkIds = $this->authHelper->getModule('ShopModule', $storeId)->$storeKeeperEndpoint($storekeeperProductId);
 
         $storekeeperLinkSkus = [];
+        
         foreach ($storekeeperLinkIds as $storekeeperLinkId) {
             if ($linkedProduct = $this->exists($storeId, ['product_id' => $storekeeperLinkId])) {
                 $storekeeperLinkSkus[] = $linkedProduct->getSku();
@@ -241,6 +242,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $currentLinkSkus = array_map(function ($link) {
             return $link->getLinkedProductSku();
         }, $filtered);
+
+        ksort($storekeeperLinkSkus);
+        ksort($currentLinkSkus);
 
         if ($storekeeperLinkSkus !== $currentLinkSkus) {
 
