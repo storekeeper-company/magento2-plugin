@@ -75,18 +75,26 @@ class Webhook
                 }, $payload['events']);
                 $eventNames = array_unique($eventNames);
 
+                $messages = [];
+                $success = false;
+
                 foreach ($eventNames as $eventName) {
 
-                    if ($entity == "ShopProduct" && !$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                        return $this->response(['success' => true, 'message' => "Skipping products: mode not allowed"]);
+                    if ($eventName == "stock_change" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        $messages[] = "Skipping stock changes: mode not allowed";
+                        continue;
+                    } else if ($entity == "ShopProduct" && !$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        $messages[] = "Skipping products: mode not allowed";
+                        continue;
                     } else if ($entity == "Category" && !$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                        return $this->response(['success' => true, 'message' => "Skipping categories: mode not allowed"]);
+                        $messages[] = "Skipping categories: mode not allowed";
+                        continue;
                     } else if ($entity == "Order" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
-                        return $this->response(['success' => true, 'message' => "Skipping orders: mode not allowed"]);
-                    } else if ($eventName == "stock_change" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                        return $this->response(['success' => true, 'message' => "Skipping stock changes: mode not allowed"]);
+                        $messages[] = "Skipping orders: mode not allowed";
+                        continue;
                     }
 
+                    $success = true;
 
                     $n = [
                         "type" => $eventName,
@@ -99,6 +107,10 @@ class Webhook
                     file_put_contents("queue.log", $this->json->serialize($n) . "\n", FILE_APPEND);
                     $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
                 }
+
+                $response['success'] = $success;
+                $response['message'] = implode(', ', $messages);
+
             } else if ($action == "deactivated") {
                 preg_match("/(\w+)\::(\w+)\(([a-z]+)\=([0-9]+)\)/", $payload['backref'], $matches);
 
