@@ -13,12 +13,14 @@ class Index extends \Magento\Backend\App\Action implements \Magento\Framework\Ap
         \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\App\Request\Http $request,
         Auth $authHelper,
+        \Magento\Framework\Message\ManagerInterface $messageManager,
         \Magento\Backend\Model\Url $url
     ) {
         parent::__construct($context);
 
         $this->request = $request;
         $this->authHelper = $authHelper;
+        $this->messageManager = $messageManager;
         $this->url = $url;
     }
 
@@ -35,10 +37,13 @@ class Index extends \Magento\Backend\App\Action implements \Magento\Framework\Ap
     public function execute()
     {
         $storeId = $this->request->getParam('storeId');
+        try {
+            $storeInformation = $this->authHelper->getStoreInformation($storeId);
+            $this->authHelper->setStoreInformation($storeId, $storeInformation);
+        } catch (\Exception $e) {
+            $this->messageManager->addError(__($e->getMessage()));
+        }
 
-        $storeInformation = $this->authHelper->getStoreInformation($storeId);
-
-        $this->authHelper->setStoreInformation($storeId, $storeInformation);
 
         return $this->_redirect('adminhtml/system_config/edit/section/storekeeper_general', ['store' => $storeId]);
     }
