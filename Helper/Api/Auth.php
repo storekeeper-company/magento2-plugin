@@ -68,7 +68,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             $storeId
         );
         $this->cache->cleanType('config');
-        true;
+        return true;
     }
 
     public function authCheck($storeId)
