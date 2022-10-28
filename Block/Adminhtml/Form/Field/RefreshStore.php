@@ -15,7 +15,7 @@ use Magento\Framework\Data\Form\Element\CollectionFactory;
 
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class AuthKey extends \Magento\Framework\Data\Form\Element\AbstractElement
+class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
 {
     public function __construct(
         Factory $factoryElement,
@@ -25,19 +25,18 @@ class AuthKey extends \Magento\Framework\Data\Form\Element\AbstractElement
         ?Random $random,
         Auth $authHelper,
         \Magento\Framework\App\Request\Http $request,
+        \Magento\Backend\Model\Url $backendUrlManager,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
         $this->request = $request;
+        $this->backendUrlManager = $backendUrlManager;
     }
 
     public function getElementHtml()
     {
-        return "
-            <span style='word-break: break-all'>" . $this->authHelper->authCheck($this->request->getParam('store')) . "</span>
-        ";
+        $url = $this->backendUrlManager->getUrl('storekeeper/index/index', ['storeId' =>$this->request->getParam('store')]);
+        return "<a href='{$url}'>" . __("Refresh store information") . "</a>";
     }
-
-    
 }

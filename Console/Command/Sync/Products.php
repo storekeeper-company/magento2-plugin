@@ -2,12 +2,14 @@
 
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
+use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\ApiWrapper;
 use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class SomeCommand
@@ -21,13 +23,18 @@ class Products extends Command
     public function __construct(
         \Magento\Framework\App\State $state,
         \StoreKeeper\StoreKeeper\Helper\Api\Products $productsHelper,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        Config $configHelper,
+        LoggerInterface $logger,
+        string $name = null
     ) {
-        parent::__construct();
+        parent::__construct($name);
 
         $this->state = $state;
         $this->productsHelper = $productsHelper;
         $this->storeManager = $storeManager;
+        $this->configHelper = $configHelper;
+        $this->logger = $logger;
     }
 
     /**
@@ -61,43 +68,59 @@ class Products extends Command
         InputInterface $input,
         OutputInterface $output
     ) {
-        $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
+        try {
+            $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
-        $storeId = 1;
-        $language = $this->productsHelper->getLanguageForStore($storeId);
+            $storeId = $input->getOption(self::STORES);
 
-        $current = 0;
-        $total = null;
+            if (!$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                echo "  Skipping product sync: mode not allowed\n";
+                return;
+            }
 
-        while (is_null($total) || $current < $total) {
+            $language = $this->productsHelper->getLanguageForStore($storeId);
 
-            $response = $this->productsHelper->naturalSearchShopFlatProductForHooks(
-                $storeId,
-                ' ',
-                $language,
-                $current,
-                5,
-                [],
-                []
-            );
+            $current = 0;
+            $total = null;
 
-            echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";
+            while (is_null($total) || $current < $total) {
 
-            $total = $response['total'];
-            $current += $response['count'];
+                $response = $this->productsHelper->naturalSearchShopFlatProductForHooks(
+                    $storeId,
+                    ' ',
+                    $language,
+                    $current,
+                    5,
+                    [],
+                    []
+                );
 
-            $results = $response['data'];
+                echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";
 
-            foreach ($results as $result) {
+                $total = $response['total'];
+                $current += $response['count'];
 
-                if ($product = $this->productsHelper->exists($storeId, $result)) {
-                    $product = $this->productsHelper->update($storeId, $product, $result);
-                } else {
-                    $product = $this->productsHelper->create($storeId, $result);
+                $results = $response['data'];
+
+                foreach ($results as $result) {
+                    try {
+                        if ($product = $this->productsHelper->exists($storeId, $result)) {
+                            $product = $this->productsHelper->update($storeId, $product, $result);
+                        } else {
+                            $product = $this->productsHelper->onCreate($storeId, $result);
+                        }
+                    } catch (\Exception|\Error $e) {
+                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                        $this->logger->error($e->getMessage());
+                    }
                 }
             }
-        }
 
-        echo "\nDone!\n";
+            echo "\nDone!\n";
+
+        } catch(\Exception|\Error $e) {
+            $output->writeln('<error>' .$e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage() . '</error>');
+            $this->logger->error($e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage());
+        }
     }
 }

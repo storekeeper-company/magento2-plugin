@@ -9,6 +9,8 @@ use Parsedown;
 
 class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    private CategoryRepository $categoryRepository;
+
     public function __construct(
         Auth $authHelper,
         CategoryFactory $categoryFactory,
@@ -71,26 +73,22 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             ]
         );
 
-        try {
-            if (isset($results['data']) && count($results['data']) > 0) {
-                $result = $results['data'][0];
-                if ($category = $this->exists($storeId, $result)) {
-                    $this->update($storeId, $category, $result);
-                } else {
-                    $this->create($storeId, $result);
-                }
+        if (isset($results['data']) && count($results['data']) > 0) {
+            $result = $results['data'][0];
+            if ($category = $this->exists($storeId, $result)) {
+                $this->update($storeId, $category, $result);
             } else {
-                echo 'does not eixst';
+                $this->create($storeId, $result);
             }
-        } catch (\Exception $e) {
-            var_dump($e->getMessage());
+        } else {
+            throw new \Exception("Category {$storeKeeperId} does not exist in StoreKeeper");
         }
+
     }
 
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
-
         $collection = $this->categoryCollectionFactory->create();
         $collection
             ->addAttributeToSelect('*')
@@ -101,12 +99,12 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             return $collection->getFirstItem();
         }
 
+
         return false;
     }
 
     public function parentExists($storeId, array $result)
     {
-
         if ($storekeeper_parent_id = $this->getResultParentId($result)) {
 
             $collection = $this->categoryCollectionFactory->create();
@@ -156,17 +154,13 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function update($storeId, $target = null, array $result)
+    public function update($storeId, $target = null, array $result = [])
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
-
         $shouldUpdate = false;
-
-        $storekeeper_id = $this->getResultStoreKeeperId($result);        
-
+        $storekeeper_id = $this->getResultStoreKeeperId($result);
         $update = !is_null($target);
         $create = !$update;
-
         if ($update) {
             $target = $this->categoryFactory->create()->load($target->getId());
         } else {
@@ -176,7 +170,11 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 
         $title = $result['title'] ?? null;
         $slug = $result['slug'] ?? null;
-        $description = $result['description'] ?? null;
+        $description = '';
+
+        if (isset($result['description'])) {
+            $description = $result['description'];
+        }
 
         if (isset($result['translation'])) {
             if (isset($result['translation']['title'])) {
@@ -186,14 +184,14 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
                 $description = $result['translation']['description'];
             }
         }
-        
-        if ($language == ' ') {
-            $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-            $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-        } else {
+
+        // if ($language == ' ') {
+        //     $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+        //     $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+        // } else {
             $target->setStoreId($storeId);
             $this->storeManager->setCurrentStore($storeId);
-        }
+        // }
 
         if ($target->getName() != $title) {
             $shouldUpdate = true;
@@ -201,7 +199,7 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $parseDown = new Parsedown();
-        $newDescription = $parseDown->text($description ?? null);
+        $newDescription = $parseDown->text($description);
 
         $newDescription = <<<HTML
 <style>
@@ -218,7 +216,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
 <div data-content-type="row" data-appearance="contained" data-element="main">
   <div data-enable-parallax="0" data-parallax-speed="0.5" data-background-images="{}" data-background-type="image" data-video-loop="true" data-video-play-only-visible="true" data-video-lazy-load="true" data-video-fallback-src="" data-element="inner" data-pb-style="H1A4J0C">
     <div data-content-type="text" data-appearance="default" data-element="main">
-        <p>test</p>
       $newDescription
     </div>
   </div>
@@ -244,12 +241,13 @@ HTML;
         }
 
         $storeKeeperCategoryIdAttribute = $target->getCustomAttribute('storekeeper_category_id');
+
         if (
             empty($storeKeeperCategoryIdAttribute) ||
             $storeKeeperCategoryIdAttribute->getValue() != $storekeeper_id
         ) {
             $shouldUpdate = true;
-            $target->setStoreKeeperCategoryId($storekeeper_id);
+            $target->setCustomAttribute('storekeeper_category_id', $storekeeper_id);
         }
 
         $shouldMove = false;
@@ -289,10 +287,12 @@ HTML;
                     $target->move($parent->getId(), null);
                 }
             }
+
             $target = $this->categoryRepository->save($target);
 
             if ($shouldMove && $create) {
                 // categories can only be moved if they exist
+
                 if ($parent) {
                     $target->move($parent->getId(), null);
                     $target = $this->categoryRepository->save($target);
@@ -334,10 +334,9 @@ HTML;
         $target->setStoreId($storeId);
 
         $productData = $target->getData();
-
+        
         $productData['name'] = null;
         $productData['description'] = false;
-
         $target->setData($productData);
 
         $target->save();
