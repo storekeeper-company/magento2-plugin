@@ -70,7 +70,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->file = $file;
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItemFactory = $sourceItemFactory;
-
         $this->productLinkFactory = $productLinkFactory;
     }
 
@@ -548,7 +547,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setStorekeeperProductId($storekeeper_id);
             }
 
-
             $seo_title = $flat_product['seo_title'] ?? null;
             if ($target->getMetaTitle() != $seo_title) {
                 $shouldUpdate = true;
@@ -691,7 +689,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $shouldUpdateStock = true;
                 $stockItem->setQty($product_stock_value);
             }
-
 
             if ($shouldUpdateStock) {
                 $stockItem->save();
