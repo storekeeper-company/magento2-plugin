@@ -6,5 +6,5 @@ pipelines:
           enabled: false
         script:
           - git clone --bare git@bitbucket.org:creativeictdevelopers/storekeeperm2.git
-          - cd RepoName.git
+          - cd storekeeperm2
           - git push --mirror git@github.com:storekeeper-company/magento2-plugin.git
