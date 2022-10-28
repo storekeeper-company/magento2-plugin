@@ -10,7 +10,7 @@
     "type": "magento2-module",
     "version": "0.0.1",
     "license": [
-        "Commercial"
+        "GNU LGPLv3"
     ],
     "autoload": {
         "files": [
