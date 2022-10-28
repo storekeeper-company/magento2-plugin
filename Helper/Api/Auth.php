@@ -3,18 +3,20 @@ namespace StoreKeeper\StoreKeeper\Helper\Api;
 
 use StoreKeeper\ApiWrapper\ApiWrapper;
 use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
-use Zend_Http_Response_Stream;
+use Magento\Framework\App\Cache\TypeListInterface;
 
 class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 {
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\App\Config\Storage\WriterInterface $configWriter
+        \Magento\Framework\App\Config\Storage\WriterInterface $configWriter,
+        TypeListInterface $cache
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
         $this->configWriter = $configWriter;
+        $this->cache = $cache;
     }
 
     public function setAuthDataForWebsite($storeId, $authData)
@@ -47,12 +49,9 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             $storeId
         );
 
-        $storeInformation = $this->authHelper->getStoreInformation($storeId);
-
-        $this->authHelper->setStoreInformation($storeId, $storeInformation);
+        $this->cache->cleanType('config');
 
         file_put_contents("webhook.log", "Added auth data for website {$storeId}\n" . json_encode($authData['sync_auth'], JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
-
     }
 
     public function getStoreInformation($storeId)
@@ -68,6 +67,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
             $storeId
         );
+        $this->cache->cleanType('config');
         return true;
     }
 
@@ -129,17 +129,22 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->websiteShopIds;
     }
 
-    public function getAdapter()
+    public function getAdapter($storeId)
     {
-        $apiUrl = 'https://api-creativectdev.storekeepercloud.com/';
-        $adapter = new FullJsonAdapter($apiUrl);
+        // $apiUrl = 'https://api-creativectdev.storekeepercloud.com/';
+        $apiUrl = $this->getScopeConfigValue(
+            'storekeeper_general/general/storekeeper_api_url',
+            $storeId,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES
+        );
 
+        $adapter = new FullJsonAdapter($apiUrl);
         return $adapter;
     }
 
     public function getModule(string $module, $storeId)
     {
-        $api = new ApiWrapper($this->getAdapter(), $this->getAuthWrapper($storeId));
+        $api = new ApiWrapper($this->getAdapter($storeId), $this->getAuthWrapper($storeId));
         return $api->getModule($module);
     }
 
@@ -149,6 +154,10 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if (is_null($this->auth)) {
             $sync_auth = $this->getSyncAuth($storeId);
+            if (empty($sync_auth)) {
+                throw new \Exception("Unable to authenticate with StoreKeeper. Did you add your API key to your store?");
+            }
+
             $this->auth = new \StoreKeeper\ApiWrapper\Auth();
             $this->auth->setSubuser($sync_auth['subaccount'], $sync_auth['user']);
             $this->auth->setApiKey($sync_auth['apikey']);

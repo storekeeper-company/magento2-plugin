@@ -1,5 +1,6 @@
 
 # Config
+The plugin should be configurable
 
 ## Products
 Add allow product sync config + implementation

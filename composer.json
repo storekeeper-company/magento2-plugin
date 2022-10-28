@@ -1,5 +1,5 @@
 {
-    "name": "storekeeper/storekeeper",
+    "name": "storekeeper/magento2-plugin",
     "description": "Storekeeper plugin by Creative CT",
     "require": {
         "storekeeper/api-wrapper": "v5.2",
@@ -10,7 +10,7 @@
     "type": "magento2-module",
     "version": "0.0.1",
     "license": [
-        "Commercial"
+        "LGPL-3.0-only"
     ],
     "autoload": {
         "files": [
