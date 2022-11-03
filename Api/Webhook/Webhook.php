@@ -13,14 +13,15 @@ class Webhook
         \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper,
     	\Magento\Framework\Serialize\Serializer\Json $json,
         \Magento\Framework\MessageQueue\PublisherInterface $publisher,
+        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         Config $configHelper,
         LoggerInterface $logger
     ) {
         $this->request = $request;
         $this->authHelper = $authHelper;
-        $this->publisher = $publisher;
-        $this->publisher = $publisher;
         $this->json = $json;
+        $this->publisher = $publisher;
+        $this->productMetadata = $productMetadata;
         $this->configHelper = $configHelper;
         $this->logger = $logger;
     }
@@ -52,17 +53,27 @@ class Webhook
                 "success" => true
             ];
 
-            if ($action == "init") {
-                $this->authHelper->setAuthDataForWebsite($storeId, $payload);
+            if ($action == "info") {
+
+                // retrieve the current plugin version
+                $composerFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "composer.json");
+                $composerJson = json_decode($composerFile, true);
 
                 $response = [
                     "success" => true,
                     'vendor' => 'StoreKeeper',
                     'platform_name' => 'Magento 2',
-                    'platform_version' => '1.0.0',
+                    'platform_version' => $this->productMetadata->getVersion(),
                     'software_name' => 'storekeeper-magento2-b2c',
-                    'software_version' => '0.0.1',
+                    'software_version' => $composerJson['version'],
                     'extra' => [],
+                ];
+                
+            } else if ($action == "init") {
+                $this->authHelper->setAuthDataForWebsite($storeId, $payload);
+
+                $response = [
+                    "success" => true
                 ];
 
             } else if ($action == "events") {
