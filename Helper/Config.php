@@ -14,6 +14,8 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
 
     const STOREKEEPER_SYNC_MODE = 'storekeeper_general/general/storekeeper_sync_mode';
 
+    const STOREKEEPER_TOKEN = 'storekeeper_general/general/storekeeper_token';
+
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
@@ -51,5 +53,9 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         $mode = $this->getScopeConfigValue(self::STOREKEEPER_SYNC_MODE, ScopeInterface::SCOPE_STORE, $storeId);
 
         return ($mode & $flags) != 0;
+    }
+
+    public function getToken($storeId): mixed {
+        return $this->getScopeConfigValue(self::STOREKEEPER_TOKEN, ScopeInterface::SCOPE_STORE, $storeId);
     }
 }
