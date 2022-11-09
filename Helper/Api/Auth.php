@@ -19,8 +19,15 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->cache = $cache;
     }
 
-    public function setAuthDataForWebsite($storeId, $authData)
+    public function setAuthDataForWebsite($storeId, $authData, $token)
     {
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_token",
+            $token,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+
         $this->configWriter->save(
             "storekeeper_general/general/storekeeper_sync_auth",
             json_encode($authData['sync_auth']),

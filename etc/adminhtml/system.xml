@@ -28,6 +28,10 @@
                     <label>API URL</label>
                 </field>
 
+                <field id="storekeeper_token" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Token</label>
+                </field>
+
                 <field id="storekeeper_sync_auth" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Sync Auth</label>
                 </field>
