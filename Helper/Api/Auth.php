@@ -66,6 +66,21 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->getModule('ShopModule', $storeId)->getShopSettingsForHooks();
     }
 
+    public function getTaxRates($storeId, $countryId)
+    {
+        return $this->getModule('ProductsModule', $storeId)->listTaxRates(
+            0,
+            100,
+            null,
+            [
+                [
+                    'name' => 'country_iso2__=',
+                    'val' => $countryId
+                ]
+            ]
+        );
+    }
+
     public function setStoreInformation($storeId, array $data)
     {
         $this->configWriter->save(
