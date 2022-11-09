@@ -55,8 +55,8 @@ class Webhook
             $response = [ "success" => true ];
             $status = 200;
 
-            if ($action == "init" && empty($token)) {
-                $this->authHelper->setAuthDataForWebsite($storeId, $payload, $requestToken);
+            if ($action == "init" && $requestToken == $token) {
+                $this->authHelper->setAuthDataForWebsite($storeId, $payload);
 
                 $response = [
                     "success" => true

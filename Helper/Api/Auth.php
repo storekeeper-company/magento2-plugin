@@ -19,15 +19,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->cache = $cache;
     }
 
-    public function setAuthDataForWebsite($storeId, $authData, $token)
+    public function setAuthDataForWebsite($storeId, $authData)
     {
-        $this->configWriter->save(
-            "storekeeper_general/general/storekeeper_token",
-            $token,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
-            $storeId
-        );
-
         $this->configWriter->save(
             "storekeeper_general/general/storekeeper_sync_auth",
             json_encode($authData['sync_auth']),
@@ -95,9 +88,37 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function authCheck($storeId)
     {
+
+        $token = $this->getScopeConfigValue('storekeeper_general/general/storekeeper_token', $storeId);
+
+        if (empty($token)) {
+            $token = md5(
+                $storeId.uniqid()
+            );
+            $this->configWriter->save(
+                "storekeeper_general/general/storekeeper_token",
+                $token,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+                $storeId
+            );
+            $this->cache->cleanType('config');
+            header('location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+
+        }
+
+
+
+
+
+        // var_dump($token);
+        // die;
+
+
         $json = json_encode(
             [
-                'token' => "abc123", // Needs to the same over the applications lifespan.
+                'token' => $token, // Needs to the same over the applications lifespan.
                 'webhook_url' => "{$this->storeManager->getStore()->getBaseUrl()}/rest/V1/storekeeper/webhook?storeId={$storeId}", // Endpoint
             ]
         );
