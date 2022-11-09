@@ -88,5 +88,3 @@ Disconnecting your Magento 2 store can be done in two ways
 4. Empty the value in the `Token` field
 
 5. Press the `Save` button
-
-To disconnect your Magento 2 from your StoreKeeper Sales Channel
