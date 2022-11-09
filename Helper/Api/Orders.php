@@ -117,12 +117,35 @@ class Orders extends AbstractHelper
             ];
         }
 
+        if ($discountAmount = (float) $order->getDiscountAmount()) {
+            $orderItemsPayload[] = [
+                'is_discount' => true,
+                'name' => __("Discount"),
+                'sku' => 'DS-101',
+                'ppu_wt' => $discountAmount,
+                'quantity' => 1,
+                'tax_rate_id' => 1, // tax rate for discounted products
+            ];
+        }
+
         if (!$isUpdate) {
             $payload['order_items'] = $orderItemsPayload;
         } else {
             $payload['order_items__remove'] = null;
             $payload['order_items__do_not_change'] = true;
         }
+
+        if ($order->getCouponCode()) {
+            $payload['order_coupon_codes'] = [
+                [
+                    'code' => $order->getCouponCode(),
+                    'value_wt' => $order->getDiscountAmount()
+                ]
+            ];
+        }
+
+
+
 
         return $payload;
     }
@@ -140,6 +163,7 @@ class Orders extends AbstractHelper
             if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
                 $shopProductId = $item->getProduct()->getStorekeeperProductId();
             }
+
             $payloadItem = [
                 'sku' => $item->getSku(),
                 'ppu_wt' => $item->getPrice(),
@@ -282,7 +306,24 @@ class Orders extends AbstractHelper
     public function update($order, $storeKeeperId)
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
+
+        // it might be so that this store has been previously connected and has "old" 
+        // StoreKeeper orders
+        if (empty($storeKeeperOrder)) {
+            return;
+        }
+
         $statusMapping = $this->statusMapping();
+
+        if (!isset($storeKeeperOrder['status'])) {
+            // no status
+            return;
+        }
+
+        if (!isset($statusMapping[$storeKeeperOrder['status']])) {
+            // unsupported status
+            return;
+        }
 
         if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
             $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
