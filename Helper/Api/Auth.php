@@ -108,14 +108,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
         }
 
-
-
-
-
-        // var_dump($token);
-        // die;
-
-
         $json = json_encode(
             [
                 'token' => $token, // Needs to the same over the applications lifespan.
@@ -125,19 +117,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
         $base64 = base64_encode($json);
 
-        // wrong
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWUycGVyLm0yLmRldjEuZG5vdm8tZGV2LmV1XC9yZXN0XC9WMVwvc3RvcmVrZWVwZXJcL3dlYmhvb2s/c3RvcmVJZD0xIn0=
-
-        // store
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz9zdG9yZUlkPTEifQ==
-
-        // website 1
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz93ZWJzaXRlSWQ9MSJ9
-
-        // store 3
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz9zdG9yZUlkPTMifQ==
         return $base64;
-
     }
 
     private $storeShopIds = null;
