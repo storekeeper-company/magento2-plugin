@@ -1,6 +1,6 @@
 {
     "name": "storekeeper/magento2-plugin",
-    "description": "Storekeeper plugin by Creative CT",
+    "description": "Storekeeper plugin",
     "require": {
         "storekeeper/api-wrapper": "v5.2",
         "erusev/parsedown": "v1.7.4"
