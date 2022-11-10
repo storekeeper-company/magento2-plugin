@@ -17,16 +17,25 @@
             <label>General</label>
             <tab>storekeeper</tab>
             <resource>StoreKeeper_StoreKeeper::configuration</resource>
+
             <group id="general" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General</label>
+
+                <field
+                    id="storekeeper_additional_data"
+                    type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\AdditionalData"
+                    translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Additional information</label>
+                </field>
+
                 <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-
-                <field id="storekeeper_api_url" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                
+                <!-- <field id="storekeeper_api_url" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>API URL</label>
-                </field>
+                </field> -->
 
                 <field id="storekeeper_token" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Token</label>
