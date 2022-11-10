@@ -14,6 +14,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Shipping\Model\ShipmentNotifier;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 
 class Orders extends AbstractHelper
 {
@@ -54,6 +55,7 @@ class Orders extends AbstractHelper
         ShipmentNotifier $shipmentNotifier,
         ShipmentRepositoryInterface $shipmentRepository,
         TrackFactory $trackFactory,
+        TaxItem $taxItem,
         Context $context
     ) {
         $this->authHelper = $authHelper;
@@ -64,6 +66,7 @@ class Orders extends AbstractHelper
         $this->shipmentNotifier = $shipmentNotifier;
         $this->shipmentRepository = $shipmentRepository;
         $this->trackFactory = $trackFactory;
+        $this->taxItem = $taxItem;
 
         parent::__construct($context);
     }
@@ -75,6 +78,9 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder($order, $isUpdate): array
     {
+
+        $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
+
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -144,9 +150,6 @@ class Orders extends AbstractHelper
             ];
         }
 
-
-
-
         return $payload;
     }
 
@@ -158,6 +161,12 @@ class Orders extends AbstractHelper
     {
         $payload = [];
 
+
+        $rates = [];
+        if ($order->getTaxAmount() > 0) {
+            $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
+        }
+
         foreach ($order->getItems() as $item) {
             $shopProductId = '';
             if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
@@ -166,24 +175,62 @@ class Orders extends AbstractHelper
 
             $payloadItem = [
                 'sku' => $item->getSku(),
-                'ppu_wt' => $item->getPrice(),
+                'ppu_wt' => $item->getPriceInclTax(),
                 'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
                 'quantity' => $item->getQtyOrdered(),
                 'name' => $item->getName(),
-                'shop_product_id' => $shopProductId
+                'shop_product_id' => $shopProductId,
             ];
 
+            $taxPercent = ((float) $item->getTaxPercent()) / 100;
+            if ($taxPercent > 0) {
+                $rateId = null;
+                foreach ($rates['data'] as $rate) {
+                    if ($rate['value'] == $taxPercent) {
+                        $rateId = $rate['id'];
+                        break;
+                    }
+                }
+                $payloadItem['tax_rate_id'] = $rateId;
+            }
             $payload[] = $payloadItem;
         }
 
+
         if (!$order->getIsVirtual()) {
-            $payload[] = [
+
+            $payloadItem = [
                 'sku' => $order->getShippingMethod(),
-                'ppu_wt' => $order->getShippingAmount(),
+                'ppu_wt' => $order->getShippingAmount() + $order->getShippingTaxAmount(),
                 'quantity' => 1,
                 'name' => $order->getShippingMethod(),
-                'is_shipping' => true
+                'is_shipping' => true,
             ];
+
+            if ($order->getShippingTaxAmount() > 0) {
+                $tax_items = $this->taxItem->getTaxItemsByOrderId($order->getId());
+
+                if (!empty($tax_items)) {
+                    foreach ($tax_items as $tax_item) {
+                        if ($tax_item['taxable_item_type'] == 'shipping') {
+                            $taxPercent = ((float) $tax_item['tax_percent']) / 100;
+                            if ($taxPercent > 0) {
+                                $rateId = null;
+                                foreach ($rates['data'] as $rate) {
+                                    if ($rate['value'] == $taxPercent) {
+                                        $rateId = $rate['id'];
+                                    }
+                                }
+                                $payloadItem['tax_rate_id'] = $rateId;
+
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            $payload[] = $payloadItem;
         }
 
         return $payload;
@@ -305,6 +352,7 @@ class Orders extends AbstractHelper
      */
     public function update($order, $storeKeeperId)
     {
+
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
         // it might be so that this store has been previously connected and has "old" 

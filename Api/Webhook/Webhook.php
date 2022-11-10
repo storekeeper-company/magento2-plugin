@@ -55,8 +55,8 @@ class Webhook
             $response = [ "success" => true ];
             $status = 200;
 
-            if ($action == "init" && empty($token)) {
-                $this->authHelper->setAuthDataForWebsite($storeId, $payload, $requestToken);
+            if ($action == "init" && $requestToken == $token) {
+                $this->authHelper->setAuthDataForWebsite($storeId, $payload);
 
                 $response = [
                     "success" => true
@@ -69,6 +69,18 @@ class Webhook
                     // retrieve the current plugin version
                     $composerFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "composer.json");
                     $composerJson = json_decode($composerFile, true);
+
+                    $sync_mode = null;
+
+                    if ($this->configHelper->hasMode($storeId, Config::SYNC_NONE)) {
+                        $sync_mode = 'sync-mode-none';
+                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_ALL)) {
+                        $sync_mode = 'sync-mode-full-sync';
+                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS)) {
+                        $sync_mode = 'sync-mode-products-only';
+                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_ORDERS)) {
+                        $sync_mode = 'sync-mode-order-only';
+                    } 
     
                     $response = [
                         "success" => true,
@@ -77,6 +89,7 @@ class Webhook
                         'platform_version' => $this->productMetadata->getVersion(),
                         'software_name' => 'storekeeper-magento2-b2c',
                         'software_version' => $composerJson['version'],
+                        'sync_mode' => $sync_mode,
                         'extra' => [],
                     ];
                     

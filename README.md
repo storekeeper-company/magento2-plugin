@@ -88,3 +88,7 @@ Disconnecting your Magento 2 store can be done in two ways
 4. Empty the value in the `Token` field
 
 5. Press the `Save` button
+
+# Debugging
+
+If you're having any issues using the plugin, the first thing to do would be checking the `magento2/var/log/storekeeper.log` for any errors.

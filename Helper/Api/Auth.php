@@ -19,15 +19,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->cache = $cache;
     }
 
-    public function setAuthDataForWebsite($storeId, $authData, $token)
+    public function setAuthDataForWebsite($storeId, $authData)
     {
-        $this->configWriter->save(
-            "storekeeper_general/general/storekeeper_token",
-            $token,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
-            $storeId
-        );
-
         $this->configWriter->save(
             "storekeeper_general/general/storekeeper_sync_auth",
             json_encode($authData['sync_auth']),
@@ -66,6 +59,21 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->getModule('ShopModule', $storeId)->getShopSettingsForHooks();
     }
 
+    public function getTaxRates($storeId, $countryId)
+    {
+        return $this->getModule('ProductsModule', $storeId)->listTaxRates(
+            0,
+            100,
+            null,
+            [
+                [
+                    'name' => 'country_iso2__=',
+                    'val' => $countryId
+                ]
+            ]
+        );
+    }
+
     public function setStoreInformation($storeId, array $data)
     {
         $this->configWriter->save(
@@ -80,28 +88,36 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function authCheck($storeId)
     {
+
+        $token = $this->getScopeConfigValue('storekeeper_general/general/storekeeper_token', $storeId);
+
+        if (empty($token)) {
+            $token = md5(
+                $storeId.uniqid()
+            );
+            $this->configWriter->save(
+                "storekeeper_general/general/storekeeper_token",
+                $token,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+                $storeId
+            );
+            $this->cache->cleanType('config');
+            header('location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+
+        }
+
         $json = json_encode(
             [
-                'token' => "abc123", // Needs to the same over the applications lifespan.
+                'token' => $token, // Needs to the same over the applications lifespan.
                 'webhook_url' => "{$this->storeManager->getStore()->getBaseUrl()}/rest/V1/storekeeper/webhook?storeId={$storeId}", // Endpoint
             ]
         );
 
         $base64 = base64_encode($json);
 
-        // wrong
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWUycGVyLm0yLmRldjEuZG5vdm8tZGV2LmV1XC9yZXN0XC9WMVwvc3RvcmVrZWVwZXJcL3dlYmhvb2s/c3RvcmVJZD0xIn0=
-
-        // store
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz9zdG9yZUlkPTEifQ==
-
-        // website 1
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz93ZWJzaXRlSWQ9MSJ9
-
-        // store 3
-        // eyJ0b2tlbiI6ImFiYzEyMyIsIndlYmhvb2tfdXJsIjoiaHR0cDpcL1wvc3RvcmVrZWVwZXIubTIuZGV2MS5kbm92by1kZXYuZXVcL3Jlc3RcL1YxXC9zdG9yZWtlZXBlclwvd2ViaG9vaz9zdG9yZUlkPTMifQ==
         return $base64;
-
     }
 
     private $storeShopIds = null;
