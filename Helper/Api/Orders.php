@@ -78,9 +78,6 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder($order, $isUpdate): array
     {
-
-        $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
-
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -163,8 +160,17 @@ class Orders extends AbstractHelper
 
 
         $rates = [];
+        $taxFreeId = null;
         if ($order->getTaxAmount() > 0) {
             $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
+        } else {
+            $rates = $this->authHelper->getTaxRates($order->getStoreId(), 'WO');
+            foreach ($rates['data'] ?? [] as $rate) {
+                if ($rate['alias'] == 'special_applicable_not_vat') {
+                    $taxFreeId = $rate['id'];
+                    break;
+                }
+            }
         }
 
         foreach ($order->getItems() as $item) {
@@ -185,13 +191,15 @@ class Orders extends AbstractHelper
             $taxPercent = ((float) $item->getTaxPercent()) / 100;
             if ($taxPercent > 0) {
                 $rateId = null;
-                foreach ($rates['data'] as $rate) {
+                foreach ($rates['data'] ?? [] as $rate) {
                     if ($rate['value'] == $taxPercent) {
                         $rateId = $rate['id'];
                         break;
                     }
                 }
                 $payloadItem['tax_rate_id'] = $rateId;
+            } else if (!empty($taxFreeId)) {
+                $payloadItem['tax_rate_id'] = $taxFreeId;
             }
             $payload[] = $payloadItem;
         }
@@ -228,6 +236,8 @@ class Orders extends AbstractHelper
                         }
                     }
                 }
+            } else if (!empty($taxFreeId)) {
+                $payloadItem['tax_rate_id'] = $taxFreeId;
             }
 
             $payload[] = $payloadItem;
