@@ -89,8 +89,9 @@ class Webhook
                         'platform_version' => $this->productMetadata->getVersion(),
                         'software_name' => 'storekeeper-magento2-b2c',
                         'software_version' => $composerJson['version'],
-                        'sync_mode' => $sync_mode,
-                        'extra' => [],
+                        'extra' => [
+                            'sync_mode' => $sync_mode
+                        ],
                     ];
                     
                 } else if ($action == "events") {
