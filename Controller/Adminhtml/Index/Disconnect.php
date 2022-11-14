@@ -7,7 +7,7 @@ use Magento\Framework\App\RequestInterface;
 
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class Index extends \Magento\Backend\App\Action implements \Magento\Framework\App\Action\HttpGetActionInterface
+class Disconnect extends \Magento\Backend\App\Action implements \Magento\Framework\App\Action\HttpGetActionInterface
 {
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -37,16 +37,13 @@ class Index extends \Magento\Backend\App\Action implements \Magento\Framework\Ap
     public function execute()
     {
         $storeId = $this->request->getParam('storeId');
-        if ($this->authHelper->isConnected($storeId)) {
-            try {
-                $storeInformation = $this->authHelper->getStoreInformation($storeId);
-                $this->authHelper->setStoreInformation($storeId, $storeInformation);
-            } catch (\Exception $e) {
-                $this->messageManager->addError(__($e->getMessage()));
-            }
-        } else {
-            $this->messageManager->addError(__("Could not retrieve store information: not connected"));
+        try {
+            $this->authHelper->disconnectStore($storeId);
+            $this->messageManager->addSuccess(__("Store {$storeId} has been disconnected from StoreKeeper"));
+        } catch (\Exception $e) {
+            $this->messageManager->addError(__($e->getMessage()));
         }
+
 
         return $this->_redirect('adminhtml/system_config/edit/section/storekeeper_general', ['store' => $storeId]);
     }
