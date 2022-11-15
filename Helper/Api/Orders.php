@@ -147,20 +147,22 @@ class Orders extends AbstractHelper
             ];
         }
 
+
         if ($order->getIncrementId() === '000000005') {
-            var_dump((float) $order->getBaseSubtotalRefunded());
             if ((float) $order->getBaseSubtotalRefunded() > 0) {
                 $storekeeperId = $order->getStorekeeperId();
                 $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
-                $diff = $order->getBaseSubtotalRefunded() - $storeKeeperOrder['paid_back_value_wt'];
+                $subtotalRefunded = $order->getSubtotalRefunded();
+                $diff = $storeKeeperOrder['paid_back_value_wt'] - ((float)$subtotalRefunded);
 
-                var_dump($diff);
-                var_dump($storeKeeperOrder['paid_back_value_wt']);
+                if ($diff > 0 ) {
+                    var_dump($diff);
+                }
                 die();
                 var_dump($storeKeeperOrder);
 //                var_dump($this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrderPayment($storekeeperId));
                 try {
-                    if ($diff < 0 ) {
+                    if ($subtotalRefunded > $storeKeeperOrder['paid_back_value_wt'] ) {
 
                     }
 //                    var_dump($order->getBaseSubtotalRefunded());
@@ -170,7 +172,7 @@ class Orders extends AbstractHelper
 //                    }
 
                     $storekeeperRefundId = $this->authHelper->getModule('PaymentModule', $order->getStoreId())->newWebPayment([
-                        'amount' => round(-abs($order->getBaseSubtotalRefunded()), 2),
+                        'amount' => round(-abs($subtotalRefunded), 2),
                         'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
                     ]);
 
