@@ -259,12 +259,20 @@ class Orders extends AbstractHelper
 
             $payloadItem = [
                 'sku' => $item->getSku(),
-                'ppu_wt' => $item->getPriceInclTax(),
-                'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
+                // keep this here for future reference
+                // 'ppu_wt' => $item->getPriceInclTax(),
+                // 'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
                 'quantity' => $item->getQtyOrdered(),
                 'name' => $item->getName(),
                 'shop_product_id' => $shopProductId,
             ];
+
+            if (((float)$item->getTaxAmount()) > 0) {
+                $payloadItem['ppu_wt'] = $item->getPriceInclTax();
+                $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
+            } else {
+                $payloadItem['ppu'] = $item->getFinalPrice();
+            }
 
             $taxPercent = ((float) $item->getTaxPercent()) / 100;
             if ($taxPercent > 0) {
