@@ -206,12 +206,11 @@ class Orders extends AbstractHelper
 
 
         if (!$order->getIsVirtual()) {
-
             $payloadItem = [
                 'sku' => $order->getShippingMethod(),
                 'ppu_wt' => $order->getShippingAmount() + $order->getShippingTaxAmount(),
                 'quantity' => 1,
-                'name' => $order->getShippingMethod(),
+                'name' => $order->getShippingDescription(),
                 'is_shipping' => true,
             ];
 
