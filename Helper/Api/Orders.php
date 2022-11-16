@@ -78,6 +78,7 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder($order, $isUpdate): array
     {
+
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -147,7 +148,62 @@ class Orders extends AbstractHelper
             ];
         }
 
+        if ($order->getIncrementId() === '000000019') {
+            $totalRefunded = $order->getTotalRefunded();
+            if ((float) $totalRefunded > 0) {
+                $storekeeperId = $order->getStorekeeperId();
+                $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
+
+                // check if the difference between Magento 2 and StoreKeeper exists
+                $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
+
+                // check if the difference is a positive number
+                // magento_refund - storekeeper_refund = pending_refund
+                // 90             - 70                 = 20
+                // in this above example we'll have to refund 20
+                if ($diff > 0) {
+                    try {
+
+                        $storekeeperRefundId = $this->newWebPayment(
+                            $order->getStoreId(),
+                            [
+                                'amount' => round(-abs($diff), 2),
+                                'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
+                            ]
+                        );
+
+                        $this->attachPaymentIdsToOrder(
+                            $order->getStoreId(),
+                            $storekeeperId,
+                            [
+                                $storekeeperRefundId
+                            ]
+                        );
+
+                    } catch (\Exception $e) {
+                        throw new \Magento\Framework\Exception\LocalizedException(
+                            __($e->getMessage())
+                        );
+                    }
+
+                }
+            }
+        }
+
         return $payload;
+    }
+
+    public function newWebPayment($storeId, $parameters = []) 
+    {
+        // $args = [ 'amount' => 20, 'description' => 'My Description' ]
+        return $this->authHelper->getModule('PaymentModule', $storeId)
+            ->newWebPayment($parameters);
+    }
+
+    public function attachPaymentIdsToOrder($storeId, $storeKeeperId, $paymentIds = [])
+    {
+        $this->authHelper->getModule('ShopModule', $storeId)
+            ->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
     }
 
     /**
@@ -157,7 +213,6 @@ class Orders extends AbstractHelper
     private function prepareOrderItems(Order $order): array
     {
         $payload = [];
-
 
         $rates = [];
         $taxFreeId = null;
@@ -175,6 +230,7 @@ class Orders extends AbstractHelper
 
         foreach ($order->getItems() as $item) {
             $shopProductId = '';
+
             if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
                 $shopProductId = $item->getProduct()->getStorekeeperProductId();
             }
@@ -361,17 +417,15 @@ class Orders extends AbstractHelper
      */
     public function update($order, $storeKeeperId)
     {
-
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
-        // it might be so that this store has been previously connected and has "old" 
+        // it might be so that this store has been previously connected and has "old"
         // StoreKeeper orders
         if (empty($storeKeeperOrder)) {
             return;
         }
 
         $statusMapping = $this->statusMapping();
-
         if (!isset($storeKeeperOrder['status'])) {
             // no status
             return;
