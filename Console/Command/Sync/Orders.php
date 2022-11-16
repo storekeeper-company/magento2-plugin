@@ -89,7 +89,7 @@ class Orders extends Command
 
             $output->writeln('<info>Start order sync</info>');
             $page = 1;
-            $pageSize = 3;
+            $pageSize = 25;
             $current = 0;
             $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
 
@@ -98,7 +98,6 @@ class Orders extends Command
             while ($current < $orders->getTotalCount()) {
                 foreach ($orders as $order) {
                     try {
-                        
                         if ($storeKeeperId = $this->ordersHelper->exists($order)) {
                             $this->ordersHelper->update($order, $storeKeeperId);
                         } else {

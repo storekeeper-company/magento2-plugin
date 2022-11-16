@@ -156,10 +156,21 @@ class Orders extends AbstractHelper
         return $order->getTotalRefunded() > 0;
     }
 
+    public function refundAllOrderItems(Order $order, $storeKeeperId)
+    {
+        $this->authHelper->getModule('ShopModule', $order->getStoreId())
+            ->refundAllOrderItems([
+                'id' => $storeKeeperId
+            ]);
+    }
+
     public function applyRefund(Order $order)
     {
         $totalRefunded = $order->getTotalRefunded();
+
+
         if ((float) $totalRefunded > 0) {
+
             $storekeeperId = $order->getStorekeeperId();
             $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
 
@@ -172,27 +183,33 @@ class Orders extends AbstractHelper
             // in this above example we'll have to refund 20
             if ($diff > 0) {
                 try {
-
-                    $storekeeperRefundId = $this->newWebPayment(
-                        $order->getStoreId(),
-                        [
-                            'amount' => round(-abs($diff), 2),
-                            'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
-                        ]
-                    );
-
-                    $this->attachPaymentIdsToOrder(
-                        $order->getStoreId(),
-                        $storekeeperId,
-                        [
-                            $storekeeperRefundId
-                        ]
-                    );
-
+                    // full refund                    
+                    if ($totalRefunded == $order->getTotalPaid()) {
+                        $this->refundAllOrderItems($order, $storekeeperId);   
+                        return;
+                    // partial refund
+                    } else {
+                        $storekeeperRefundId = $this->newWebPayment(
+                            $order->getStoreId(),
+                            [
+                                'amount' => round(-abs($diff), 2),
+                                'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
+                            ]
+                        );
+    
+                        $this->attachPaymentIdsToOrder(
+                            $order->getStoreId(),
+                            $storekeeperId,
+                            [
+                                $storekeeperRefundId
+                            ]
+                        );
+                    }
                 } catch (\Exception $e) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __($e->getMessage())
-                    );
+                    throw $e;
+                    // throw new \Magento\Framework\Exception\LocalizedException(
+                    //     __($e->getMessage())
+                    // );
                 }
             }
         }
@@ -431,7 +448,7 @@ class Orders extends AbstractHelper
         }
 
         $statusMapping = $this->statusMapping();
-        if (!isset($storeKeeperOrder['status'])) {
+        if (!isset($storeKeeperOrder['status'])) {            
             // no status
             return;
         }
@@ -441,19 +458,19 @@ class Orders extends AbstractHelper
             return;
         }
 
-        if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
-            $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
-        }
-
-        $this->updateStoreKeeperOrder($order, $storeKeeperId);
-
-        if ($order->getStatus() !== 'canceled') {
+        if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
+            if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
+                $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+            }
+    
+            $this->updateStoreKeeperOrder($order, $storeKeeperId);
             $this->createShipment($order, $storeKeeperId);
         }
 
         if ($this->hasRefund($order)) {
             $this->applyRefund($order);
         }
+
     }
 
     /**
@@ -547,7 +564,7 @@ class Orders extends AbstractHelper
             )
             ->addFilter(
                 'status',
-                ['processing', 'canceled', 'complete'],
+                ['processing', 'canceled', 'closed', 'complete'],
                 'in'
             )
             ->setPageSize(
