@@ -148,49 +148,54 @@ class Orders extends AbstractHelper
             ];
         }
 
-        if ($order->getIncrementId() === '000000019') {
-            $totalRefunded = $order->getTotalRefunded();
-            if ((float) $totalRefunded > 0) {
-                $storekeeperId = $order->getStorekeeperId();
-                $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
+        return $payload;
+    }
 
-                // check if the difference between Magento 2 and StoreKeeper exists
-                $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
+    public function hasRefund(Order $order)
+    {
+        return $order->getTotalRefunded() > 0;
+    }
 
-                // check if the difference is a positive number
-                // magento_refund - storekeeper_refund = pending_refund
-                // 90             - 70                 = 20
-                // in this above example we'll have to refund 20
-                if ($diff > 0) {
-                    try {
+    public function applyRefund(Order $order)
+    {
+        $totalRefunded = $order->getTotalRefunded();
+        if ((float) $totalRefunded > 0) {
+            $storekeeperId = $order->getStorekeeperId();
+            $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
 
-                        $storekeeperRefundId = $this->newWebPayment(
-                            $order->getStoreId(),
-                            [
-                                'amount' => round(-abs($diff), 2),
-                                'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
-                            ]
-                        );
+            // check if the difference between Magento 2 and StoreKeeper exists
+            $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
 
-                        $this->attachPaymentIdsToOrder(
-                            $order->getStoreId(),
-                            $storekeeperId,
-                            [
-                                $storekeeperRefundId
-                            ]
-                        );
+            // check if the difference is a positive number
+            // magento_refund - storekeeper_refund = pending_refund
+            // 90             - 70                 = 20
+            // in this above example we'll have to refund 20
+            if ($diff > 0) {
+                try {
 
-                    } catch (\Exception $e) {
-                        throw new \Magento\Framework\Exception\LocalizedException(
-                            __($e->getMessage())
-                        );
-                    }
+                    $storekeeperRefundId = $this->newWebPayment(
+                        $order->getStoreId(),
+                        [
+                            'amount' => round(-abs($diff), 2),
+                            'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
+                        ]
+                    );
 
+                    $this->attachPaymentIdsToOrder(
+                        $order->getStoreId(),
+                        $storekeeperId,
+                        [
+                            $storekeeperRefundId
+                        ]
+                    );
+
+                } catch (\Exception $e) {
+                    throw new \Magento\Framework\Exception\LocalizedException(
+                        __($e->getMessage())
+                    );
                 }
             }
         }
-
-        return $payload;
     }
 
     public function newWebPayment($storeId, $parameters = []) 
@@ -445,6 +450,10 @@ class Orders extends AbstractHelper
         if ($order->getStatus() !== 'canceled') {
             $this->createShipment($order, $storeKeeperId);
         }
+
+        if ($this->hasRefund($order)) {
+            $this->applyRefund($order);
+        }
     }
 
     /**
@@ -515,6 +524,10 @@ class Orders extends AbstractHelper
                     );
                 }
             }
+        }
+
+        if ($this->hasRefund($order)) {
+            $this->applyRefund($order);
         }
     }
 

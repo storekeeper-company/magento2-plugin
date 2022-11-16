@@ -105,7 +105,9 @@ class Orders extends Command
                             $this->ordersHelper->onCreate($order);
                         }
                     } catch(\Exception|\Error $e) {
-                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                        $error = $e->getMessage() . "\n";
+                        $error .= ($e->getFile() ?? '') . ' at line #' . ($e->getLine() ?? '');
+                        $output->writeln('<error>' . $error . '</error>');
                         $this->logger->error($e->getMessage());
                     }
                 }
