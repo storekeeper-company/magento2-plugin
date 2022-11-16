@@ -78,6 +78,7 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder($order, $isUpdate): array
     {
+
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -147,46 +148,62 @@ class Orders extends AbstractHelper
             ];
         }
 
-
-        if ($order->getIncrementId() === '000000005') {
-            if ((float) $order->getBaseSubtotalRefunded() > 0) {
+        if ($order->getIncrementId() === '000000019') {
+            $totalRefunded = $order->getTotalRefunded();
+            if ((float) $totalRefunded > 0) {
                 $storekeeperId = $order->getStorekeeperId();
                 $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
-                $subtotalRefunded = $order->getSubtotalRefunded();
-                $diff = $storeKeeperOrder['paid_back_value_wt'] - ((float)$subtotalRefunded);
 
-                if ($diff > 0 ) {
-                    var_dump($diff);
-                }
-                die();
-                var_dump($storeKeeperOrder);
-//                var_dump($this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrderPayment($storekeeperId));
-                try {
-                    if ($subtotalRefunded > $storeKeeperOrder['paid_back_value_wt'] ) {
+                // check if the difference between Magento 2 and StoreKeeper exists
+                $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
 
+                // check if the difference is a positive number
+                // magento_refund - storekeeper_refund = pending_refund
+                // 90             - 70                 = 20
+                // in this above example we'll have to refund 20
+                if ($diff > 0) {
+                    try {
+
+                        $storekeeperRefundId = $this->newWebPayment(
+                            $order->getStoreId(),
+                            [
+                                'amount' => round(-abs($diff), 2),
+                                'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
+                            ]
+                        );
+
+                        $this->attachPaymentIdsToOrder(
+                            $order->getStoreId(),
+                            $storekeeperId,
+                            [
+                                $storekeeperRefundId
+                            ]
+                        );
+
+                    } catch (\Exception $e) {
+                        throw new \Magento\Framework\Exception\LocalizedException(
+                            __($e->getMessage())
+                        );
                     }
-//                    var_dump($order->getBaseSubtotalRefunded());
-//                    var_dump($order->getBaseSubtotal());
-//                    if ($order->getBaseSubtotalRefunded() == $order->getBaseSubtotal()) {
-//                        var_dump('yolo');
-//                    }
 
-                    $storekeeperRefundId = $this->authHelper->getModule('PaymentModule', $order->getStoreId())->newWebPayment([
-                        'amount' => round(-abs($subtotalRefunded), 2),
-                        'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
-                    ]);
-
-                    $this->authHelper->getModule('ShopModule', $order->getStoreId())->attachPaymentIdsToOrder(['payment_ids' => [$storekeeperRefundId]], $storekeeperId);
-                } catch (\Exception $e) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __($e->getMessage())
-                    );
                 }
-
             }
         }
 
         return $payload;
+    }
+
+    public function newWebPayment($storeId, $parameters = []) 
+    {
+        // $args = [ 'amount' => 20, 'description' => 'My Description' ]
+        return $this->authHelper->getModule('PaymentModule', $storeId)
+            ->newWebPayment($parameters);
+    }
+
+    public function attachPaymentIdsToOrder($storeId, $storeKeeperId, $paymentIds = [])
+    {
+        $this->authHelper->getModule('ShopModule', $storeId)
+            ->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
     }
 
     /**
@@ -401,7 +418,6 @@ class Orders extends AbstractHelper
      */
     public function update($order, $storeKeeperId)
     {
-
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
         // it might be so that this store has been previously connected and has "old"
@@ -411,7 +427,6 @@ class Orders extends AbstractHelper
         }
 
         $statusMapping = $this->statusMapping();
-
         if (!isset($storeKeeperOrder['status'])) {
             // no status
             return;

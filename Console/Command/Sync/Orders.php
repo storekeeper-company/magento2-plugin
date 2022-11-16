@@ -98,6 +98,7 @@ class Orders extends Command
             while ($current < $orders->getTotalCount()) {
                 foreach ($orders as $order) {
                     try {
+                        
                         if ($storeKeeperId = $this->ordersHelper->exists($order)) {
                             $this->ordersHelper->update($order, $storeKeeperId);
                         } else {
