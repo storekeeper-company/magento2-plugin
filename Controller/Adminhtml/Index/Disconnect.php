@@ -44,7 +44,6 @@ class Disconnect extends \Magento\Backend\App\Action implements \Magento\Framewo
             $this->messageManager->addError(__($e->getMessage()));
         }
 
-
         return $this->_redirect('adminhtml/system_config/edit/section/storekeeper_general', ['store' => $storeId]);
     }
 
