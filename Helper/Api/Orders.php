@@ -238,16 +238,17 @@ class Orders extends AbstractHelper
 
         $rates = [];
         $taxFreeId = null;
+
+        $rates = $this->authHelper->getTaxRates($order->getStoreId(), 'WO');
+        foreach ($rates['data'] ?? [] as $rate) {
+            if ($rate['alias'] == 'special_applicable_not_vat') {
+                $taxFreeId = $rate['id'];
+                break;
+            }
+        }
+
         if ($order->getTaxAmount() > 0) {
             $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
-        } else {
-            $rates = $this->authHelper->getTaxRates($order->getStoreId(), 'WO');
-            foreach ($rates['data'] ?? [] as $rate) {
-                if ($rate['alias'] == 'special_applicable_not_vat') {
-                    $taxFreeId = $rate['id'];
-                    break;
-                }
-            }
         }
 
         foreach ($order->getItems() as $item) {
@@ -271,7 +272,7 @@ class Orders extends AbstractHelper
                 $payloadItem['ppu_wt'] = $item->getPriceInclTax();
                 $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
             } else {
-                $payloadItem['ppu'] = $item->getFinalPrice();
+                $payloadItem['ppu_wt'] = $item->getPrice();
             }
 
             $taxPercent = ((float) $item->getTaxPercent()) / 100;
@@ -289,7 +290,6 @@ class Orders extends AbstractHelper
             }
             $payload[] = $payloadItem;
         }
-
 
         if (!$order->getIsVirtual()) {
             $payloadItem = [
