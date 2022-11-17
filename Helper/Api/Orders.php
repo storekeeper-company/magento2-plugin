@@ -202,7 +202,6 @@ class Orders extends AbstractHelper
 
     public function newWebPayment($storeId, $parameters = []) 
     {
-        // $args = [ 'amount' => 20, 'description' => 'My Description' ]
         return $this->authHelper->getModule('PaymentModule', $storeId)
             ->newWebPayment($parameters);
     }

@@ -159,13 +159,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getAdapter($storeId)
     {
-
-        // $apiUrl = $this->getScopeConfigValue(
-        //     'storekeeper_general/general/storekeeper_api_url',
-        //     $storeId,
-        //     \Magento\Store\Model\ScopeInterface::SCOPE_STORES
-        // );
-
         $syncAuth = $this->getSyncAuth($storeId);
 
         if (!empty($syncAuth) && isset($syncAuth['account'])) {
