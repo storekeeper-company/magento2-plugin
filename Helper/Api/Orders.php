@@ -314,7 +314,7 @@ class Orders extends AbstractHelper
         }
 
         if ($discountAmount = (float) $order->getDiscountAmount()) {
-            $orderItemsPayload[] = [
+            $payload[] = [
                 'is_discount' => true,
                 'name' => __("Discount"),
                 'sku' => 'DS-101',
