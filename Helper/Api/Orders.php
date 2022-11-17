@@ -121,17 +121,6 @@ class Orders extends AbstractHelper
             ];
         }
 
-        if ($discountAmount = (float) $order->getDiscountAmount()) {
-            $orderItemsPayload[] = [
-                'is_discount' => true,
-                'name' => __("Discount"),
-                'sku' => 'DS-101',
-                'ppu_wt' => $discountAmount,
-                'quantity' => 1,
-                'tax_rate_id' => 1, // tax rate for discounted products
-            ];
-        }
-
         if (!$isUpdate) {
             $payload['order_items'] = $orderItemsPayload;
         } else {
@@ -322,6 +311,17 @@ class Orders extends AbstractHelper
             }
 
             $payload[] = $payloadItem;
+        }
+
+        if ($discountAmount = (float) $order->getDiscountAmount()) {
+            $orderItemsPayload[] = [
+                'is_discount' => true,
+                'name' => __("Discount"),
+                'sku' => 'DS-101',
+                'ppu_wt' => $discountAmount,
+                'quantity' => 1,
+                'tax_rate_id' => $taxFreeId, // tax rate for discounted products
+            ];
         }
 
         return $payload;
