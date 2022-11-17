@@ -98,6 +98,7 @@ class Webhook
                         'software_name' => 'storekeeper-magento2-b2c',
                         'software_version' => $composerJson['version'],
                         'extra' => [
+                            'url' => $this->authHelper->getStoreBaseUrl(),
                             'sync_mode' => $sync_mode
                         ],
                     ];

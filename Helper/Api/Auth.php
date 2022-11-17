@@ -120,6 +120,11 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $base64;
     }
 
+    public function getStoreBaseUrl()
+    {
+        return $this->storeManager->getStore()->getBaseUrl();
+    }
+
     private $storeShopIds = null;
 
     public function getStoreShopIds()

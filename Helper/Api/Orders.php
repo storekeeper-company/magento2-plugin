@@ -156,18 +156,18 @@ class Orders extends AbstractHelper
         return $order->getTotalRefunded() > 0;
     }
 
-    public function refundAllOrderItems(Order $order, $storeKeeperId)
+    public function refundAllOrderItems(Order $order, $storeKeeperId, array $refund_payments)
     {
         $this->authHelper->getModule('ShopModule', $order->getStoreId())
             ->refundAllOrderItems([
-                'id' => $storeKeeperId
+                'id' => $storeKeeperId,
+                'refund_payments' => $refund_payments
             ]);
     }
 
     public function applyRefund(Order $order)
     {
         $totalRefunded = $order->getTotalRefunded();
-
 
         if ((float) $totalRefunded > 0) {
 
@@ -182,34 +182,30 @@ class Orders extends AbstractHelper
             // 90             - 70                 = 20
             // in this above example we'll have to refund 20
             if ($diff > 0) {
-                try {
-                    // full refund                    
-                    if ($totalRefunded == $order->getTotalPaid()) {
-                        $this->refundAllOrderItems($order, $storekeeperId);   
-                        return;
-                    // partial refund
-                    } else {
-                        $storekeeperRefundId = $this->newWebPayment(
-                            $order->getStoreId(),
-                            [
-                                'amount' => round(-abs($diff), 2),
-                                'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
-                            ]
-                        );
-    
-                        $this->attachPaymentIdsToOrder(
-                            $order->getStoreId(),
-                            $storekeeperId,
-                            [
-                                $storekeeperRefundId
-                            ]
-                        );
-                    }
-                } catch (\Exception $e) {
-                    throw $e;
-                    // throw new \Magento\Framework\Exception\LocalizedException(
-                    //     __($e->getMessage())
-                    // );
+
+                $storekeeperRefundId = $this->newWebPayment(
+                    $order->getStoreId(),
+                    [
+                        'amount' => round(-abs($diff), 2),
+                        'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
+                    ]
+                );
+
+                $this->attachPaymentIdsToOrder(
+                    $order->getStoreId(),
+                    $storekeeperId,
+                    [
+                        $storekeeperRefundId
+                    ]
+                );
+
+            }
+
+            if ($totalRefunded == $order->getTotalPaid()) {
+                if ($storeKeeperOrder['status'] != 'refunded') {
+                    $this->refundAllOrderItems($order, $storekeeperId, [
+
+                    ]);  
                 }
             }
         }
