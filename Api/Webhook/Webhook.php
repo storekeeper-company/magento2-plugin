@@ -42,6 +42,7 @@ class Webhook
 	public function postExecute($storeId)
     {
         try {
+
             $bodyParams = $this->request->getBodyParams();
 
             file_put_contents("post-webhook.log", json_encode($bodyParams, JSON_PRETTY_PRINT), FILE_APPEND);
@@ -63,6 +64,13 @@ class Webhook
                 ];
 
             } else if ($requestToken == $token) {
+
+                if (!$this->authHelper->isConnected($storeId)) {
+                    return $this->response([
+                        'success' => false,
+                        'message' => __("Store is not connected")
+                    ]);
+                }
 
                 if ($action == "info") {
 
@@ -90,6 +98,7 @@ class Webhook
                         'software_name' => 'storekeeper-magento2-b2c',
                         'software_version' => $composerJson['version'],
                         'extra' => [
+                            'url' => $this->authHelper->getStoreBaseUrl(),
                             'sync_mode' => $sync_mode
                         ],
                     ];

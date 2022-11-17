@@ -87,6 +87,13 @@
                     translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Auth Key</label>
                 </field>
+
+                <field id="storekeeper_disconnect_storeview"
+                    type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\DisconnectStore"
+                    translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <label>Disconnect Store</label>
+                </field>
+
             </group>
         </section>
 

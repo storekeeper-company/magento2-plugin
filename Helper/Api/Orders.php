@@ -78,6 +78,7 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder($order, $isUpdate): array
     {
+
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -120,17 +121,6 @@ class Orders extends AbstractHelper
             ];
         }
 
-        if ($discountAmount = (float) $order->getDiscountAmount()) {
-            $orderItemsPayload[] = [
-                'is_discount' => true,
-                'name' => __("Discount"),
-                'sku' => 'DS-101',
-                'ppu_wt' => $discountAmount,
-                'quantity' => 1,
-                'tax_rate_id' => 1, // tax rate for discounted products
-            ];
-        }
-
         if (!$isUpdate) {
             $payload['order_items'] = $orderItemsPayload;
         } else {
@@ -150,6 +140,78 @@ class Orders extends AbstractHelper
         return $payload;
     }
 
+    public function hasRefund(Order $order)
+    {
+        return $order->getTotalRefunded() > 0;
+    }
+
+    public function refundAllOrderItems(Order $order, $storeKeeperId, array $refund_payments)
+    {
+        $this->authHelper->getModule('ShopModule', $order->getStoreId())
+            ->refundAllOrderItems([
+                'id' => $storeKeeperId,
+                'refund_payments' => $refund_payments
+            ]);
+    }
+
+    public function applyRefund(Order $order)
+    {
+        $totalRefunded = $order->getTotalRefunded();
+
+        if ((float) $totalRefunded > 0) {
+
+            $storekeeperId = $order->getStorekeeperId();
+            $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
+
+            // check if the difference between Magento 2 and StoreKeeper exists
+            $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
+
+            // check if the difference is a positive number
+            // magento_refund - storekeeper_refund = pending_refund
+            // 90             - 70                 = 20
+            // in this above example we'll have to refund 20
+            if ($diff > 0) {
+
+                $storekeeperRefundId = $this->newWebPayment(
+                    $order->getStoreId(),
+                    [
+                        'amount' => round(-abs($diff), 2),
+                        'description' => __('Refund by Magento plugin (Order #%1)', $order->getIncrementId())
+                    ]
+                );
+
+                $this->attachPaymentIdsToOrder(
+                    $order->getStoreId(),
+                    $storekeeperId,
+                    [
+                        $storekeeperRefundId
+                    ]
+                );
+
+            }
+
+            if ($totalRefunded == $order->getTotalPaid()) {
+                if ($storeKeeperOrder['status'] != 'refunded') {
+                    $this->refundAllOrderItems($order, $storekeeperId, [
+
+                    ]);  
+                }
+            }
+        }
+    }
+
+    public function newWebPayment($storeId, $parameters = []) 
+    {
+        return $this->authHelper->getModule('PaymentModule', $storeId)
+            ->newWebPayment($parameters);
+    }
+
+    public function attachPaymentIdsToOrder($storeId, $storeKeeperId, $paymentIds = [])
+    {
+        $this->authHelper->getModule('ShopModule', $storeId)
+            ->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
+    }
+
     /**
      * @param Order $order
      * @return array
@@ -158,35 +220,44 @@ class Orders extends AbstractHelper
     {
         $payload = [];
 
-
         $rates = [];
         $taxFreeId = null;
+
+        $rates = $this->authHelper->getTaxRates($order->getStoreId(), 'WO');
+        foreach ($rates['data'] ?? [] as $rate) {
+            if ($rate['alias'] == 'special_applicable_not_vat') {
+                $taxFreeId = $rate['id'];
+                break;
+            }
+        }
+
         if ($order->getTaxAmount() > 0) {
             $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
-        } else {
-            $rates = $this->authHelper->getTaxRates($order->getStoreId(), 'WO');
-            foreach ($rates['data'] ?? [] as $rate) {
-                if ($rate['alias'] == 'special_applicable_not_vat') {
-                    $taxFreeId = $rate['id'];
-                    break;
-                }
-            }
         }
 
         foreach ($order->getItems() as $item) {
             $shopProductId = '';
+
             if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
                 $shopProductId = $item->getProduct()->getStorekeeperProductId();
             }
 
             $payloadItem = [
                 'sku' => $item->getSku(),
-                'ppu_wt' => $item->getPriceInclTax(),
-                'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
+                // keep this here for future reference
+                // 'ppu_wt' => $item->getPriceInclTax(),
+                // 'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
                 'quantity' => $item->getQtyOrdered(),
                 'name' => $item->getName(),
                 'shop_product_id' => $shopProductId,
             ];
+
+            if (((float)$item->getTaxAmount()) > 0) {
+                $payloadItem['ppu_wt'] = $item->getPriceInclTax();
+                $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
+            } else {
+                $payloadItem['ppu_wt'] = $item->getPrice();
+            }
 
             $taxPercent = ((float) $item->getTaxPercent()) / 100;
             if ($taxPercent > 0) {
@@ -204,14 +275,12 @@ class Orders extends AbstractHelper
             $payload[] = $payloadItem;
         }
 
-
         if (!$order->getIsVirtual()) {
-
             $payloadItem = [
                 'sku' => $order->getShippingMethod(),
                 'ppu_wt' => $order->getShippingAmount() + $order->getShippingTaxAmount(),
                 'quantity' => 1,
-                'name' => $order->getShippingMethod(),
+                'name' => $order->getShippingDescription(),
                 'is_shipping' => true,
             ];
 
@@ -241,6 +310,17 @@ class Orders extends AbstractHelper
             }
 
             $payload[] = $payloadItem;
+        }
+
+        if ($discountAmount = (float) $order->getDiscountAmount()) {
+            $payload[] = [
+                'is_discount' => true,
+                'name' => __("Discount"),
+                'sku' => 'DS-101',
+                'ppu_wt' => $discountAmount,
+                'quantity' => 1,
+                'tax_rate_id' => $taxFreeId, // tax rate for discounted products
+            ];
         }
 
         return $payload;
@@ -362,18 +442,16 @@ class Orders extends AbstractHelper
      */
     public function update($order, $storeKeeperId)
     {
-
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
-        // it might be so that this store has been previously connected and has "old" 
+        // it might be so that this store has been previously connected and has "old"
         // StoreKeeper orders
         if (empty($storeKeeperOrder)) {
             return;
         }
 
         $statusMapping = $this->statusMapping();
-
-        if (!isset($storeKeeperOrder['status'])) {
+        if (!isset($storeKeeperOrder['status'])) {            
             // no status
             return;
         }
@@ -383,15 +461,19 @@ class Orders extends AbstractHelper
             return;
         }
 
-        if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
-            $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
-        }
-
-        $this->updateStoreKeeperOrder($order, $storeKeeperId);
-
-        if ($order->getStatus() !== 'canceled') {
+        if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
+            if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
+                $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+            }
+    
+            $this->updateStoreKeeperOrder($order, $storeKeeperId);
             $this->createShipment($order, $storeKeeperId);
         }
+
+        if ($this->hasRefund($order)) {
+            $this->applyRefund($order);
+        }
+
     }
 
     /**
@@ -463,6 +545,10 @@ class Orders extends AbstractHelper
                 }
             }
         }
+
+        if ($this->hasRefund($order)) {
+            $this->applyRefund($order);
+        }
     }
 
     /**
@@ -481,7 +567,7 @@ class Orders extends AbstractHelper
             )
             ->addFilter(
                 'status',
-                ['processing', 'canceled', 'complete'],
+                ['processing', 'canceled', 'closed', 'complete'],
                 'in'
             )
             ->setPageSize(

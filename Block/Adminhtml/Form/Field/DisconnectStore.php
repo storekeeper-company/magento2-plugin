@@ -15,7 +15,7 @@ use Magento\Framework\Data\Form\Element\CollectionFactory;
 
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
+class DisconnectStore extends \Magento\Framework\Data\Form\Element\AbstractElement
 {
     public function __construct(
         Factory $factoryElement,
@@ -37,10 +37,9 @@ class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
     public function getElementHtml()
     {
         $storeId = $this->request->getParam('store');
-
         if ($this->authHelper->isConnected($storeId)) {
-            $url = $this->backendUrlManager->getUrl('storekeeper/index/index', ['storeId' => $storeId]);
-            return "<a href='{$url}'>" . __("Refresh store information") . "</a>";
+            $url = $this->backendUrlManager->getUrl('storekeeper/index/disconnect', ['storeId' =>$this->request->getParam('store')]);
+            return "<a href='{$url}' class='action-default'>" . __("Disconnect from StoreKeeper") . "</a>";
         }
     }
 }

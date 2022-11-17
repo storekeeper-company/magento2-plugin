@@ -120,6 +120,11 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $base64;
     }
 
+    public function getStoreBaseUrl()
+    {
+        return $this->storeManager->getStore()->getBaseUrl();
+    }
+
     private $storeShopIds = null;
 
     public function getStoreShopIds()
@@ -154,18 +159,11 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getAdapter($storeId)
     {
-        // $apiUrl = $this->getScopeConfigValue(
-        //     'storekeeper_general/general/storekeeper_api_url',
-        //     $storeId,
-        //     \Magento\Store\Model\ScopeInterface::SCOPE_STORES
-        // );
-
         $syncAuth = $this->getSyncAuth($storeId);
 
         if (!empty($syncAuth) && isset($syncAuth['account'])) {
             $apiUrl = "https://api-{$syncAuth['account']}.storekeepercloud.com/";
         }
-
 
         $adapter = new FullJsonAdapter($apiUrl);
         return $adapter;
@@ -198,14 +196,61 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function getSyncAuth($storeId)
     {
-        return json_decode(
-            $this->getScopeConfigValue(
-                "storekeeper_general/general/storekeeper_sync_auth",
-                $storeId,
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORES
-            ),
-            true
+        $sync_auth = $this->getScopeConfigValue(
+            "storekeeper_general/general/storekeeper_sync_auth",
+            $storeId,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES
         );
+
+        if (!empty($sync_auth)) {
+            return json_decode($sync_auth, true);
+        }
+        return null;
+    }
+
+    public function isConnected($storeId)
+    {
+        return !empty($this->getSyncAuth($storeId));
+    }
+
+    public function disconnectStore($storeId)
+    {
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_sync_auth",
+            null,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_guest_auth",
+            null,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_shop_id",
+            null,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_shop_name",
+            null,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+
+        $this->configWriter->save(
+            "storekeeper_general/general/storekeeper_store_information",
+            null,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
+            $storeId
+        );
+
+        $this->cache->cleanType('config');
     }
 
     public function getLanguageForStore($storeId)

@@ -2,6 +2,20 @@
 
 Connect your Magento 2 stores to StoreKeeper.
 
+# Important Notice
+
+Due to Tax Calculations, your shop has to have it's Customer Taxes set to be calculated "Before Discount".
+
+Here's a quick guide on how to configure your store:
+
+1. Log into the Magento 2 back
+
+2. Go to "Stores" > "Configuration"
+
+3. In the sidebar expand the "Sales" section and click on "Tax"
+
+3. Expand the "Calculation Settings" section and set "Apply Customer Tax" to "Before Discount"
+
 # Installation
 
 1. Go to your Magento 2 directory and install the plugin via `composer`:
