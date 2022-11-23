@@ -102,9 +102,36 @@ class Customers extends AbstractHelper
      */
     public function createStorekeeperCustomerByOrder(Order $order): int
     {
-        $customer = $this->customerRepositoryInterface->getById($order->getCustomerId());
+        if (!$order->getCustomerIsGuest()) {
+            $customer = $this->customerRepositoryInterface->getById($order->getCustomerId());
+            return $this->createStoreKeeperCustomer($customer);
+        }
 
-        return $this->createStoreKeeperCustomer($customer);
+        $billingAddress = $order->getBillingAddress();
+        $shippingAddress = $order->getShippingAddress();
+
+        if (!$shippingAddress) {
+            $shippingAddress = $billingAddress;
+        }
+
+        $data = [
+            'relation' => [
+                'business_data' => $this->getBusinessDataFromOrder($order),
+                'contact_person' => $this->getContactPersonFromOrder($order),
+                'contact_set' => $this->getContactSetFromOrder($order),
+                'contact_address' => $this->mapAddress($shippingAddress),
+                'address_billing' => $this->mapAddress($billingAddress),
+                'subuser' => [
+                    'login' => $order->getCustomerEmail(),
+                    'email' => $order->getCustomerEmail()
+                ]
+            ]
+        ];
+
+        $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
+
+        return (int) $relationDataId;
+
 
         // $data = [
         //     'relation' => [
@@ -151,6 +178,7 @@ class Customers extends AbstractHelper
         return [
             'familyname' => $order->getCustomerLastname(),
             'firstname' => $order->getCustomerFirstname(),
+            'name' => $order->getCustomerName(),
             'contact_set' => $this->getContactSetFromOrder($order)
         ];
     }
@@ -162,10 +190,11 @@ class Customers extends AbstractHelper
     public function mapAddress($address): array
     {
         return [
+            'name' => $address->getName(),
             'city' => $address->getCity(),
             'zipcode' => $address->getPostcode(),
             'street' => $address->getStreet()[0],
-            'streetnumber' => '',
+            'streetnumber' => $address->getStreet()[1] ?? '',
             'country_iso2' => $address->getCountryId(),
         ];
     }
