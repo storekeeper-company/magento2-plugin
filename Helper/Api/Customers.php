@@ -24,10 +24,12 @@ class Customers extends AbstractHelper
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface,
         Context $context
     ) {
         $this->authHelper = $authHelper;
         $this->addressFactory = $addressFactory;
+        $this->customerRepositoryInterface = $customerRepositoryInterface;
 
         parent::__construct($context);
     }
@@ -100,23 +102,27 @@ class Customers extends AbstractHelper
      */
     public function createStorekeeperCustomerByOrder(Order $order): int
     {
-        $data = [
-            'relation' => [
-                'business_data' => $this->getBusinessDataFromOrder($order),
-                'contact_person' => $this->getContactPersonFromOrder($order),
-                'contact_set' => $this->getContactSetFromOrder($order),
-                'contact_address' => $this->mapAddress($order->getShippingAddress()),
-                'address_billing' => $this->mapAddress($order->getBillingAddress()),
-                'subuser' => [
-                    'login' => $order->getCustomerEmail(),
-                    'email' => $order->getCustomerEmail()
-                ]
-            ]
-        ];
+        $customer = $this->customerRepositoryInterface->getById($order->getCustomerId());
 
-        $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
+        return $this->createStoreKeeperCustomer($customer);
 
-        return (int) $relationDataId;
+        // $data = [
+        //     'relation' => [
+        //         'business_data' => $this->getBusinessDataFromOrder($order),
+        //         'contact_person' => $this->getContactPersonFromOrder($order),
+        //         'contact_set' => $this->getContactSetFromOrder($order),
+        //         'contact_address' => $this->mapAddress($order->getShippingAddress()),
+        //         'address_billing' => $this->mapAddress($order->getBillingAddress()),
+        //         'subuser' => [
+        //             'login' => $order->getCustomerEmail(),
+        //             'email' => $order->getCustomerEmail()
+        //         ]
+        //     ]
+        // ];
+
+        // $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
+
+        // return (int) $relationDataId;
     }
 
     /**
