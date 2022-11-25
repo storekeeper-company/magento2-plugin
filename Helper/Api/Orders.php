@@ -101,7 +101,7 @@ class Orders extends AbstractHelper
                 ],
                 'contact_set' => [
                     'email' => $order->getCustomerEmail(),
-                    'name' => $order->getCustomerName(),
+                    'name' => $order->getBillingAddress()->getName(),
                     'phone' => $order->getBillingAddress()->getTelephone()
                 ],
                 'contact_address' => $this->customersHelper->mapAddress($order->getBillingAddress()),
@@ -111,14 +111,23 @@ class Orders extends AbstractHelper
 
         if (!$order->getIsVirtual()) {
             $payload['shipping_address'] = [
-                'contact_address' => [
-                    'city' => $order->getBillingAddress()->getCity(),
-                    'zipcode' => $order->getShippingAddress()->getPostcode(),
-                    'street' => $order->getShippingAddress()->getStreet()[0],
-                    'streetnumber' => '',
-                    'country_iso2' => $order->getShippingAddress()->getCountryId()
-                ]
+                'contact_set' => [
+                    'email' => $order->getCustomerEmail(),
+                    'name' => $order->getShippingAddress()->getName(),
+                    'phone' => $order->getShippingAddress()->getTelephone()
+                ],
+                'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
             ];
+            // $payload['shipping_address'] = [
+            //     'contact_address' => [
+            //         'city' => $order->getBillingAddress()->getCity(),
+            //         'zipcode' => $order->getShippingAddress()->getPostcode(),
+            //         'street' => $order->getShippingAddress()->getStreet()[0],
+            //         'streetnumber' => '',
+            //         'country_iso2' => $order->getShippingAddress()->getCountryId()
+            //     ]
+            // ];
+
         }
 
         if (!$isUpdate) {
