@@ -24,10 +24,12 @@ class Customers extends AbstractHelper
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface,
         Context $context
     ) {
         $this->authHelper = $authHelper;
         $this->addressFactory = $addressFactory;
+        $this->customerRepositoryInterface = $customerRepositoryInterface;
 
         parent::__construct($context);
     }
@@ -100,13 +102,25 @@ class Customers extends AbstractHelper
      */
     public function createStorekeeperCustomerByOrder(Order $order): int
     {
+        if (!$order->getCustomerIsGuest()) {
+            $customer = $this->customerRepositoryInterface->getById($order->getCustomerId());
+            return $this->createStoreKeeperCustomer($customer);
+        }
+
+        $billingAddress = $order->getBillingAddress();
+        $shippingAddress = $order->getShippingAddress();
+
+        if (!$shippingAddress) {
+            $shippingAddress = $billingAddress;
+        }
+
         $data = [
             'relation' => [
                 'business_data' => $this->getBusinessDataFromOrder($order),
                 'contact_person' => $this->getContactPersonFromOrder($order),
                 'contact_set' => $this->getContactSetFromOrder($order),
-                'contact_address' => $this->mapAddress($order->getShippingAddress()),
-                'address_billing' => $this->mapAddress($order->getBillingAddress()),
+                'contact_address' => $this->mapAddress($shippingAddress),
+                'address_billing' => $this->mapAddress($billingAddress),
                 'subuser' => [
                     'login' => $order->getCustomerEmail(),
                     'email' => $order->getCustomerEmail()
@@ -117,6 +131,25 @@ class Customers extends AbstractHelper
         $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
 
         return (int) $relationDataId;
+
+
+        // $data = [
+        //     'relation' => [
+        //         'business_data' => $this->getBusinessDataFromOrder($order),
+        //         'contact_person' => $this->getContactPersonFromOrder($order),
+        //         'contact_set' => $this->getContactSetFromOrder($order),
+        //         'contact_address' => $this->mapAddress($order->getShippingAddress()),
+        //         'address_billing' => $this->mapAddress($order->getBillingAddress()),
+        //         'subuser' => [
+        //             'login' => $order->getCustomerEmail(),
+        //             'email' => $order->getCustomerEmail()
+        //         ]
+        //     ]
+        // ];
+
+        // $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
+
+        // return (int) $relationDataId;
     }
 
     /**
@@ -145,6 +178,7 @@ class Customers extends AbstractHelper
         return [
             'familyname' => $order->getCustomerLastname(),
             'firstname' => $order->getCustomerFirstname(),
+            'name' => $order->getCustomerName(),
             'contact_set' => $this->getContactSetFromOrder($order)
         ];
     }
@@ -156,10 +190,11 @@ class Customers extends AbstractHelper
     public function mapAddress($address): array
     {
         return [
+            'name' => $address->getName(),
             'city' => $address->getCity(),
             'zipcode' => $address->getPostcode(),
             'street' => $address->getStreet()[0],
-            'streetnumber' => '',
+            'streetnumber' => $address->getStreet()[1] ?? '',
             'country_iso2' => $address->getCountryId(),
         ];
     }
