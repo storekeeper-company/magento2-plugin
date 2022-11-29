@@ -5,12 +5,6 @@
  */
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Order\View\Tab;
 
-/**
- * Order Invoices grid
- *
- * @api
- * @since 100.0.2
- */
 class StoreKeeper extends \Magento\Backend\Block\Template implements \Magento\Backend\Block\Widget\Tab\TabInterface
 {
     protected $_template = "StoreKeeper_StoreKeeper::storekeeper/order/view/tab/storekeeper.phtml";
