@@ -13,14 +13,6 @@ class CheckoutSubmitAllAfterObserver implements \Magento\Framework\Event\Observe
         $this->authHelper = $authHelper;
     }
 
-    /**
-     * Handle post order registration and order tieing to guest customer
-     *
-     * @param Observer $observer
-     * @event checkout_submit_after
-     *
-     * @return void
-     */
     public function execute(
         \Magento\Framework\Event\Observer $observer
     ) {
