@@ -24,12 +24,21 @@
         <?= $order->getStorekeeperOrderPendingSync() ? __("Yes") : __("No") ?>
     </p>
 
-        <?php if ( $storekeeperId = $order->getStorekeeperId()) : ?>
-            <p>
-                <strong><?=__("Storekeeper Order ID") ?></strong><br/>
-                <?= $storekeeperId ?>
-                <a href="<?= $block->getStorekeeperBackofficeOrderUrl($order) ?>" target="_blank"><?= __("View in backoffice") ?>
-            </p>
-        <?php endif ?>
+    <?php if ( $storekeeperId = $order->getStorekeeperId()) : ?>
+        <p>
+            <strong><?=__("Order ID") ?></strong><br/>
+            <?= $storekeeperId ?>
+            <a href="<?= $block->getStorekeeperBackofficeOrderUrl($order) ?>" target="_blank">
+                <?= __("View in backoffice") ?>
+            </a>
+        </p>
+    <?php endif ?>
+
+    <?php if ( $storekeeperOrderNumber = $order->getStorekeeperOrderNumber()) : ?>
+        <p>
+            <strong><?=__("Order #") ?></strong><br/>
+            <?= $storekeeperOrderNumber ?>
+        </p>
+    <?php endif ?>
 
 </div>

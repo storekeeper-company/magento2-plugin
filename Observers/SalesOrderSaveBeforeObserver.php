@@ -26,7 +26,11 @@ class SalesOrderSaveBeforeObserver implements \Magento\Framework\Event\ObserverI
     ) {
         $order = $observer->getEvent()->getOrder();
 
-        if ($this->authHelper->isConnected($order->getStoreId()) && $order->getStorekeeperOrderPendingSync() == 0) {
+        if (
+            $this->authHelper->isConnected($order->getStoreId()) &&
+            $order->getStorekeeperOrderPendingSyncSkip() == false &&
+            $order->getStorekeeperOrderPendingSync() == 0
+        ) {
             $order = $observer->getEvent()->getOrder();
             $order->setStorekeeperOrderPendingSync(1);
             $order->save();

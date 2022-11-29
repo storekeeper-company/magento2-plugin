@@ -456,14 +456,11 @@ class Orders extends AbstractHelper
             return;
         }
 
-        if (!isset($statusMapping[$storeKeeperOrder['status']])) {
-            // unsupported status
-            return;
-        }
-
         if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
-            if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
-                $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+            if (isset($statusMapping[$storeKeeperOrder['status']])) {
+                if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
+                    $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+                }
             }
     
             $this->updateStoreKeeperOrder($order, $storeKeeperId);
@@ -476,6 +473,8 @@ class Orders extends AbstractHelper
 
         $order->setStorekeeperOrderLastSync(time());
         $order->setStorekeeperOrderPendingSync(0);
+        $order->setStorekeeperOrderPendingSyncSkip(true);
+        $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
 
         try {
             $this->orderRepository->save($order);
@@ -538,6 +537,11 @@ class Orders extends AbstractHelper
         $order->setStorekeeperId($storeKeeperId);
         $order->setStorekeeperOrderLastSync(time());
         $order->setStorekeeperOrderPendingSync(0);
+        $order->setStorekeeperOrderPendingSyncSkip(true);
+
+        $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
+
+        $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
 
         try {
             $this->orderRepository->save($order);
@@ -567,6 +571,9 @@ class Orders extends AbstractHelper
         if ($this->hasRefund($order)) {
             $this->applyRefund($order);
         }
+
+
+
     }
 
     /**
