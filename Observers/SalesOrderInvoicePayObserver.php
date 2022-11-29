@@ -1,10 +1,6 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Observers;
 
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
-use Magento\Sales\Model\Order;
-
 class SalesOrderInvoicePayObserver implements \Magento\Framework\Event\ObserverInterface
 {
     public function __construct(
