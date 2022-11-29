@@ -475,6 +475,7 @@ class Orders extends AbstractHelper
         }
 
         $order->setStorekeeperOrderLastSync(time());
+        $order->setStorekeeperOrderPendingSync(0);
 
         try {
             $this->orderRepository->save($order);
@@ -504,7 +505,11 @@ class Orders extends AbstractHelper
         $statusMapping = $this->statusMapping();
 
         try {
-            $this->authHelper->getModule('ShopModule', $order->getStoreId())->updateOrderStatus(['status' => array_search($order->getStatus(), $statusMapping)], $storeKeeperId);
+            if ($status = array_search($order->getStatus(), $statusMapping)) {
+                $this->authHelper->getModule('ShopModule', $order->getStoreId())->updateOrderStatus([
+                    'status' => $status
+                ], $storeKeeperId);
+            }
         } catch (GeneralException $e) {
             throw new \Magento\Framework\Exception\LocalizedException(
                 __($e->getMessage())
@@ -532,6 +537,7 @@ class Orders extends AbstractHelper
         $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
         $order->setStorekeeperId($storeKeeperId);
         $order->setStorekeeperOrderLastSync(time());
+        $order->setStorekeeperOrderPendingSync(0);
 
         try {
             $this->orderRepository->save($order);
@@ -578,10 +584,15 @@ class Orders extends AbstractHelper
                 'eq'
             )
             ->addFilter(
-                'status',
-                ['processing', 'canceled', 'closed', 'complete'],
-                'in'
+                'storekeeper_order_pending_sync',
+                1,
+                'eq'
             )
+            // ->addFilter(
+            //     'status',
+            //     ['processing', 'canceled', 'closed', 'complete'],
+            //     'in'
+            // )
             ->setPageSize(
                 $pageSize
             )

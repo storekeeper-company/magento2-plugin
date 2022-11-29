@@ -196,6 +196,14 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->auth;
     }
 
+    public function isEnabled($storeId) {
+        return $this->getScopeConfigValue(
+            "storekeeper_general/general/enabled",
+            $storeId,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES
+        );
+    }
+
     private function getSyncAuth($storeId)
     {
         $sync_auth = $this->getScopeConfigValue(
@@ -212,7 +220,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function isConnected($storeId)
     {
-        return !empty($this->getSyncAuth($storeId));
+        return $this->isEnabled($storeId) && !empty($this->getSyncAuth($storeId));
     }
 
     public function disconnectStore($storeId)
