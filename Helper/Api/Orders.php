@@ -118,6 +118,7 @@ class Orders extends AbstractHelper
                 ],
                 'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
             ];
+
         }
 
         if (!$isUpdate) {
@@ -473,6 +474,16 @@ class Orders extends AbstractHelper
             $this->applyRefund($order);
         }
 
+        $order->setStorekeeperOrderLastSync(time());
+
+        try {
+            $this->orderRepository->save($order);
+        } catch (GeneralException $e) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __($e->getMessage())
+            );
+        }
+
     }
 
     /**
@@ -520,6 +531,7 @@ class Orders extends AbstractHelper
 
         $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
         $order->setStorekeeperId($storeKeeperId);
+        $order->setStorekeeperOrderLastSync(time());
 
         try {
             $this->orderRepository->save($order);

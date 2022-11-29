@@ -7,7 +7,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Sales\Model\Order;
 
-class StoreKeeperOrderId implements DataPatchInterface
+class StoreKeeperOrderNumber implements DataPatchInterface
 {
     /**
      * @var ModuleDataSetupInterface
@@ -33,9 +33,9 @@ class StoreKeeperOrderId implements DataPatchInterface
 
         $eavSetup->addAttribute(
             Order::ENTITY,
-            'storekeeper_id',
+            'storekeeper_order_number',
             [
-                'type' => 'int',
+                'type' => 'varchar',
                 'visible' => false,
                 'required' => true
             ]

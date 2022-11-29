@@ -1,0 +1,35 @@
+<div class="fieldset-wrapper order-information">
+    <?php
+
+        $order = $block->getOrder();
+
+        $storekeeperOrderNumber = $order->getStorekeeperOrderNumber();
+        $storekeeperId = $order->getStorekeeperId();
+        $storekeeperOrderLastSync = $order->getStorekeeperOrderLastSync();
+        $storekeeperOrderPendingSync = $order->getStorekeeperOrderPendingSync();
+
+    ?>
+
+    <p>
+        <strong><?=__("Last synchronised at") ?></strong><br/>
+        <?php if ( $storekeeperOrderLastSync = $order->getStorekeeperOrderLastSync()) : ?>
+            <?= date("Y-m-d H:i:s", $storekeeperOrderLastSync) ?>
+        <?php else : ?>
+            <?= __("Never") ?>
+        <?php endif ?>
+    </p>
+
+    <p>
+        <strong><?= __("Pending synchronisation") ?></strong><br/>
+        <?= $order->getStorekeeperOrderPendingSync() ? __("Yes") : __("No") ?>
+    </p>
+
+        <?php if ( $storekeeperId = $order->getStorekeeperId()) : ?>
+            <p>
+                <strong><?=__("Storekeeper Order ID") ?></strong><br/>
+                <?= $storekeeperId ?>
+                <a href="<?= $block->getStorekeeperBackofficeOrderUrl($order) ?>" target="_blank"><?= __("View in backoffice") ?>
+            </p>
+        <?php endif ?>
+
+</div>
