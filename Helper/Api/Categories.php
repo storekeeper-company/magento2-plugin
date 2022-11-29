@@ -334,7 +334,7 @@ HTML;
         $target->setStoreId($storeId);
 
         $productData = $target->getData();
-        
+
         $productData['name'] = null;
         $productData['description'] = false;
         $target->setData($productData);
