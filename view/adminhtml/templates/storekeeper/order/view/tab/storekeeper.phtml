@@ -1,13 +1,6 @@
 <div class="fieldset-wrapper order-information">
     <?php
-
         $order = $block->getOrder();
-
-        $storekeeperOrderNumber = $order->getStorekeeperOrderNumber();
-        $storekeeperId = $order->getStorekeeperId();
-        $storekeeperOrderLastSync = $order->getStorekeeperOrderLastSync();
-        $storekeeperOrderPendingSync = $order->getStorekeeperOrderPendingSync();
-
     ?>
 
     <p>
@@ -24,7 +17,7 @@
         <?= $order->getStorekeeperOrderPendingSync() ? __("Yes") : __("No") ?>
     </p>
 
-    <?php if ( $storekeeperId = $order->getStorekeeperId()) : ?>
+    <?php if ($storekeeperId = $order->getStorekeeperId()) : ?>
         <p>
             <strong><?=__("Order ID") ?></strong><br/>
             <?= $storekeeperId ?>
@@ -34,7 +27,7 @@
         </p>
     <?php endif ?>
 
-    <?php if ( $storekeeperOrderNumber = $order->getStorekeeperOrderNumber()) : ?>
+    <?php if ($storekeeperOrderNumber = $order->getStorekeeperOrderNumber()) : ?>
         <p>
             <strong><?=__("Order #") ?></strong><br/>
             <?= $storekeeperOrderNumber ?>
