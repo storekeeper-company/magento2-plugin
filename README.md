@@ -28,7 +28,7 @@ composer require storekeeper/magento2-plugin
 bin/magento setup:upgrade;
 bin/magento setup:di:compile;
 bin/magento setup:static-content:deploy;
-bin/magento cache:clear;
+bin/magento cache:clean;
 ```
 
 # Configuration
@@ -39,23 +39,21 @@ bin/magento cache:clear;
 
 3. Enable the plugin by setting the field `Enabled` to `Yes`
 
-4. Fill in the `API URL` for your StoreKeeper environment and set the `Sync Mode` to `Order`
+6. Copy your `Auth Key`
 
-5. Copy your `Auth Key`
+7. Press the `Save` button
 
-6. Press the `Save` button
+8. Log into your StoreKeeper account
 
-7. Log into your StoreKeeper account
+9. Select the StoreKeeper Sales Channel you want to connect with
 
-8. Select the StoreKeeper Sales Channel you want to connect with
+10. Go to `Settings`
 
-9. Go to `Settings`
+11. Scroll down to the `Synchronisation` button and click it
 
-10. Scroll down to the `Synchronisation` button and click it
+12. Paste the `Auth Key` you previously copied from Magento 2 into the `Api Key` field and click `Connect`
 
-11. Paste the `Auth Key` you previously copied from Magento 2 into the `Api Key` field and click `Connect`
-
-12. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
+13. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
 
 ## Cron commands
 

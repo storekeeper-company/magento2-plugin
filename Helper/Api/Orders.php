@@ -96,7 +96,7 @@ class Orders extends AbstractHelper
             'relation_data_id' => $relationDataId,
             'billing_address' => [
                 'business_data' => [
-                    'name' => $order->getCustomerName(),
+                    'name' => $order->getBillingAddress()->getCompany(),
                     'country_iso2' => $order->getBillingAddress()->getCountryId()
                 ],
                 'contact_set' => [
@@ -111,6 +111,10 @@ class Orders extends AbstractHelper
 
         if (!$order->getIsVirtual()) {
             $payload['shipping_address'] = [
+                'business_data' => [
+                    'name' => $order->getShippingAddress()->getCompany(),
+                    'country_iso2' => $order->getShippingAddress()->getCountryId()
+                ],
                 'contact_set' => [
                     'email' => $order->getCustomerEmail(),
                     'name' => $order->getShippingAddress()->getName(),
@@ -118,20 +122,12 @@ class Orders extends AbstractHelper
                 ],
                 'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
             ];
-            // $payload['shipping_address'] = [
-            //     'contact_address' => [
-            //         'city' => $order->getBillingAddress()->getCity(),
-            //         'zipcode' => $order->getShippingAddress()->getPostcode(),
-            //         'street' => $order->getShippingAddress()->getStreet()[0],
-            //         'streetnumber' => '',
-            //         'country_iso2' => $order->getShippingAddress()->getCountryId()
-            //     ]
-            // ];
 
         }
 
         if (!$isUpdate) {
             $payload['order_items'] = $orderItemsPayload;
+            $payload['shop_order_number'] = $order->getIncrementId();
         } else {
             $payload['order_items__remove'] = null;
             $payload['order_items__do_not_change'] = true;
@@ -145,7 +141,6 @@ class Orders extends AbstractHelper
                 ]
             ];
         }
-
         return $payload;
     }
 
@@ -360,7 +355,7 @@ class Orders extends AbstractHelper
         /** @var Order $order */
         $order = $this->getOrderByStoreKeeperId($storeKeeperId);
 
-        if ($order->getStatus() !== 'canceled') {
+        if ($order && $order->getStatus() !== 'canceled') {
             $this->createShipment($order, $storeKeeperId);
         }
     }
@@ -465,14 +460,11 @@ class Orders extends AbstractHelper
             return;
         }
 
-        if (!isset($statusMapping[$storeKeeperOrder['status']])) {
-            // unsupported status
-            return;
-        }
-
         if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
-            if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
-                $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+            if (isset($statusMapping[$storeKeeperOrder['status']])) {
+                if ($statusMapping[$storeKeeperOrder['status']] !== $order->getStatus() && $storeKeeperOrder['status'] !== 'complete') {
+                    $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+                }
             }
     
             $this->updateStoreKeeperOrder($order, $storeKeeperId);
@@ -481,6 +473,19 @@ class Orders extends AbstractHelper
 
         if ($this->hasRefund($order)) {
             $this->applyRefund($order);
+        }
+
+        $order->setStorekeeperOrderLastSync(time());
+        $order->setStorekeeperOrderPendingSync(0);
+        $order->setStorekeeperOrderPendingSyncSkip(true);
+        $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
+
+        try {
+            $this->orderRepository->save($order);
+        } catch (GeneralException $e) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __($e->getMessage())
+            );
         }
 
     }
@@ -503,7 +508,11 @@ class Orders extends AbstractHelper
         $statusMapping = $this->statusMapping();
 
         try {
-            $this->authHelper->getModule('ShopModule', $order->getStoreId())->updateOrderStatus(['status' => array_search($order->getStatus(), $statusMapping)], $storeKeeperId);
+            if ($status = array_search($order->getStatus(), $statusMapping)) {
+                $this->authHelper->getModule('ShopModule', $order->getStoreId())->updateOrderStatus([
+                    'status' => $status
+                ], $storeKeeperId);
+            }
         } catch (GeneralException $e) {
             throw new \Magento\Framework\Exception\LocalizedException(
                 __($e->getMessage())
@@ -527,8 +536,17 @@ class Orders extends AbstractHelper
     public function onCreate(Order $order)
     {
         $payload = $this->prepareOrder($order, false);
-        $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
+
+        // $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
+        $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
+        $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
+        $order->setStorekeeperOrderLastSync(time());
+        $order->setStorekeeperOrderPendingSync(0);
+        $order->setStorekeeperOrderPendingSyncSkip(true);
+        $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
+
+        // $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
         try {
             $this->orderRepository->save($order);
@@ -558,6 +576,9 @@ class Orders extends AbstractHelper
         if ($this->hasRefund($order)) {
             $this->applyRefund($order);
         }
+
+
+
     }
 
     /**
@@ -575,10 +596,15 @@ class Orders extends AbstractHelper
                 'eq'
             )
             ->addFilter(
-                'status',
-                ['processing', 'canceled', 'closed', 'complete'],
-                'in'
+                'storekeeper_order_pending_sync',
+                1,
+                'eq'
             )
+            // ->addFilter(
+            //     'status',
+            //     ['processing', 'canceled', 'closed', 'complete'],
+            //     'in'
+            // )
             ->setPageSize(
                 $pageSize
             )

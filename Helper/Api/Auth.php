@@ -160,9 +160,11 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     public function getAdapter($storeId)
     {
         $syncAuth = $this->getSyncAuth($storeId);
-
+        $apiUrl = null;
         if (!empty($syncAuth) && isset($syncAuth['account'])) {
             $apiUrl = "https://api-{$syncAuth['account']}.storekeepercloud.com/";
+        } else {
+            throw new \Exception("An error occurred: Store #{$storeId} is not connected to StoreKeeper");
         }
 
         $adapter = new FullJsonAdapter($apiUrl);
@@ -194,6 +196,14 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->auth;
     }
 
+    public function isEnabled($storeId) {
+        return $this->getScopeConfigValue(
+            "storekeeper_general/general/enabled",
+            $storeId,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORES
+        );
+    }
+
     private function getSyncAuth($storeId)
     {
         $sync_auth = $this->getScopeConfigValue(
@@ -210,7 +220,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function isConnected($storeId)
     {
-        return !empty($this->getSyncAuth($storeId));
+        return $this->isEnabled($storeId) && !empty($this->getSyncAuth($storeId));
     }
 
     public function disconnectStore($storeId)
