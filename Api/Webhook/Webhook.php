@@ -118,19 +118,22 @@ class Webhook
                     foreach ($eventNames as $eventName) {
     
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                            // $messages[] = "Skipping stock changes: mode not allowed";
+                            $messages[] = "Processing event \"stock_change\"";
                             // continue;
                         } else if ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing entity \"ShopProduct\"";
                             // $messages[] = "Skipping products: mode not allowed";
                             // continue;
                         } else if ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing entity \"Category\"";
                             // $messages[] = "Skipping categories: mode not allowed";
                             // continue;
                         } else if ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing entity \"Order\"";
                             // $messages[] = "Skipping orders: mode not allowed";
                             // continue;
                         } else {
-                            $messages[] = "Skipping event {$entity} {$eventName}: mode not allowed";
+                            $messages[] = "Skipping {$entity}::{$eventName}: mode not allowed";
                             continue;
                         }
 

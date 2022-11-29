@@ -49,7 +49,6 @@ class Consumer
     {
         try {
 
-
             $data = json_decode($request, true);
             $storeId = $data['storeId'] ?? null;
             $module = $data['module'];

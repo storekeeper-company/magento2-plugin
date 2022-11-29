@@ -179,7 +179,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private function updateProductStock($storeId, $product, $product_stock)
     {
         $stockItem = $this->stockRegistry->getStockItem($product->getId()); 
-
         if ($stockItem) {
             if ($stockItem->getManageStock()) {
                 $stockItem->setData('is_in_stock', $product_stock['value'] > 0); 

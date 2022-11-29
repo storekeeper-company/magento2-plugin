@@ -96,7 +96,7 @@ class Orders extends AbstractHelper
             'relation_data_id' => $relationDataId,
             'billing_address' => [
                 'business_data' => [
-                    'name' => $order->getCustomerName(),
+                    'name' => $order->getBillingAddress()->getCompany(),
                     'country_iso2' => $order->getBillingAddress()->getCountryId()
                 ],
                 'contact_set' => [
@@ -111,6 +111,10 @@ class Orders extends AbstractHelper
 
         if (!$order->getIsVirtual()) {
             $payload['shipping_address'] = [
+                'business_data' => [
+                    'name' => $order->getShippingAddress()->getCompany(),
+                    'country_iso2' => $order->getShippingAddress()->getCountryId()
+                ],
                 'contact_set' => [
                     'email' => $order->getCustomerEmail(),
                     'name' => $order->getShippingAddress()->getName(),
@@ -351,7 +355,7 @@ class Orders extends AbstractHelper
         /** @var Order $order */
         $order = $this->getOrderByStoreKeeperId($storeKeeperId);
 
-        if ($order->getStatus() !== 'canceled') {
+        if ($order && $order->getStatus() !== 'canceled') {
             $this->createShipment($order, $storeKeeperId);
         }
     }
@@ -533,15 +537,16 @@ class Orders extends AbstractHelper
     {
         $payload = $this->prepareOrder($order, false);
 
-        $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
+        // $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
+        $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
+        $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
         $order->setStorekeeperOrderLastSync(time());
         $order->setStorekeeperOrderPendingSync(0);
         $order->setStorekeeperOrderPendingSyncSkip(true);
-
-        $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
-
         $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
+
+        // $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
         try {
             $this->orderRepository->save($order);
