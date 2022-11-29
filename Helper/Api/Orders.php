@@ -106,8 +106,7 @@ class Orders extends AbstractHelper
                 ],
                 'contact_address' => $this->customersHelper->mapAddress($order->getBillingAddress()),
                 'address_billing' => $this->customersHelper->mapAddress($order->getBillingAddress())
-            ],
-            'shop_order_number' => $order->getIncrementId()
+            ]
         ];
 
         if (!$order->getIsVirtual()) {
@@ -119,20 +118,11 @@ class Orders extends AbstractHelper
                 ],
                 'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
             ];
-            // $payload['shipping_address'] = [
-            //     'contact_address' => [
-            //         'city' => $order->getBillingAddress()->getCity(),
-            //         'zipcode' => $order->getShippingAddress()->getPostcode(),
-            //         'street' => $order->getShippingAddress()->getStreet()[0],
-            //         'streetnumber' => '',
-            //         'country_iso2' => $order->getShippingAddress()->getCountryId()
-            //     ]
-            // ];
-
         }
 
         if (!$isUpdate) {
             $payload['order_items'] = $orderItemsPayload;
+            $payload['shop_order_number'] = $order->getIncrementId();
         } else {
             $payload['order_items__remove'] = null;
             $payload['order_items__do_not_change'] = true;
@@ -146,7 +136,6 @@ class Orders extends AbstractHelper
                 ]
             ];
         }
-
         return $payload;
     }
 
@@ -528,6 +517,7 @@ class Orders extends AbstractHelper
     public function onCreate(Order $order)
     {
         $payload = $this->prepareOrder($order, false);
+
         $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
         $order->setStorekeeperId($storeKeeperId);
 
