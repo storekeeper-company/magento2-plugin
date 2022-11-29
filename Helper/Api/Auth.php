@@ -160,9 +160,11 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     public function getAdapter($storeId)
     {
         $syncAuth = $this->getSyncAuth($storeId);
-
+        $apiUrl = null;
         if (!empty($syncAuth) && isset($syncAuth['account'])) {
             $apiUrl = "https://api-{$syncAuth['account']}.storekeepercloud.com/";
+        } else {
+            throw new \Exception("An error occurred: Store #{$storeId} is not connected to StoreKeeper");
         }
 
         $adapter = new FullJsonAdapter($apiUrl);

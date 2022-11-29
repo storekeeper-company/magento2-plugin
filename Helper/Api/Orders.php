@@ -106,7 +106,8 @@ class Orders extends AbstractHelper
                 ],
                 'contact_address' => $this->customersHelper->mapAddress($order->getBillingAddress()),
                 'address_billing' => $this->customersHelper->mapAddress($order->getBillingAddress())
-            ]
+            ],
+            'shop_order_number' => $order->getIncrementId()
         ];
 
         if (!$order->getIsVirtual()) {
