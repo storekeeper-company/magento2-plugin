@@ -75,6 +75,14 @@ It is recommended to add these commands to a `crontab` for them to be automatica
 45 * * * * bin/magento storekeeper:sync:products --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
 ```
 
+## Queue
+
+This plugin uses the Magento 2 queue consumer functionality. If you want to run the queue manually you can use the following command:
+
+```
+bin/magento queue:consumer:start storekeeper.queue.events
+```
+
 # Disconnecting
 
 Disconnecting your Magento 2 store can be done in two ways
