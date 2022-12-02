@@ -183,7 +183,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if ($stockItem) {
             if ($stockItem->getManageStock()) {
                 echo "  Managed Stock: Setting stock to {$product_stock['value']} for store {$storeId}\n";
-
                 $stockItem->setData('is_in_stock', $product_stock['value'] > 0); 
                 $stockItem->setData('qty', $product_stock['value']); 
                 $stockItem->setData('use_config_notify_stock_qty',1);
