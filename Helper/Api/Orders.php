@@ -157,10 +157,6 @@ class Orders extends AbstractHelper
             ];
         }
 
-        if ($order->getId() == 82) {
-            file_put_contents("payload.json", json_encode($payload));
-        }
-
         return $payload;
     }
 
