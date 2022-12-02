@@ -104,6 +104,11 @@ class Orders extends AbstractHelper
                     'name' => $order->getBillingAddress()->getName(),
                     'phone' => $order->getBillingAddress()->getTelephone()
                 ],
+                'contact_person' => [
+                    'firstname' => $order->getBillingAddress()->getFirstName(),
+                    'familyname_prefix' => '',
+                    'familyname' => $order->getBillingAddress()->getLastName(),
+                ],
                 'name' => $order->getBillingAddress()->getCompany() ?
                     $order->getBillingAddress()->getCompany() :
                     $order->getBillingAddress()->getName(),
@@ -123,12 +128,16 @@ class Orders extends AbstractHelper
                     'name' => $order->getShippingAddress()->getName(),
                     'phone' => $order->getShippingAddress()->getTelephone()
                 ],
+                'contact_person' => [
+                    'firstname' => $order->getShippingAddress()->getFirstName(),
+                    'familyname_prefix' => '',
+                    'familyname' => $order->getShippingAddress()->getLastName(),
+                ],
                 'name' => $order->getShippingAddress()->getCompany() ?
                     $order->getShippingAddress()->getCompany() :
                     $order->getShippingAddress()->getName(),
                 'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
             ];
-
         }
 
         if (!$isUpdate) {
@@ -147,6 +156,7 @@ class Orders extends AbstractHelper
                 ]
             ];
         }
+
         return $payload;
     }
 
