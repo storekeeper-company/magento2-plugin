@@ -104,6 +104,9 @@ class Orders extends AbstractHelper
                     'name' => $order->getBillingAddress()->getName(),
                     'phone' => $order->getBillingAddress()->getTelephone()
                 ],
+                'name' => $order->getBillingAddress()->getCompany() ?
+                    $order->getBillingAddress()->getCompany() :
+                    $order->getBillingAddress()->getName(),
                 'contact_address' => $this->customersHelper->mapAddress($order->getBillingAddress()),
                 'address_billing' => $this->customersHelper->mapAddress($order->getBillingAddress())
             ]
@@ -120,6 +123,9 @@ class Orders extends AbstractHelper
                     'name' => $order->getShippingAddress()->getName(),
                     'phone' => $order->getShippingAddress()->getTelephone()
                 ],
+                'name' => $order->getShippingAddress()->getCompany() ?
+                    $order->getShippingAddress()->getCompany() :
+                    $order->getShippingAddress()->getName(),
                 'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
             ];
 
