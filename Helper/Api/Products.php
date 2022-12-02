@@ -401,7 +401,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 ->setFlag('has_stock_status_filter', false);
 
             if (is_array($result) && isset($result['flat_product']) && isset($result['flat_product']['product'])) {
-                $collection->addAttributeToFilter('sku', $result['flat_product']['product']['sku']);
+                $collection->addAttributeToFilter('sku', $result['flat_product']['product']['sku'] ?? null);
             }
 
             if ($collection->count()) {
