@@ -57,7 +57,7 @@ class Consumer
             $value = $data['value'];
             $type = $data['type'];
 
-            echo "[{$type}] {$entity}({$value}): Starting... ";
+            echo "[{$type}] {$entity}({$value}): Starting...\n";
 
             if (is_null($storeId)) {
                 throw new \Exception("Missing store ID");
