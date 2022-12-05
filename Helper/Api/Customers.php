@@ -131,25 +131,6 @@ class Customers extends AbstractHelper
         $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
 
         return (int) $relationDataId;
-
-
-        // $data = [
-        //     'relation' => [
-        //         'business_data' => $this->getBusinessDataFromOrder($order),
-        //         'contact_person' => $this->getContactPersonFromOrder($order),
-        //         'contact_set' => $this->getContactSetFromOrder($order),
-        //         'contact_address' => $this->mapAddress($order->getShippingAddress()),
-        //         'address_billing' => $this->mapAddress($order->getBillingAddress()),
-        //         'subuser' => [
-        //             'login' => $order->getCustomerEmail(),
-        //             'email' => $order->getCustomerEmail()
-        //         ]
-        //     ]
-        // ];
-
-        // $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
-
-        // return (int) $relationDataId;
     }
 
     /**
@@ -178,7 +159,6 @@ class Customers extends AbstractHelper
         return [
             'familyname' => $order->getCustomerLastname(),
             'firstname' => $order->getCustomerFirstname(),
-            'name' => $order->getCustomerName(),
             'contact_set' => $this->getContactSetFromOrder($order)
         ];
     }
