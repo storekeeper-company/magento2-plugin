@@ -15,7 +15,7 @@ use Magento\Framework\Data\Form\Element\CollectionFactory;
 
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
+class AdditionalData extends \Magento\Framework\Data\Form\Element\AbstractElement
 {
     public function __construct(
         Factory $factoryElement,
@@ -25,22 +25,30 @@ class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
         ?Random $random,
         Auth $authHelper,
         \Magento\Framework\App\Request\Http $request,
-        \Magento\Backend\Model\Url $backendUrlManager,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
         $this->request = $request;
-        $this->backendUrlManager = $backendUrlManager;
     }
 
     public function getElementHtml()
     {
-        $storeId = $this->request->getParam('store');
 
-        if ($this->authHelper->isConnected($storeId)) {
-            $url = $this->backendUrlManager->getUrl('storekeeper/index/index', ['storeId' => $storeId]);
-            return "<a href='{$url}'>" . __("Refresh store information") . "</a>";
+        $version = 'unknown';
+
+        $composerFile = dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . "composer.json";
+        if (file_exists($composerFile)) {
+            $composerContents = file_get_contents($composerFile);
+            $composerJson = json_decode($composerContents, true);
+            if (isset($composerJson['version'])) {
+                $version = $composerJson['version'];
+            }
         }
+        return "
+            Version: {$version}
+        ";
     }
+
+    
 }

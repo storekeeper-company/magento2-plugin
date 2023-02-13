@@ -51,7 +51,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         File $file,
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterfaceFactory $sourceItemFactory,
-        ProductLinkInterfaceFactory $productLinkFactory
+        ProductLinkInterfaceFactory $productLinkFactory,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry, 
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -71,6 +72,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItemFactory = $sourceItemFactory;
         $this->productLinkFactory = $productLinkFactory;
+        $this->stockRegistry = $stockRegistry;
     }
 
     public function authCheck($storeId)
@@ -159,6 +161,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $product_stock = $result['flat_product']['product']['product_stock'];
 
             if ($product = $this->exists($storeId, $result)) {
+                echo "Updating product {$product->getId()}\n";
                 $this->updateProductStock($storeId, $product, $product_stock);
             } else {
                 echo "Can't update product because it doesn't exist\n";
@@ -176,10 +179,35 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function updateProductStock($storeId, $product, $product_stock)
     {
-        echo "update product stock\n";
-        $stockItem = $this->stockItem->load($product->getId(), 'product_id');
-        $stockItem->setQty($product_stock['value']);
-        $stockItem->save();
+        $stockItem = $this->stockRegistry->getStockItem($product->getId()); 
+        if ($stockItem) {
+            if ($stockItem->getManageStock()) {
+                echo "  Managed Stock: Setting stock to {$product_stock['value']} for store {$storeId}\n";
+                $stockItem->setData('is_in_stock', $product_stock['value'] > 0); 
+                $stockItem->setData('qty', $product_stock['value']); 
+                $stockItem->setData('use_config_notify_stock_qty',1);
+                $stockItem->save(); 
+
+                $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
+                $product->setQuantityAndStockStatus(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
+                $product->save();
+            } else {
+                echo "  Unmanaged stock, skipping product stock update\n";
+            }
+        // in some rare cases it can occur that a stock item doesn't exist in Magento 2
+        // if there's no existing stock item, we'll create it
+        } else {
+            echo "  Missing Stock Item: Creating stock to {$product_stock['value']} for store {$storeId}\n";
+            $stockItem->setData('is_in_stock', $product_stock['value'] > 0); 
+            $stockItem->setData('qty', $product_stock['value']); 
+            $stockItem->setData('manage_stock', true);
+            $stockItem->setData('use_config_notify_stock_qty',1);
+            $stockItem->save(); 
+
+            $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
+            $product->setQuantityAndStockStatus(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
+            $product->save();
+        }
     }
 
     public function updateById($storeId, $storeKeeperId)
@@ -382,6 +410,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 ->addAttributeToSelect('*')
                 ->addAttributeToFilter('storekeeper_product_id', $storekeeper_id)
                 ->setFlag('has_stock_status_filter', false);
+
+            if (is_array($result) && isset($result['flat_product']) && isset($result['flat_product']['product'])) {
+                $collection->addAttributeToFilter('sku', $result['flat_product']['product']['sku'] ?? null);
+            }
 
             if ($collection->count()) {
                 $firstItem = $collection->getFirstItem();

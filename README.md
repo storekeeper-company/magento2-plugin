@@ -2,6 +2,20 @@
 
 Connect your Magento 2 stores to StoreKeeper.
 
+# Important Notice
+
+Due to Tax Calculations, your shop has to have it's Customer Taxes set to be calculated "Before Discount".
+
+Here's a quick guide on how to configure your store:
+
+1. Log into the Magento 2 back
+
+2. Go to "Stores" > "Configuration"
+
+3. In the sidebar expand the "Sales" section and click on "Tax"
+
+3. Expand the "Calculation Settings" section and set "Apply Customer Tax" to "Before Discount"
+
 # Installation
 
 1. Go to your Magento 2 directory and install the plugin via `composer`:
@@ -14,7 +28,7 @@ composer require storekeeper/magento2-plugin
 bin/magento setup:upgrade;
 bin/magento setup:di:compile;
 bin/magento setup:static-content:deploy;
-bin/magento cache:clear;
+bin/magento cache:clean;
 ```
 
 # Configuration
@@ -25,23 +39,21 @@ bin/magento cache:clear;
 
 3. Enable the plugin by setting the field `Enabled` to `Yes`
 
-4. Fill in the `API URL` for your StoreKeeper environment and set the `Sync Mode` to `Order`
+6. Copy your `Auth Key`
 
-5. Copy your `Auth Key`
+7. Press the `Save` button
 
-6. Press the `Save` button
+8. Log into your StoreKeeper account
 
-7. Log into your StoreKeeper account
+9. Select the StoreKeeper Sales Channel you want to connect with
 
-8. Select the StoreKeeper Sales Channel you want to connect with
+10. Go to `Settings`
 
-9. Go to `Settings`
+11. Scroll down to the `Synchronisation` button and click it
 
-10. Scroll down to the `Synchronisation` button and click it
+12. Paste the `Auth Key` you previously copied from Magento 2 into the `Api Key` field and click `Connect`
 
-11. Paste the `Auth Key` you previously copied from Magento 2 into the `Api Key` field and click `Connect`
-
-12. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
+13. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
 
 ## Cron commands
 
@@ -61,6 +73,14 @@ It is recommended to add these commands to a `crontab` for them to be automatica
 15 * * * * bin/magento storekeeper:sync:customers --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
 30 * * * * bin/magento storekeeper:sync:orders --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
 45 * * * * bin/magento storekeeper:sync:products --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
+```
+
+## Queue
+
+This plugin uses the Magento 2 queue consumer functionality. If you want to run the queue manually you can use the following command:
+
+```
+bin/magento queue:consumer:start storekeeper.queue.events
 ```
 
 # Disconnecting
@@ -88,3 +108,7 @@ Disconnecting your Magento 2 store can be done in two ways
 4. Empty the value in the `Token` field
 
 5. Press the `Save` button
+
+# Debugging
+
+If you're having any issues using the plugin, the first thing to do would be checking the `magento2/var/log/storekeeper.log` for any errors.

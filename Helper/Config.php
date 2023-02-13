@@ -27,6 +27,10 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->scopeConfig->getValue($key, $scope, $storeId);
     }
 
+    public function getSyncAuth($storeId) {
+        return $this->getScopeConfigValue('storekeeper_general/general/storekeeper_sync_auth', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
     public function getAuthEmail()
     {
         return $this->getScopeConfigValue('storekeeper_general/general/auth_email');

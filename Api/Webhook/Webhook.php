@@ -42,6 +42,7 @@ class Webhook
 	public function postExecute($storeId)
     {
         try {
+
             $bodyParams = $this->request->getBodyParams();
 
             file_put_contents("post-webhook.log", json_encode($bodyParams, JSON_PRETTY_PRINT), FILE_APPEND);
@@ -55,8 +56,8 @@ class Webhook
             $response = [ "success" => true ];
             $status = 200;
 
-            if ($action == "init" && empty($token)) {
-                $this->authHelper->setAuthDataForWebsite($storeId, $payload, $requestToken);
+            if ($action == "init" && $requestToken == $token) {
+                $this->authHelper->setAuthDataForWebsite($storeId, $payload);
 
                 $response = [
                     "success" => true
@@ -64,11 +65,30 @@ class Webhook
 
             } else if ($requestToken == $token) {
 
+                if (!$this->authHelper->isConnected($storeId)) {
+                    return $this->response([
+                        'success' => false,
+                        'message' => __("Store is not connected")
+                    ]);
+                }
+
                 if ($action == "info") {
 
                     // retrieve the current plugin version
                     $composerFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "composer.json");
                     $composerJson = json_decode($composerFile, true);
+
+                    $sync_mode = null;
+
+                    if ($this->configHelper->hasMode($storeId, Config::SYNC_NONE)) {
+                        $sync_mode = 'sync-mode-none';
+                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_ALL)) {
+                        $sync_mode = 'sync-mode-full-sync';
+                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS)) {
+                        $sync_mode = 'sync-mode-products-only';
+                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_ORDERS)) {
+                        $sync_mode = 'sync-mode-order-only';
+                    } 
     
                     $response = [
                         "success" => true,
@@ -77,7 +97,10 @@ class Webhook
                         'platform_version' => $this->productMetadata->getVersion(),
                         'software_name' => 'storekeeper-magento2-b2c',
                         'software_version' => $composerJson['version'],
-                        'extra' => [],
+                        'extra' => [
+                            'url' => $this->authHelper->getStoreBaseUrl(),
+                            'sync_mode' => $sync_mode
+                        ],
                     ];
                     
                 } else if ($action == "events") {
@@ -92,23 +115,28 @@ class Webhook
     
                     $messages = [];
                     $success = false;
-    
                     foreach ($eventNames as $eventName) {
     
-                        if ($eventName == "stock_change" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                            $messages[] = "Skipping stock changes: mode not allowed";
-                            continue;
-                        } else if ($entity == "ShopProduct" && !$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                            $messages[] = "Skipping products: mode not allowed";
-                            continue;
-                        } else if ($entity == "Category" && !$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                            $messages[] = "Skipping categories: mode not allowed";
-                            continue;
-                        } else if ($entity == "Order" && !$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
-                            $messages[] = "Skipping orders: mode not allowed";
+                        if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing event \"stock_change\"";
+                            // continue;
+                        } else if ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing entity \"ShopProduct\"";
+                            // $messages[] = "Skipping products: mode not allowed";
+                            // continue;
+                        } else if ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing entity \"Category\"";
+                            // $messages[] = "Skipping categories: mode not allowed";
+                            // continue;
+                        } else if ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+                            $messages[] = "Processing entity \"Order\"";
+                            // $messages[] = "Skipping orders: mode not allowed";
+                            // continue;
+                        } else {
+                            $messages[] = "Skipping {$entity}::{$eventName}: mode not allowed";
                             continue;
                         }
-    
+
                         $success = true;
     
                         $n = [
