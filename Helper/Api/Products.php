@@ -3,29 +3,27 @@
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
 use Exception;
+use Magento\Catalog\Api\CategoryLinkManagementInterface;
+use Magento\Catalog\Api\CategoryLinkRepositoryInterface;
+use Magento\Catalog\Api\Data\ProductLinkInterfaceFactory;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper\AttributeFilter;
+use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\Product;
-use Magento\Framework\Api\FilterFactory;
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
+
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
-use Parsedown;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
-use Magento\Catalog\Model\Product\Attribute\Source\Status;
-
-use Magento\Catalog\Api\CategoryLinkManagementInterface;
-use Magento\Catalog\Api\CategoryLinkRepositoryInterface;
-use Magento\Catalog\Model\CategoryRepository;
-use Magento\Catalog\Model\ProductLink\Repository as ProductLinkRepository;
-use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\Store;
-use Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper\AttributeFilter;
+use Magento\Store\Model\StoreManager;
 
-use Magento\Catalog\Api\Data\ProductLinkInterfaceFactory;
+use Parsedown;
 
 class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -185,7 +183,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 echo "  Managed Stock: Setting stock to {$product_stock['value']} for store {$storeId}\n";
                 $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
                 $stockItem->setData('qty', $product_stock['value']);
-                $stockItem->setData('use_config_notify_stock_qty',1);
+                $stockItem->setData('use_config_notify_stock_qty', 1);
                 $stockItem->save();
 
                 $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
@@ -201,7 +199,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
             $stockItem->setData('qty', $product_stock['value']);
             $stockItem->setData('manage_stock', true);
-            $stockItem->setData('use_config_notify_stock_qty',1);
+            $stockItem->setData('use_config_notify_stock_qty', 1);
             $stockItem->save();
 
             $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
@@ -227,7 +225,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 ]
             ]
         );
-
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
@@ -274,7 +271,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         ksort($currentLinkSkus);
 
         if ($storekeeperLinkSkus !== $currentLinkSkus) {
-
             // filter all upsell
             $linkData = array_filter($target->getProductLinks(), function ($link) use ($linkType) {
                 return $link->getLinkType() != $linkType;
@@ -289,7 +285,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $target->setProductLinks($linkData);
-
 
             return true;
         }
@@ -341,7 +336,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     //         $target->setProductLinks($linkData);
 
-
     //         return true;
     //     }
 
@@ -367,7 +361,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     //         }
     //     }
 
-
     //     $filtered = array_filter($target->getProductLinks(), function ($link) {
     //         return $link->getLinkType() == "crosssell";
     //     });
@@ -375,7 +368,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     //     $currentCrosssellSkus = array_map(function ($link) {
     //         return $link->getLinkedProductSku();
     //     }, $filtered);
-
 
     //     if ($crossellSkus !== $currentCrosssellSkus) {
 
@@ -393,7 +385,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     //         }
 
     //         $target->setProductLinks($linkData);
-
 
     //         return true;
     //     }
@@ -446,7 +437,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $collection = $this->categoryCollectionFactory->create();
             $collection
                 ->addAttributeToSelect('*')
-                ->addAttributeToFilter('storekeeper_category_id', array('in', $storekeeper_category_ids))
+                ->addAttributeToFilter('storekeeper_category_id', ['in', $storekeeper_category_ids])
                 ->setFlag('has_stock_status_filter', false);
 
             if ($collection->count() > 0) {
@@ -456,7 +447,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             return false;
         }
     }
-
 
     private $websiteIds = [];
 

@@ -1,14 +1,13 @@
 <?php
 
-
 namespace StoreKeeper\StoreKeeper\Model;
 
+use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
-use StoreKeeper\StoreKeeper\Helper\Config;
 
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class Consumer used to process OperationInterface messages.
@@ -48,7 +47,6 @@ class Consumer
     public function process($request)
     {
         try {
-
             $data = json_decode($request, true);
             $storeId = $data['storeId'] ?? null;
             $module = $data['module'];
@@ -64,66 +62,51 @@ class Consumer
             }
 
             if ($type == "updated") {
-
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->updateById($storeId, $value);
                     $this->productsHelper->updateStock($storeId, $value);
-
-                } else if ($entity == 'Category') {
+                } elseif ($entity == 'Category') {
                     $this->categoriesHelper->updateById($storeId, $value);
-
-                } else if ($entity == "Order") {
+                } elseif ($entity == "Order") {
                     $this->ordersHelper->updateById($storeId, $value);
                 } else {
                     echo "  Unknown entity: {$entity}\n";
                 }
-
-            } else if ($type == "deactivated") {
-
+            } elseif ($type == "deactivated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->onDeactivate($storeId, $value);
-                } else if ($entity == 'Category') {
+                } elseif ($entity == 'Category') {
                     $this->categoriesHelper->onDeactivate($storeId, $value);
                 } else {
                     echo "  Unknown entity: {$entity}\n";
                 }
-
-            } else if ($type == "activated") {
-
+            } elseif ($type == "activated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->activate($storeId, $value);
-                } else if ($entity == 'Category') {
+                } elseif ($entity == 'Category') {
                     $this->categoriesHelper->activate($storeId, $value);
                 } else {
                     echo "  Unknown entity: {$entity}\n";
                 }
-
-            } else if ($type == "deleted") {
-
+            } elseif ($type == "deleted") {
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onDeleted($storeId, $value);
                 } else {
                     echo "  Unknown entity: {$entity}\n";
                 }
-
-            } else if ($type == "created") {
-
+            } elseif ($type == "created") {
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onCreated($storeId, $value);
-                } else if ($entity == "ShopProduct") {
+                } elseif ($entity == "ShopProduct") {
                     $this->productsHelper->updateById($storeId, $value);
                 } else {
                     echo "  Unknown entity: {$entity}\n";
                 }
-
-            } else if ($type == 'stock_change') {
-
+            } elseif ($type == 'stock_change') {
                 $this->productsHelper->updateStock($storeId, $value);
-
             }
 
             echo "done!\n";
-
         } catch (\Exception|\Error $e) {
             echo "{$e->getMessage()}\n";
             $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");

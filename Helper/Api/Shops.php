@@ -18,6 +18,6 @@ class Shops extends \Magento\Framework\App\Helper\AbstractHelper
             $limit,
             $order,
             $filters
-        );        
+        );
     }
 }

@@ -3,13 +3,11 @@
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
 use Psr\Log\LoggerInterface;
-use StoreKeeper\ApiWrapper\ApiWrapper;
-use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
+use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class SomeCommand
@@ -84,7 +82,6 @@ class Products extends Command
             $total = null;
 
             while (is_null($total) || $current < $total) {
-
                 $response = $this->productsHelper->naturalSearchShopFlatProductForHooks(
                     $storeId,
                     ' ',
@@ -117,9 +114,8 @@ class Products extends Command
             }
 
             echo "\nDone!\n";
-
         } catch(\Exception|\Error $e) {
-            $output->writeln('<error>' .$e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage() . '</error>');
+            $output->writeln('<error>' . $e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage() . '</error>');
             $this->logger->error($e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage());
         }
     }

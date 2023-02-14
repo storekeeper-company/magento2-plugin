@@ -51,5 +51,4 @@ class Disconnect extends \Magento\Backend\App\Action implements \Magento\Framewo
     {
         return true;
     }
-
 }

@@ -2,10 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Setup\Patch\Data;
 
-use Magento\Sales\Setup\SalesSetupFactory;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Setup\SalesSetupFactory;
 
 class StoreKeeperOrderLastSync implements DataPatchInterface
 {

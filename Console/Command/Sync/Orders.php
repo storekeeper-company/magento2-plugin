@@ -2,22 +2,16 @@
 
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
-use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Api\ShipmentRepositoryInterface;
-use Magento\Sales\Model\Convert\Order as ConvertOrder;
-use Magento\Shipping\Model\ShipmentNotifier;
 use Psr\Log\LoggerInterface;
-use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
+use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Orders extends Command
 {
@@ -38,8 +32,7 @@ class Orders extends Command
         Config $configHelper,
         LoggerInterface $logger,
         string $name = null
-    )
-    {
+    ) {
         parent::__construct($name);
 
         $this->state = $state;

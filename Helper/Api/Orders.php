@@ -12,13 +12,12 @@ use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Convert\Order as ConvertOrder;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
+use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
-use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 
 class Orders extends AbstractHelper
 {
-
     private Auth $authHelper;
 
     private Customers $customersHelper;
@@ -78,7 +77,6 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder($order, $isUpdate): array
     {
-
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -179,7 +177,6 @@ class Orders extends AbstractHelper
         $totalRefunded = $order->getTotalRefunded();
 
         if ((float) $totalRefunded > 0) {
-
             $storekeeperId = $order->getStorekeeperId();
             $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreId())->getOrder($storekeeperId);
 
@@ -191,7 +188,6 @@ class Orders extends AbstractHelper
             // 90             - 70                 = 20
             // in this above example we'll have to refund 20
             if ($diff > 0) {
-
                 $storekeeperRefundId = $this->newWebPayment(
                     $order->getStoreId(),
                     [
@@ -207,20 +203,19 @@ class Orders extends AbstractHelper
                         $storekeeperRefundId
                     ]
                 );
-
             }
 
             if ($totalRefunded == $order->getTotalPaid()) {
                 if ($storeKeeperOrder['status'] != 'refunded') {
                     $this->refundAllOrderItems($order, $storekeeperId, [
 
-                    ]);  
+                    ]);
                 }
             }
         }
     }
 
-    public function newWebPayment($storeId, $parameters = []) 
+    public function newWebPayment($storeId, $parameters = [])
     {
         return $this->authHelper->getModule('PaymentModule', $storeId)
             ->newWebPayment($parameters);
@@ -289,7 +284,7 @@ class Orders extends AbstractHelper
                     }
                 }
                 $payloadItem['tax_rate_id'] = $rateId;
-            } else if (!empty($taxFreeId)) {
+            } elseif (!empty($taxFreeId)) {
                 $payloadItem['tax_rate_id'] = $taxFreeId;
             }
             $payload[] = $payloadItem;
@@ -319,13 +314,12 @@ class Orders extends AbstractHelper
                                     }
                                 }
                                 $payloadItem['tax_rate_id'] = $rateId;
-
                             }
                             break;
                         }
                     }
                 }
-            } else if (!empty($taxFreeId)) {
+            } elseif (!empty($taxFreeId)) {
                 $payloadItem['tax_rate_id'] = $taxFreeId;
             }
 
@@ -450,7 +444,7 @@ class Orders extends AbstractHelper
     {
         $storeKeeperId = $order->getStorekeeperId();
 
-        if ($storeKeeperId > 0 ) {
+        if ($storeKeeperId > 0) {
             return $storeKeeperId;
         }
 
@@ -471,7 +465,7 @@ class Orders extends AbstractHelper
         }
 
         $statusMapping = $this->statusMapping();
-        if (!isset($storeKeeperOrder['status'])) {            
+        if (!isset($storeKeeperOrder['status'])) {
             // no status
             return;
         }
@@ -482,7 +476,7 @@ class Orders extends AbstractHelper
                     $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
                 }
             }
-    
+
             $this->updateStoreKeeperOrder($order, $storeKeeperId);
             $this->createShipment($order, $storeKeeperId);
         }
@@ -503,7 +497,6 @@ class Orders extends AbstractHelper
                 __($e->getMessage())
             );
         }
-
     }
 
     /**
@@ -592,9 +585,6 @@ class Orders extends AbstractHelper
         if ($this->hasRefund($order)) {
             $this->applyRefund($order);
         }
-
-
-
     }
 
     /**
