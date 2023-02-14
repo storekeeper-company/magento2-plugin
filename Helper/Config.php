@@ -59,7 +59,7 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         return ($mode & $flags) != 0;
     }
 
-    public function getToken($storeId): mixed {
+    public function getToken($storeId) {
         return $this->getScopeConfigValue(self::STOREKEEPER_TOKEN, ScopeInterface::SCOPE_STORE, $storeId);
     }
 }

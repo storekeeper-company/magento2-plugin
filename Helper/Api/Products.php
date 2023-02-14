@@ -52,7 +52,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterfaceFactory $sourceItemFactory,
         ProductLinkInterfaceFactory $productLinkFactory,
-        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry, 
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -179,14 +179,14 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function updateProductStock($storeId, $product, $product_stock)
     {
-        $stockItem = $this->stockRegistry->getStockItem($product->getId()); 
+        $stockItem = $this->stockRegistry->getStockItem($product->getId());
         if ($stockItem) {
             if ($stockItem->getManageStock()) {
                 echo "  Managed Stock: Setting stock to {$product_stock['value']} for store {$storeId}\n";
-                $stockItem->setData('is_in_stock', $product_stock['value'] > 0); 
-                $stockItem->setData('qty', $product_stock['value']); 
+                $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
+                $stockItem->setData('qty', $product_stock['value']);
                 $stockItem->setData('use_config_notify_stock_qty',1);
-                $stockItem->save(); 
+                $stockItem->save();
 
                 $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
                 $product->setQuantityAndStockStatus(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
@@ -198,11 +198,11 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         // if there's no existing stock item, we'll create it
         } else {
             echo "  Missing Stock Item: Creating stock to {$product_stock['value']} for store {$storeId}\n";
-            $stockItem->setData('is_in_stock', $product_stock['value'] > 0); 
-            $stockItem->setData('qty', $product_stock['value']); 
+            $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
+            $stockItem->setData('qty', $product_stock['value']);
             $stockItem->setData('manage_stock', true);
             $stockItem->setData('use_config_notify_stock_qty',1);
-            $stockItem->save(); 
+            $stockItem->save();
 
             $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
             $product->setQuantityAndStockStatus(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
@@ -255,7 +255,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $storekeeperLinkIds = $this->authHelper->getModule('ShopModule', $storeId)->$storeKeeperEndpoint($storekeeperProductId);
 
         $storekeeperLinkSkus = [];
-        
+
         foreach ($storekeeperLinkIds as $storekeeperLinkId) {
             if ($linkedProduct = $this->exists($storeId, ['product_id' => $storekeeperLinkId])) {
                 $storekeeperLinkSkus[] = $linkedProduct->getSku();
