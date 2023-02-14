@@ -11,7 +11,6 @@ use StoreKeeper\ApiWrapper\Exception\GeneralException;
 
 class Customers extends AbstractHelper
 {
-
     private $authHelper;
 
     private AddressFactory $addressFactory;

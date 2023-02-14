@@ -1,9 +1,9 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
+use Magento\Framework\App\Cache\TypeListInterface;
 use StoreKeeper\ApiWrapper\ApiWrapper;
 use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
-use Magento\Framework\App\Cache\TypeListInterface;
 
 class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -88,12 +88,11 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function authCheck($storeId)
     {
-
         $token = $this->getScopeConfigValue('storekeeper_general/general/storekeeper_token', $storeId);
 
         if (empty($token)) {
             $token = md5(
-                $storeId.uniqid()
+                $storeId . uniqid()
             );
             $this->configWriter->save(
                 "storekeeper_general/general/storekeeper_token",
@@ -105,7 +104,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             header('location: ' . $_SERVER['REQUEST_URI']);
             exit;
         } else {
-
         }
 
         $json = json_encode(
@@ -196,7 +194,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->auth;
     }
 
-    public function isEnabled($storeId) {
+    public function isEnabled($storeId)
+    {
         return $this->getScopeConfigValue(
             "storekeeper_general/general/enabled",
             $storeId,
@@ -285,6 +284,4 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             $id
         );
     }
-
-
 }

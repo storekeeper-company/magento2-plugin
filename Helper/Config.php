@@ -27,7 +27,8 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->scopeConfig->getValue($key, $scope, $storeId);
     }
 
-    public function getSyncAuth($storeId) {
+    public function getSyncAuth($storeId)
+    {
         return $this->getScopeConfigValue('storekeeper_general/general/storekeeper_sync_auth', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
     }
 
@@ -59,7 +60,8 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
         return ($mode & $flags) != 0;
     }
 
-    public function getToken($storeId) {
+    public function getToken($storeId)
+    {
         return $this->getScopeConfigValue(self::STOREKEEPER_TOKEN, ScopeInterface::SCOPE_STORE, $storeId);
     }
 }

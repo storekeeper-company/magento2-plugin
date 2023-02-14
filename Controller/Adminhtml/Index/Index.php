@@ -55,5 +55,4 @@ class Index extends \Magento\Backend\App\Action implements \Magento\Framework\Ap
     {
         return true;
     }
-
 }

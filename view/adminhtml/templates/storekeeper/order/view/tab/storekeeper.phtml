@@ -5,7 +5,7 @@
 
     <p>
         <strong><?=__("Last synchronised at") ?></strong><br/>
-        <?php if ( $storekeeperOrderLastSync = $order->getStorekeeperOrderLastSync()) : ?>
+        <?php if ($storekeeperOrderLastSync = $order->getStorekeeperOrderLastSync()) : ?>
             <?= date("Y-m-d H:i:s", $storekeeperOrderLastSync) ?>
         <?php else : ?>
             <?= __("Never") ?>

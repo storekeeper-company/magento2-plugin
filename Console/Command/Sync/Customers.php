@@ -3,17 +3,16 @@
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
 use Magento\Customer\Api\CustomerRepositoryInterface;
-use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Customers as CustomersHelper;
+use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Customers extends Command
 {
@@ -90,7 +89,7 @@ class Customers extends Command
             $customers = $this->getCustomers($storeId);
             foreach ($customers->getItems() as $customer) {
                 try {
-                    $output->writeln('<info>Sync customer with id: ' . $customer->getId() .  '</info>');
+                    $output->writeln('<info>Sync customer with id: ' . $customer->getId() . '</info>');
                     $customer = $this->customerRepository->getById($customer->getId());
                     $customerEmail = $customer->getEmail();
                     $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($customerEmail, $storeId);

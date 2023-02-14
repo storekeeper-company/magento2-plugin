@@ -3,13 +3,11 @@
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
 use Psr\Log\LoggerInterface;
-use StoreKeeper\ApiWrapper\ApiWrapper;
-use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
+use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class SomeCommand
@@ -67,7 +65,6 @@ class Categories extends Command
         OutputInterface $output
     ) {
         try {
-        
             $this->state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
             $storeId = $input->getOption(self::STORES);
@@ -85,7 +82,6 @@ class Categories extends Command
             echo "  \nWorking...\n";
 
             while (is_null($total) || $current < $total) {
-
                 $response = $this->categoriesHelper->listTranslatedCategoryForHooks(
                     $storeId,
                     $language,

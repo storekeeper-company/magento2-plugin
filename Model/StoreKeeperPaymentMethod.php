@@ -2,7 +2,6 @@
 
 namespace StoreKeeper\StoreKeeper\Model;
 
-use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Payment\Model\Method\AbstractMethod;
 
 class StoreKeeperPaymentMethod extends AbstractMethod

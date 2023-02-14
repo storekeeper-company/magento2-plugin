@@ -2,16 +2,14 @@
 namespace StoreKeeper\StoreKeeper\Api\Webhook;
 
 use Psr\Log\LoggerInterface;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser;
 use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Webhook
 {
-
     public function __construct(
         \Magento\Framework\Webapi\Rest\Request $request,
         \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper,
-    	\Magento\Framework\Serialize\Serializer\Json $json,
+        \Magento\Framework\Serialize\Serializer\Json $json,
         \Magento\Framework\MessageQueue\PublisherInterface $publisher,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         Config $configHelper,
@@ -27,9 +25,9 @@ class Webhook
     }
 
     /**
-	 * {@inheritdoc}
-	 */
-	public function getExecute($storeId)
+     * {@inheritdoc}
+     */
+    public function getExecute($storeId)
     {
         file_put_contents("get-webhook.log", json_encode([
             "storeId" => $storeId
@@ -37,12 +35,11 @@ class Webhook
     }
 
     /**
-	 * {@inheritdoc}
-	 */
-	public function postExecute($storeId)
+     * {@inheritdoc}
+     */
+    public function postExecute($storeId)
     {
         try {
-
             $bodyParams = $this->request->getBodyParams();
 
             file_put_contents("post-webhook.log", json_encode($bodyParams, JSON_PRETTY_PRINT), FILE_APPEND);
@@ -62,9 +59,7 @@ class Webhook
                 $response = [
                     "success" => true
                 ];
-
-            } else if ($requestToken == $token) {
-
+            } elseif ($requestToken == $token) {
                 if (!$this->authHelper->isConnected($storeId)) {
                     return $this->response([
                         'success' => false,
@@ -73,7 +68,6 @@ class Webhook
                 }
 
                 if ($action == "info") {
-
                     // retrieve the current plugin version
                     $composerFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "composer.json");
                     $composerJson = json_decode($composerFile, true);
@@ -82,14 +76,14 @@ class Webhook
 
                     if ($this->configHelper->hasMode($storeId, Config::SYNC_NONE)) {
                         $sync_mode = 'sync-mode-none';
-                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_ALL)) {
+                    } elseif ($this->configHelper->hasMode($storeId, Config::SYNC_ALL)) {
                         $sync_mode = 'sync-mode-full-sync';
-                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS)) {
+                    } elseif ($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS)) {
                         $sync_mode = 'sync-mode-products-only';
-                    } else if ($this->configHelper->hasMode($storeId, Config::SYNC_ORDERS)) {
+                    } elseif ($this->configHelper->hasMode($storeId, Config::SYNC_ORDERS)) {
                         $sync_mode = 'sync-mode-order-only';
-                    } 
-    
+                    }
+
                     $response = [
                         "success" => true,
                         'vendor' => 'StoreKeeper',
@@ -102,43 +96,41 @@ class Webhook
                             'sync_mode' => $sync_mode
                         ],
                     ];
-                    
-                } else if ($action == "events") {
+                } elseif ($action == "events") {
                     preg_match("/(\w+)\::(\w+)\(([a-z]+)\=([0-9]+)\)/", $payload['backref'], $matches);
-    
+
                     list($group, $module, $entity, $key, $value) = $matches;
-    
+
                     $eventNames = array_map(function ($event) {
                         return $event['event'];
                     }, $payload['events']);
                     $eventNames = array_unique($eventNames);
-    
+
                     $messages = [];
                     $success = false;
                     foreach ($eventNames as $eventName) {
-    
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing event \"stock_change\"";
-                            // continue;
-                        } else if ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        // continue;
+                        } elseif ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"ShopProduct\"";
-                            // $messages[] = "Skipping products: mode not allowed";
-                            // continue;
-                        } else if ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        // $messages[] = "Skipping products: mode not allowed";
+                        // continue;
+                        } elseif ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"Category\"";
-                            // $messages[] = "Skipping categories: mode not allowed";
-                            // continue;
-                        } else if ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+                        // $messages[] = "Skipping categories: mode not allowed";
+                        // continue;
+                        } elseif ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"Order\"";
-                            // $messages[] = "Skipping orders: mode not allowed";
-                            // continue;
+                        // $messages[] = "Skipping orders: mode not allowed";
+                        // continue;
                         } else {
                             $messages[] = "Skipping {$entity}::{$eventName}: mode not allowed";
                             continue;
                         }
 
                         $success = true;
-    
+
                         $n = [
                             "type" => $eventName,
                             "entity" => $entity,
@@ -150,15 +142,14 @@ class Webhook
                         file_put_contents("queue.log", $this->json->serialize($n) . "\n", FILE_APPEND);
                         $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
                     }
-    
+
                     $response['success'] = $success;
                     $response['message'] = implode(', ', $messages);
-    
-                } else if ($action == "deactivated") {
+                } elseif ($action == "deactivated") {
                     preg_match("/(\w+)\::(\w+)\(([a-z]+)\=([0-9]+)\)/", $payload['backref'], $matches);
-    
+
                     list($group, $module, $entity, $key, $value) = $matches;
-    
+
                     foreach ($payload['events'] as $id => $eventData) {
                         $n = [
                             "type" => $eventData['event'],
@@ -171,7 +162,6 @@ class Webhook
                         $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
                     }
                 }
-
             } else {
                 $status = 403;
                 $response = [

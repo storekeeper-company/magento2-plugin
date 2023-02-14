@@ -2,8 +2,8 @@
 
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
-use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\CategoryFactory;
+use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
 use Parsedown;
 
@@ -23,7 +23,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoryRepository = $categoryRepository;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->storeManager = $storeManager;
-
 
         $this->storeShopIds = $this->authHelper->getStoreShopIds();
         $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
@@ -59,12 +58,12 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             $language,
             0,
             1,
-            array(
-                array(
+            [
+                [
                     'name' => 'category_type/id',
                     'dir' => 'asc'
-                )
-            ),
+                ]
+            ],
             [
                 [
                     "name" => "id__=",
@@ -83,7 +82,6 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         } else {
             throw new \Exception("Category {$storeKeeperId} does not exist in StoreKeeper");
         }
-
     }
 
     public function exists($storeId, array $result)
@@ -99,14 +97,12 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             return $collection->getFirstItem();
         }
 
-
         return false;
     }
 
     public function parentExists($storeId, array $result)
     {
         if ($storekeeper_parent_id = $this->getResultParentId($result)) {
-
             $collection = $this->categoryCollectionFactory->create();
             $collection
                 ->addAttributeToSelect('*')
@@ -189,8 +185,8 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         //     $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
         //     $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
         // } else {
-            $target->setStoreId($storeId);
-            $this->storeManager->setCurrentStore($storeId);
+        $target->setStoreId($storeId);
+        $this->storeManager->setCurrentStore($storeId);
         // }
 
         if ($target->getName() != $title) {
@@ -232,10 +228,10 @@ HTML;
 
         if (is_null($isActive)) {
             $target->setIsActive($published);
-        } else if ($isActive && !$published) {
+        } elseif ($isActive && !$published) {
             $shouldUpdate = true;
             $target->setIsActive(false);
-        } else if (!$isActive && $published) {
+        } elseif (!$isActive && $published) {
             $shouldUpdate = true;
             $target->setIsActive(true);
         }
@@ -254,7 +250,6 @@ HTML;
         $parent = null;
 
         if ($parent = $this->parentExists($storeId, $result)) {
-
             if ($target->getParentId() != $parent->getId()) {
                 $shouldUpdate = true;
                 $shouldMove = true;
@@ -280,7 +275,6 @@ HTML;
         }
 
         if ($shouldUpdate) {
-
             if ($shouldMove && $update) {
                 // categories can only be moved if they exist
                 if ($parent) {
@@ -308,8 +302,6 @@ HTML;
             if ($update && $language == ' ') {
                 $this->setCategoryToUseDefaultValues($target, $storeId);
             }
-
-
         } else {
             echo "  Skipped {$title}, no changes\n";
         }

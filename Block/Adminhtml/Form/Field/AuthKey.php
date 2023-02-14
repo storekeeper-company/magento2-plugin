@@ -2,16 +2,12 @@
 
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field;
 
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Data\Form;
-use Magento\Framework\Data\Form\AbstractForm;
-use Magento\Framework\Data\Form\Element\Renderer\RendererInterface;
+use Magento\Framework\Data\Form\Element\CollectionFactory;
+use Magento\Framework\Data\Form\Element\Factory;
 use Magento\Framework\Escaper;
+
 use Magento\Framework\Math\Random;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
-
-use Magento\Framework\Data\Form\Element\Factory;
-use Magento\Framework\Data\Form\Element\CollectionFactory;
 
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
@@ -38,6 +34,4 @@ class AuthKey extends \Magento\Framework\Data\Form\Element\AbstractElement
             <span style='word-break: break-all'>" . $this->authHelper->authCheck($this->request->getParam('store')) . "</span>
         ";
     }
-
-    
 }

@@ -8,7 +8,6 @@ use StoreKeeper\StoreKeeper\Helper\Config;
 
 class SyncModes implements OptionSourceInterface
 {
-
     public function toOptionArray()
     {
         return [
