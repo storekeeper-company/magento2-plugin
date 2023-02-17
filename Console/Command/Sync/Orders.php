@@ -72,20 +72,16 @@ class Orders extends Command
     ) {
         try {
             $this->state->setAreaCode(Area::AREA_ADMINHTML);
-
             $storeId = $input->getOption(self::STORES);
 
             if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
                 return;
             }
 
-            $output->writeln('<info>Start order sync</info>');
             $page = 1;
             $pageSize = 25;
             $current = 0;
             $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
-
-            $output->writeln('<info>Number of Orders ' . $orders->getTotalCount() . '</info>');
 
             while ($current < $orders->getTotalCount()) {
                 foreach ($orders as $order) {
@@ -95,7 +91,7 @@ class Orders extends Command
                         } else {
                             $this->ordersHelper->onCreate($order);
                         }
-                    } catch(\Exception|\Error $e) {
+                    } catch(\Exception $e) {
                         $this->logger->error($e->getMessage());
                     }
                 }
@@ -103,9 +99,7 @@ class Orders extends Command
                 $page++;
                 $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
             }
-
-            $output->writeln('<info>Finish order sync</info>');
-        } catch (\Exception|\Error $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
     }

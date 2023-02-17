@@ -2,7 +2,6 @@
 
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
-use Exception;
 use Magento\Catalog\Api\CategoryLinkManagementInterface;
 use Magento\Catalog\Api\CategoryLinkRepositoryInterface;
 use Magento\Catalog\Api\Data\ProductLinkInterfaceFactory;
@@ -15,15 +14,14 @@ use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
-
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
-
 use Parsedown;
+use Psr\Log\LoggerInterface;
 
 class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -33,6 +31,32 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     private SourceItemInterfaceFactory $sourceItemFactory;
 
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
+
+    /**
+     * Constructor
+     * 
+     * @param Auth $authHelper
+     * @param ProductFactory $productFactory
+     * @param ProductRepositoryInterface $productRepository
+     * @param CollectionFactory $productCollectionFactory
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param CategoryLinkManagementInterface $categoryLinkManagement
+     * @param CategoryLinkRepositoryInterface $categoryLinkRepository
+     * @param CategoryRepository $categoryRepository
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\CatalogInventory\Model\Stock\Item $stockItem
+     * @param AttributeFilter $attributeFilter
+     * @param DirectoryList $directoryList
+     * @param File $file
+     * @param SourceItemsSaveInterface $sourceItemsSave
+     * @param SourceItemInterfaceFactory $sourceItemFactory
+     * @param ProductLinkInterfaceFactory $productLinkFactory
+     * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
+     */
     public function __construct(
         Auth $authHelper,
         ProductFactory $productFactory,
@@ -60,7 +84,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoryLinkManagement = $categoryLinkManagement;
         $this->categoryLinkRepository = $categoryLinkRepository;
         $this->storeManager = $storeManager;
-
         $this->storeShopIds = $this->authHelper->getStoreShopIds();
         $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
         $this->stockItem = $stockItem;
@@ -71,6 +94,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->sourceItemFactory = $sourceItemFactory;
         $this->productLinkFactory = $productLinkFactory;
         $this->stockRegistry = $stockRegistry;
+        $this->logger = $logger;
     }
 
     public function authCheck($storeId)
@@ -170,7 +194,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @throws \Magento\Framework\Validation\ValidationException
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
-     * @throws Exception
+     * @throws \Exception
      */
     private function updateProductStock($storeId, $product, $product_stock)
     {
@@ -309,14 +333,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($result = $this->productRepository->get($storekeeper_sku)) {
                     return $result;
                 }
-            } catch (Exception $e) {
-                //TODO Implement exception handler
+            } catch (\Exception $e) {
                 // ignoring
             }
 
             return false;
         } catch (\Exception $e) {
-            //TODO Add exception message handler
+            $this->logger->error($e->getMessage());
         }
         return false;
     }
@@ -515,8 +538,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                         $this->setGalleryImage($flat_product['main_image']['big_url'], $target, true);
                     }
                 }
-            } else {
-                //ToDo: remove main image
             }
 
             $galleryImages = $target->getMediaGalleryImages()->getItems();
@@ -621,8 +642,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                                 $categoryIds
                             );
                         }
-                    } catch (Exception $e) {
-                        //TODO Implement exception handler
+                    } catch (\Exception $e) {
+                        $this->logger->error($e->getMessage());
                     }
                 }
             }
@@ -652,7 +673,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             try {
                 $target->addImageToMediaGallery($newImage, $imageTypes, true, false);
             } catch (LocalizedException $e) {
-                //TODO Implement exception handler
+                $this->logger->error($exception->getMessage());
             }
         }
     }

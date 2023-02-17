@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Setup\Patch\Data;
 
@@ -10,6 +12,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Setup\SalesSetupFactory;
+use Psr\Log\LoggerInterface;
 
 class RelationDataId implements DataPatchInterface
 {
@@ -38,18 +41,38 @@ class RelationDataId implements DataPatchInterface
      */
     private $customerSetup;
 
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
+
+    /*** 
+     * Construcor
+     * 
+     * @param ModuleDataSetupInterface $moduleDataSetup
+     * @param CustomerSetupFactory $customerSetupFactory
+     * @param AttributeResource $attributeResource
+     * @param SalesSetupFactory $salesSetupFactory
+     * @param LoggerInterface $logger
+     */
     public function __construct(
         ModuleDataSetupInterface $moduleDataSetup,
         CustomerSetupFactory $customerSetupFactory,
         AttributeResource $attributeResource,
-        SalesSetupFactory $salesSetupFactory
+        SalesSetupFactory $salesSetupFactory,
+        LoggerInterface $logger
     ) {
         $this->moduleDataSetup = $moduleDataSetup;
         $this->customerSetupFactory = $customerSetupFactory;
         $this->customerSetup = $customerSetupFactory->create(['setup' => $moduleDataSetup]);
         $this->attributeResource = $attributeResource;
         $this->salesSetupFactory = $salesSetupFactory;
+        $this->logger = $logger;
     }
+
+    /**
+     * @return RelationDataId|void
+     */
     public function apply()
     {
         $this->moduleDataSetup->getConnection()->startSetup();
@@ -98,17 +121,23 @@ class RelationDataId implements DataPatchInterface
 
             $this->attributeResource->save($attribute);
         } catch (\Exception $e) {
-            //TODO Implement exception handler
+            $this->logger->error($e->getMessage());
         }
 
         $this->moduleDataSetup->getConnection()->endSetup();
     }
 
+    /**
+     * @return array|string[]
+     */
     public static function getDependencies()
     {
         return [];
     }
 
+    /**
+     * @return array|string[]
+     */
     public function getAliases()
     {
         return [];

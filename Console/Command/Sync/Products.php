@@ -103,12 +103,12 @@ class Products extends Command
                         } else {
                             $product = $this->productsHelper->onCreate($storeId, $result);
                         }
-                    } catch (\Exception|\Error $e) {
+                    } catch (\Exception $e) {
                         $this->logger->error($e->getMessage());
                     }
                 }
             }
-        } catch(\Exception|\Error $e) {
+        } catch(\Exception $e) {
             $this->logger->error($e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage());
         }
     }

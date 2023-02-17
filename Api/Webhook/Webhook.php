@@ -161,7 +161,7 @@ class Webhook
             $this->logger->info("Received action {$action}: " . json_encode($response));
 
             return $this->response($response, $status);
-        } catch (\Exception | \Error $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             return $this->response([
                 'success' => false,

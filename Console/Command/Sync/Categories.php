@@ -114,7 +114,7 @@ class Categories extends Command
                     }
                 }
             }
-        } catch (\Exception|\Error $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
     }

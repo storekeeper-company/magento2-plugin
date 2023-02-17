@@ -93,7 +93,7 @@ class Consumer
             } elseif ($type == 'stock_change') {
                 $this->productsHelper->updateStock($storeId, $value);
             }
-        } catch (\Exception|\Error $e) {
+        } catch (\Exception $e) {
             $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
         }
     }

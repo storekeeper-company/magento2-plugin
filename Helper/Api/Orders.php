@@ -14,6 +14,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
+use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 
 class Orders extends AbstractHelper
@@ -33,6 +34,11 @@ class Orders extends AbstractHelper
     private ShipmentRepositoryInterface $shipmentRepository;
 
     private TrackFactory $trackFactory;
+
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
 
     /**
      * @param Auth $authHelper
@@ -55,7 +61,8 @@ class Orders extends AbstractHelper
         ShipmentRepositoryInterface $shipmentRepository,
         TrackFactory $trackFactory,
         TaxItem $taxItem,
-        Context $context
+        Context $context,
+        LoggerInterface $logger
     ) {
         $this->authHelper = $authHelper;
         $this->customersHelper = $customersHelper;
@@ -66,6 +73,7 @@ class Orders extends AbstractHelper
         $this->shipmentRepository = $shipmentRepository;
         $this->trackFactory = $trackFactory;
         $this->taxItem = $taxItem;
+        $this->logger = $logger;
 
         parent::__construct($context);
     }
@@ -340,11 +348,12 @@ class Orders extends AbstractHelper
     public function getStoreKeeperOrder($storeId, $storeKeeperId)
     {
         try {
-            if (is_array($response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId))) {
+            $response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId);
+            if (is_array($response)) {
                 return $response;
             }
-        } catch (\Error|\Exception $e) {
-            //TODO Implement exception handler
+        } catch (\Exception $e) {
+            $this->logger->error($exception->getMessage());
             return null;
         }
     }
