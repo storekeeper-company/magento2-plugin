@@ -11,6 +11,10 @@ use Magento\InventorySourceDeductionApi\Model\GetSourceItemBySourceCodeAndSku;
 use Magento\InventorySourceDeductionApi\Model\SourceDeductionRequestInterface;
 use Magento\InventorySourceDeductionApi\Model\SourceDeductionServiceInterface;
 
+/**
+ * Extends functionality of \Magento\InventorySourceDeductionApi\Model\SourceDeductionService
+ * Modified copy of https://github.com/magento/inventory/blob/1.2.5-p1/InventorySourceDeductionApi/Model/SourceDeductionService.php
+ */
 class SourceDeductionService implements SourceDeductionServiceInterface
 {
     /**

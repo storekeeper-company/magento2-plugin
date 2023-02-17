@@ -14,6 +14,10 @@ use Magento\InventorySourceDeductionApi\Model\SourceDeductionRequestInterface;
 use Magento\InventorySourceDeductionApi\Model\SourceDeductionService;
 use StoreKeeper\StoreKeeper\Model\SourceDeductionService as SourceDeductionServiceRewrite;
 
+/**
+ * Extends functionality of \Magento\InventoryShipping\Observer\SourceDeductionProcessor
+ * Modified copy of https://github.com/magento/inventory/blob/1.2.5-p1/InventoryShipping/Observer/SourceDeductionProcessor.php
+ */
 class SourceDeductionProcessor implements ObserverInterface
 {
     /**
