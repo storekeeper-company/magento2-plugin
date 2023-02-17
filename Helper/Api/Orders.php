@@ -411,6 +411,7 @@ class Orders extends AbstractHelper
                 $shipment->getOrder()->setIsInProcess(true);
 
                 try {
+                    $shipment->getExtensionAttributes()->setIsStorekeeper(true);
                     $this->shipmentRepository->save($shipment);
 
                     $this->orderRepository->save($shipment->getOrder());

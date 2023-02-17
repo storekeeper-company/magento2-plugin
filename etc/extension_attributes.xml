@@ -3,4 +3,7 @@
     <extension_attributes for="Magento\Customer\Api\Data\CustomerInterface">
         <attribute code="relation_data_id" type="string"/>
     </extension_attributes>
+    <extension_attributes for="Magento\Sales\Api\Data\ShipmentInterface">
+        <attribute code="is_storekeeper" type="boolean"/>
+    </extension_attributes>
 </config>
