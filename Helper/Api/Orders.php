@@ -14,6 +14,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
+use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 
 class Orders extends AbstractHelper
@@ -33,6 +34,11 @@ class Orders extends AbstractHelper
     private ShipmentRepositoryInterface $shipmentRepository;
 
     private TrackFactory $trackFactory;
+
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
 
     /**
      * @param Auth $authHelper
@@ -55,7 +61,8 @@ class Orders extends AbstractHelper
         ShipmentRepositoryInterface $shipmentRepository,
         TrackFactory $trackFactory,
         TaxItem $taxItem,
-        Context $context
+        Context $context,
+        LoggerInterface $logger
     ) {
         $this->authHelper = $authHelper;
         $this->customersHelper = $customersHelper;
@@ -66,6 +73,7 @@ class Orders extends AbstractHelper
         $this->shipmentRepository = $shipmentRepository;
         $this->trackFactory = $trackFactory;
         $this->taxItem = $taxItem;
+        $this->logger = $logger;
 
         parent::__construct($context);
     }
@@ -259,9 +267,6 @@ class Orders extends AbstractHelper
 
             $payloadItem = [
                 'sku' => $item->getSku(),
-                // keep this here for future reference
-                // 'ppu_wt' => $item->getPriceInclTax(),
-                // 'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
                 'quantity' => $item->getQtyOrdered(),
                 'name' => $item->getName(),
                 'shop_product_id' => $shopProductId,
@@ -343,10 +348,12 @@ class Orders extends AbstractHelper
     public function getStoreKeeperOrder($storeId, $storeKeeperId)
     {
         try {
-            if (is_array($response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId))) {
+            $response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId);
+            if (is_array($response)) {
                 return $response;
             }
-        } catch (\Error|\Exception $e) {
+        } catch (\Exception $e) {
+            $this->logger->error($exception->getMessage());
             return null;
         }
     }
@@ -546,8 +553,6 @@ class Orders extends AbstractHelper
     public function onCreate(Order $order)
     {
         $payload = $this->prepareOrder($order, false);
-
-        // $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
         $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
         $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
@@ -555,8 +560,6 @@ class Orders extends AbstractHelper
         $order->setStorekeeperOrderPendingSync(0);
         $order->setStorekeeperOrderPendingSyncSkip(true);
         $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
-
-        // $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
         try {
             $this->orderRepository->save($order);
@@ -607,11 +610,6 @@ class Orders extends AbstractHelper
                 1,
                 'eq'
             )
-            // ->addFilter(
-            //     'status',
-            //     ['processing', 'canceled', 'closed', 'complete'],
-            //     'in'
-            // )
             ->setPageSize(
                 $pageSize
             )

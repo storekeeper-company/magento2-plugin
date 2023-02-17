@@ -72,7 +72,6 @@ class Products extends Command
             $storeId = $input->getOption(self::STORES);
 
             if (!$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                echo "  Skipping product sync: mode not allowed\n";
                 return;
             }
 
@@ -92,8 +91,6 @@ class Products extends Command
                     []
                 );
 
-                echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";
-
                 $total = $response['total'];
                 $current += $response['count'];
 
@@ -106,16 +103,12 @@ class Products extends Command
                         } else {
                             $product = $this->productsHelper->onCreate($storeId, $result);
                         }
-                    } catch (\Exception|\Error $e) {
-                        $output->writeln('<error>' . $e->getMessage() . '</error>');
+                    } catch (\Exception $e) {
                         $this->logger->error($e->getMessage());
                     }
                 }
             }
-
-            echo "\nDone!\n";
-        } catch(\Exception|\Error $e) {
-            $output->writeln('<error>' . $e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage() . '</error>');
+        } catch(\Exception $e) {
             $this->logger->error($e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage());
         }
     }

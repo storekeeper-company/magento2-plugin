@@ -41,15 +41,10 @@ class Webhook
     {
         try {
             $bodyParams = $this->request->getBodyParams();
-
-            file_put_contents("post-webhook.log", json_encode($bodyParams, JSON_PRETTY_PRINT), FILE_APPEND);
-
             $payload = $bodyParams['payload'] ?? [];
             $action = $bodyParams['action'] ?? null;
-
             $token = $this->configHelper->getToken($storeId);
             $requestToken = $this->request->getHeader('upxhooktoken');
-
             $response = [ "success" => true ];
             $status = 200;
 
@@ -111,19 +106,12 @@ class Webhook
                     foreach ($eventNames as $eventName) {
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing event \"stock_change\"";
-                        // continue;
                         } elseif ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"ShopProduct\"";
-                        // $messages[] = "Skipping products: mode not allowed";
-                        // continue;
                         } elseif ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"Category\"";
-                        // $messages[] = "Skipping categories: mode not allowed";
-                        // continue;
                         } elseif ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"Order\"";
-                        // $messages[] = "Skipping orders: mode not allowed";
-                        // continue;
                         } else {
                             $messages[] = "Skipping {$entity}::{$eventName}: mode not allowed";
                             continue;
@@ -131,7 +119,7 @@ class Webhook
 
                         $success = true;
 
-                        $n = [
+                        $message = [
                             "type" => $eventName,
                             "entity" => $entity,
                             "storeId" => $storeId,
@@ -139,8 +127,8 @@ class Webhook
                             "key" => $key,
                             "value" => $value
                         ];
-                        file_put_contents("queue.log", $this->json->serialize($n) . "\n", FILE_APPEND);
-                        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
+
+                        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
                     }
 
                     $response['success'] = $success;
@@ -151,7 +139,7 @@ class Webhook
                     list($group, $module, $entity, $key, $value) = $matches;
 
                     foreach ($payload['events'] as $id => $eventData) {
-                        $n = [
+                        $message = [
                             "type" => $eventData['event'],
                             "storeId" => $storeId,
                             "module" => $module,
@@ -159,7 +147,7 @@ class Webhook
                             "key" => $key,
                             "value" => $value
                         ];
-                        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($n));
+                        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
                     }
                 }
             } else {
@@ -173,7 +161,7 @@ class Webhook
             $this->logger->info("Received action {$action}: " . json_encode($response));
 
             return $this->response($response, $status);
-        } catch (\Exception | \Error $e) {
+        } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             return $this->response([
                 'success' => false,

@@ -2,7 +2,6 @@
 
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
-use Exception;
 use Magento\Catalog\Api\CategoryLinkManagementInterface;
 use Magento\Catalog\Api\CategoryLinkRepositoryInterface;
 use Magento\Catalog\Api\Data\ProductLinkInterfaceFactory;
@@ -15,15 +14,14 @@ use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
-
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
-
 use Parsedown;
+use Psr\Log\LoggerInterface;
 
 class Products extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -33,6 +31,32 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     private SourceItemInterfaceFactory $sourceItemFactory;
 
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
+
+    /**
+     * Constructor
+     * 
+     * @param Auth $authHelper
+     * @param ProductFactory $productFactory
+     * @param ProductRepositoryInterface $productRepository
+     * @param CollectionFactory $productCollectionFactory
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param CategoryLinkManagementInterface $categoryLinkManagement
+     * @param CategoryLinkRepositoryInterface $categoryLinkRepository
+     * @param CategoryRepository $categoryRepository
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\CatalogInventory\Model\Stock\Item $stockItem
+     * @param AttributeFilter $attributeFilter
+     * @param DirectoryList $directoryList
+     * @param File $file
+     * @param SourceItemsSaveInterface $sourceItemsSave
+     * @param SourceItemInterfaceFactory $sourceItemFactory
+     * @param ProductLinkInterfaceFactory $productLinkFactory
+     * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
+     */
     public function __construct(
         Auth $authHelper,
         ProductFactory $productFactory,
@@ -60,7 +84,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoryLinkManagement = $categoryLinkManagement;
         $this->categoryLinkRepository = $categoryLinkRepository;
         $this->storeManager = $storeManager;
-
         $this->storeShopIds = $this->authHelper->getStoreShopIds();
         $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
         $this->stockItem = $stockItem;
@@ -71,6 +94,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->sourceItemFactory = $sourceItemFactory;
         $this->productLinkFactory = $productLinkFactory;
         $this->stockRegistry = $stockRegistry;
+        $this->logger = $logger;
     }
 
     public function authCheck($storeId)
@@ -159,10 +183,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $product_stock = $result['flat_product']['product']['product_stock'];
 
             if ($product = $this->exists($storeId, $result)) {
-                echo "Updating product {$product->getId()}\n";
                 $this->updateProductStock($storeId, $product, $product_stock);
-            } else {
-                echo "Can't update product because it doesn't exist\n";
             }
         } else {
             throw new \Exception("Product {$storeKeeperId} does not exist in StoreKeeper");
@@ -173,14 +194,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @throws \Magento\Framework\Validation\ValidationException
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
-     * @throws Exception
+     * @throws \Exception
      */
     private function updateProductStock($storeId, $product, $product_stock)
     {
         $stockItem = $this->stockRegistry->getStockItem($product->getId());
         if ($stockItem) {
             if ($stockItem->getManageStock()) {
-                echo "  Managed Stock: Setting stock to {$product_stock['value']} for store {$storeId}\n";
                 $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
                 $stockItem->setData('qty', $product_stock['value']);
                 $stockItem->setData('use_config_notify_stock_qty', 1);
@@ -189,13 +209,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
                 $product->setQuantityAndStockStatus(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
                 $product->save();
-            } else {
-                echo "  Unmanaged stock, skipping product stock update\n";
             }
         // in some rare cases it can occur that a stock item doesn't exist in Magento 2
         // if there's no existing stock item, we'll create it
         } else {
-            echo "  Missing Stock Item: Creating stock to {$product_stock['value']} for store {$storeId}\n";
             $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
             $stockItem->setData('qty', $product_stock['value']);
             $stockItem->setData('manage_stock', true);
@@ -228,7 +245,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
-            file_put_contents("update_products.{$storeId}.json", json_encode($result, JSON_PRETTY_PRINT), FILE_APPEND);
             if ($product = $this->exists($storeId, $result)) {
                 $this->update($storeId, $product, $result);
             } else {
@@ -292,106 +308,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
     }
 
-    // public function updateUpsells($storeId, $target)
-    // {
-    //     $storekeeperProductId = $target->getStorekeeperProductId();
-    //     if (empty($storeKeeperProductId)) {
-    //         $storekeeperProductId = $target->getData()['storekeeper_product_id'];
-    //     }
-
-    //     if (empty($storekeeperProductId)) {
-    //         throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
-    //     }
-    //     $upsellProductIds = $this->authHelper->getModule('ShopModule', $storeId)->getUpsellShopProductIds($storekeeperProductId);
-
-    //     $upsellSkus = [];
-    //     foreach ($upsellProductIds as $upsellProductId) {
-    //         if ($upsell = $this->exists($storeId, [ 'product_id' => $upsellProductId ])) {
-    //             $upsellSkus[] = $upsell->getSku();
-    //         }
-    //     }
-
-    //     $filtered = array_filter($target->getProductLinks(), function ($link) {
-    //         return $link->getLinkType() == "upsell";
-    //     });
-
-    //     $currentUpsellSkus = array_map(function ($link) {
-    //         return $link->getLinkedProductSku();
-    //     }, $filtered);
-
-    //     if ($upsellSkus !== $currentUpsellSkus) {
-
-    //         // filter all upsell
-    //         $linkData = array_filter($target->getProductLinks(), function ($link) {
-    //             return $link->getLinkType() != 'upsell';
-    //         });
-
-    //         foreach ($upsellSkus as $index => $upsellSku) {
-    //             $productLink = $this->productLinkFactory->create();
-    //             $linkData[] = $productLink->setSku($target->getSku())
-    //                 ->setLinkedProductSku($upsellSku)
-    //                 ->setPosition($index)
-    //                 ->setLinkType('upsell');
-    //         }
-
-    //         $target->setProductLinks($linkData);
-
-    //         return true;
-    //     }
-
-    //     return false;
-    // }
-
-    // public function updateCrosssells($storeId, $target)
-    // {
-    //     $storekeeperProductId = $target->getStorekeeperProductId();
-    //     if (empty($storeKeeperProductId)) {
-    //         $storekeeperProductId = $target->getData()['storekeeper_product_id'];
-    //     }
-
-    //     if (empty($storekeeperProductId)) {
-    //         throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
-    //     }
-    //     $crosssellProductIds = $this->authHelper->getModule('ShopModule', $storeId)->getCrossSellShopProductIds($storekeeperProductId);
-
-    //     $crossellSkus = [];
-    //     foreach ($crosssellProductIds as $crosssellProductId) {
-    //         if ($crossell = $this->exists($storeId, ['product_id' => $crosssellProductId])) {
-    //             $crossellSkus[] = $crossell->getSku();
-    //         }
-    //     }
-
-    //     $filtered = array_filter($target->getProductLinks(), function ($link) {
-    //         return $link->getLinkType() == "crosssell";
-    //     });
-
-    //     $currentCrosssellSkus = array_map(function ($link) {
-    //         return $link->getLinkedProductSku();
-    //     }, $filtered);
-
-    //     if ($crossellSkus !== $currentCrosssellSkus) {
-
-    //         // filter all related
-    //         $linkData = array_filter($target->getProductLinks(), function($link) {
-    //             return $link->getLinkType() != 'crosssell';
-    //         });
-
-    //         foreach ($crossellSkus as $index => $upsellSku) {
-    //             $productLink = $this->productLinkFactory->create();
-    //             $linkData[] = $productLink->setSku($target->getSku())
-    //                 ->setLinkedProductSku($upsellSku)
-    //                 ->setPosition($index)
-    //                 ->setLinkType('crosssell');
-    //         }
-
-    //         $target->setProductLinks($linkData);
-
-    //         return true;
-    //     }
-
-    //     return false;
-    // }
-
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
@@ -417,16 +333,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 if ($result = $this->productRepository->get($storekeeper_sku)) {
                     return $result;
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 // ignoring
             }
 
             return false;
         } catch (\Exception $e) {
-            echo "\n\n";
-            echo "  {$e->getMessage()}";
-            echo "\n\n";
-            exit;
+            $this->logger->error($e->getMessage());
         }
         return false;
     }
@@ -460,9 +373,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->websiteIds[$storeId];
     }
 
-    public function onCreate($storeId, array $result) //, array $shopProductAssigns)
+    public function onCreate($storeId, array $result)
     {
-        return $this->update($storeId, null, $result); //, $shopProductAssigns);
+        return $this->update($storeId, null, $result);
     }
 
     public function onDeactivate($storeId, $targetId)
@@ -498,7 +411,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function update($storeId, $target = null, array $result = []) //, array $shopProductAssigns)
+    public function update($storeId, $target = null, array $result = [])
     {
         $this->storeManager->setCurrentStore($storeId);
 
@@ -625,8 +538,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                         $this->setGalleryImage($flat_product['main_image']['big_url'], $target, true);
                     }
                 }
-            } else {
-                //ToDo: remove main image
             }
 
             $galleryImages = $target->getMediaGalleryImages()->getItems();
@@ -657,28 +568,20 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($this->updateProductLinks($storeId, $target, 'getUpsellShopProductIds', 'upsell')) {
                 $shouldUpdate = true;
-                echo "  Should update upsells\n";
             }
 
             if ($this->updateProductLinks($storeId, $target, 'getCrossSellShopProductIds', 'crosssell')) {
                 $shouldUpdate = true;
-                echo "  Should update crosssells\n";
             }
 
             if ($shouldUpdate) {
                 $this->productRepository->save($target);
 
                 if ($update) {
-                    echo "  Updated {$sku} ({$title})\n";
-
                     if ($language == ' ') {
                         $this->setProductToUseDefaultValues($target, $storeId);
                     }
-                } else {
-                    echo "  Created {$sku} ({$title})\n";
                 }
-            } else {
-                echo "  Skipped {$sku} ({$title}), no changes\n";
             }
 
             $shouldUpdateStock = false;
@@ -714,9 +617,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             if ($shouldUpdateStock) {
                 $stockItem->save();
-
-                echo "      Stock has changed, updated stock\n";
-                echo "\n";
             }
 
             if (!empty($categoryIds = $this->getResultCategoryIds($result))) {
@@ -731,27 +631,19 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     try {
                         $diff = array_diff($target->getCategoryIds(), $categoryIds);
                         if (empty($target->getCategoryIds()) || $diff) {
-                            echo "  Updating category assignment for {$target->getSku()}";
-                            // $this->storeManager->setCurrentStore($storeIds[0]);
                             if ($diff) {
                                 foreach ($diff as $categoryId) {
-                                    echo ".";
                                     $this->categoryLinkRepository->deleteByIds($categoryId, $target->getSku());
                                 }
                             }
 
-                            echo ".";
                             $this->categoryLinkManagement->assignProductToCategories(
                                 $target->getSku(),
                                 $categoryIds
                             );
-                            echo "done\n";
                         }
-                    } catch (Exception $e) {
-                        echo "\n\n";
-                        echo "  Something went wrong: {$e->getMessage()}\n";
-                        echo "      Continuing operations\n";
-                        echo "\n\n";
+                    } catch (\Exception $e) {
+                        $this->logger->error($e->getMessage());
                     }
                 }
             }
@@ -781,8 +673,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             try {
                 $target->addImageToMediaGallery($newImage, $imageTypes, true, false);
             } catch (LocalizedException $e) {
-                var_dump($e->getMessage());
-                var_dump($e->getTraceAsString());
+                $this->logger->error($exception->getMessage());
             }
         }
     }
@@ -814,12 +705,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     private function setProductToUseDefaultValues($target, $storeId)
     {
-        echo "      Setting \"{$target->getSku()}\" for store \"{$storeId}\" to use default values\n";
-
         $target->setStoreId($storeId);
-
         $productData = $target->getData();
-
         $productData['name'] = null;
         $productData['description'] = false;
         $productData['short_description'] = false;
@@ -828,7 +715,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $productData['url_key'] = false;
 
         $target->setData($productData);
-
         $this->productRepository->save($target);
     }
 }

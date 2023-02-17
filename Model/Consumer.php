@@ -55,8 +55,6 @@ class Consumer
             $value = $data['value'];
             $type = $data['type'];
 
-            echo "[{$type}] {$entity}({$value}): Starting...\n";
-
             if (is_null($storeId)) {
                 throw new \Exception("Missing store ID");
             }
@@ -69,46 +67,33 @@ class Consumer
                     $this->categoriesHelper->updateById($storeId, $value);
                 } elseif ($entity == "Order") {
                     $this->ordersHelper->updateById($storeId, $value);
-                } else {
-                    echo "  Unknown entity: {$entity}\n";
                 }
             } elseif ($type == "deactivated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->onDeactivate($storeId, $value);
                 } elseif ($entity == 'Category') {
                     $this->categoriesHelper->onDeactivate($storeId, $value);
-                } else {
-                    echo "  Unknown entity: {$entity}\n";
                 }
             } elseif ($type == "activated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->activate($storeId, $value);
                 } elseif ($entity == 'Category') {
                     $this->categoriesHelper->activate($storeId, $value);
-                } else {
-                    echo "  Unknown entity: {$entity}\n";
                 }
             } elseif ($type == "deleted") {
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onDeleted($storeId, $value);
-                } else {
-                    echo "  Unknown entity: {$entity}\n";
                 }
             } elseif ($type == "created") {
                 if ($entity == 'Category') {
                     $this->categoriesHelper->onCreated($storeId, $value);
                 } elseif ($entity == "ShopProduct") {
                     $this->productsHelper->updateById($storeId, $value);
-                } else {
-                    echo "  Unknown entity: {$entity}\n";
                 }
             } elseif ($type == 'stock_change') {
                 $this->productsHelper->updateStock($storeId, $value);
             }
-
-            echo "done!\n";
-        } catch (\Exception|\Error $e) {
-            echo "{$e->getMessage()}\n";
+        } catch (\Exception $e) {
             $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
         }
     }

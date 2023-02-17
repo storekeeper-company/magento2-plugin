@@ -7,6 +7,7 @@ use Magento\Customer\Model\Data\Customer;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Sales\Model\Order;
+use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 
 class Customers extends AbstractHelper
@@ -16,19 +17,30 @@ class Customers extends AbstractHelper
     private AddressFactory $addressFactory;
 
     /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
+
+    /**
+     * Constructor
+     * 
      * @param Auth $authHelper
      * @param AddressFactory $addressFactory
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface
      * @param Context $context
+     * @param LoggerInterface $logger
      */
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface,
-        Context $context
+        Context $context,
+        LoggerInterface $logger
     ) {
         $this->authHelper = $authHelper;
         $this->addressFactory = $addressFactory;
         $this->customerRepositoryInterface = $customerRepositoryInterface;
+        $this->logger = $logger;
 
         parent::__construct($context);
     }
@@ -49,6 +61,7 @@ class Customers extends AbstractHelper
                 $id = (int)$customer['id'];
             } catch (GeneralException $exception) {
                 // Customer not found in StoreKeeper
+                $this->logger->error($exception->getMessage());
             }
         }
 
