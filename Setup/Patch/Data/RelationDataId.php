@@ -98,8 +98,7 @@ class RelationDataId implements DataPatchInterface
 
             $this->attributeResource->save($attribute);
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            var_dump($e->getTraceAsString());
+            //TODO Implement exception handler
         }
 
         $this->moduleDataSetup->getConnection()->endSetup();

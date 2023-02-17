@@ -49,6 +49,7 @@ class Customers extends AbstractHelper
                 $id = (int)$customer['id'];
             } catch (GeneralException $exception) {
                 // Customer not found in StoreKeeper
+                //TODO Implement exception handler
             }
         }
 

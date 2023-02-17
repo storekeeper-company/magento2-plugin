@@ -76,7 +76,6 @@ class Orders extends Command
             $storeId = $input->getOption(self::STORES);
 
             if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
-                echo "  Skipping order sync: mode not allowed\n";
                 return;
             }
 
@@ -97,9 +96,6 @@ class Orders extends Command
                             $this->ordersHelper->onCreate($order);
                         }
                     } catch(\Exception|\Error $e) {
-                        $error = $e->getMessage() . "\n";
-                        $error .= ($e->getFile() ?? '') . ' at line #' . ($e->getLine() ?? '');
-                        $output->writeln('<error>' . $error . '</error>');
                         $this->logger->error($e->getMessage());
                     }
                 }
@@ -110,7 +106,6 @@ class Orders extends Command
 
             $output->writeln('<info>Finish order sync</info>');
         } catch (\Exception|\Error $e) {
-            $output->writeln('<error>' . $e->getMessage() . '</error>');
             $this->logger->error($e->getMessage());
         }
     }

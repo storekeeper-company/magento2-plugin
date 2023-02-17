@@ -50,8 +50,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         );
 
         $this->cache->cleanType('config');
-
-        file_put_contents("webhook.log", "Added auth data for website {$storeId}\n" . json_encode($authData['sync_auth'], JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
     }
 
     public function getStoreInformation($storeId)

@@ -181,13 +181,8 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        // if ($language == ' ') {
-        //     $target->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-        //     $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-        // } else {
         $target->setStoreId($storeId);
         $this->storeManager->setCurrentStore($storeId);
-        // }
 
         if ($target->getName() != $title) {
             $shouldUpdate = true;
@@ -293,17 +288,9 @@ HTML;
                 }
             }
 
-            if ($update) {
-                echo "  Updated {$title}\n";
-            } else {
-                echo "  Created {$title}\n";
-            }
-
             if ($update && $language == ' ') {
                 $this->setCategoryToUseDefaultValues($target, $storeId);
             }
-        } else {
-            echo "  Skipped {$title}, no changes\n";
         }
     }
 
@@ -320,17 +307,12 @@ HTML;
     private function setCategoryToUseDefaultValues($target, $storeId)
     {
         $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-
-        echo "      Setting \"{$target->getName()}\" for store \"{$storeId}\" to use default values\n";
-
         $target->setStoreId($storeId);
-
         $productData = $target->getData();
-
         $productData['name'] = null;
         $productData['description'] = false;
-        $target->setData($productData);
 
+        $target->setData($productData);
         $target->save();
         $this->categoryRepository->save($target);
     }

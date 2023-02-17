@@ -70,7 +70,6 @@ class Categories extends Command
             $storeId = $input->getOption(self::STORES);
 
             if (!$this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                echo "  Skipping category sync: mode not allowed\n";
                 return;
             }
 
@@ -78,8 +77,6 @@ class Categories extends Command
 
             $current = 0;
             $total = null;
-
-            echo "  \nWorking...\n";
 
             while (is_null($total) || $current < $total) {
                 $response = $this->categoriesHelper->listTranslatedCategoryForHooks(
@@ -100,8 +97,6 @@ class Categories extends Command
                     []
                 );
 
-                echo "\nProcessing " . ($current + $response['count']) . ' out of ' . $response['total'] . " results\n\n";
-
                 $total = $response['total'];
                 $current += $response['count'];
 
@@ -116,16 +111,11 @@ class Categories extends Command
                         }
                     } catch (\Exception $e) {
                         $this->logger->error($e->getMessage());
-                        $output->writeln('<error>' . $e->getFile() . ' at ' . $e->getLine() . ' ' . $e->getMessage() . '</error>');
-                        foreach ($e->getTrace() as $trace) {
-                            $output->writeln('<error>   ' . ($trace['file'] ?? '') . ' at ' . ($trace['line'] ?? '') . '</error>');
-                        }
                     }
                 }
             }
         } catch (\Exception|\Error $e) {
             $this->logger->error($e->getMessage());
-            $output->writeln('<error>' . $e->getFile() . ' at ' . $e->getLine() . ' ' . $e->getMessage() . '</error>');
         }
     }
 }

@@ -259,9 +259,6 @@ class Orders extends AbstractHelper
 
             $payloadItem = [
                 'sku' => $item->getSku(),
-                // keep this here for future reference
-                // 'ppu_wt' => $item->getPriceInclTax(),
-                // 'before_discount_ppu_wt' => (float) $item->getOriginalPrice(),
                 'quantity' => $item->getQtyOrdered(),
                 'name' => $item->getName(),
                 'shop_product_id' => $shopProductId,
@@ -347,6 +344,7 @@ class Orders extends AbstractHelper
                 return $response;
             }
         } catch (\Error|\Exception $e) {
+            //TODO Implement exception handler
             return null;
         }
     }
@@ -546,8 +544,6 @@ class Orders extends AbstractHelper
     public function onCreate(Order $order)
     {
         $payload = $this->prepareOrder($order, false);
-
-        // $storeKeeperId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newOrder($payload);
         $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
         $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
@@ -555,8 +551,6 @@ class Orders extends AbstractHelper
         $order->setStorekeeperOrderPendingSync(0);
         $order->setStorekeeperOrderPendingSyncSkip(true);
         $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
-
-        // $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
         try {
             $this->orderRepository->save($order);
@@ -607,11 +601,6 @@ class Orders extends AbstractHelper
                 1,
                 'eq'
             )
-            // ->addFilter(
-            //     'status',
-            //     ['processing', 'canceled', 'closed', 'complete'],
-            //     'in'
-            // )
             ->setPageSize(
                 $pageSize
             )

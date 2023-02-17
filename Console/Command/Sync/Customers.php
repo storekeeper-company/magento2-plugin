@@ -81,7 +81,6 @@ class Customers extends Command
             $storeId = $input->getOption(self::STORES);
 
             if (!$this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
-                echo "  Skipping customer sync: mode not allowed\n";
                 return;
             }
 
@@ -103,13 +102,10 @@ class Customers extends Command
                     $customer->setExtensionAttributes($extensionAttributes);
                     $this->customerRepository->save($customer);
                 } catch (\Exception|\Error $e) {
-                    $output->writeln('<error>' . $e->getMessage() . '</error>');
                     $this->logger->error($e->getMessage());
                 }
             }
-            $output->writeln('<info>Finished customer sync</info>');
         } catch (\Exception|\Error $e) {
-            $output->writeln('<error>' . $e->getMessage() . '</error>');
             $this->logger->error($e->getMessage());
         }
     }
