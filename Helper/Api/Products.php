@@ -38,7 +38,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
     /**
      * Constructor
-     * 
+     *
      * @param Auth $authHelper
      * @param ProductFactory $productFactory
      * @param ProductRepositoryInterface $productRepository
@@ -56,6 +56,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param SourceItemInterfaceFactory $sourceItemFactory
      * @param ProductLinkInterfaceFactory $productLinkFactory
      * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
+     * @param LoggerInterface $logger
      */
     public function __construct(
         Auth $authHelper,
@@ -74,7 +75,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterfaceFactory $sourceItemFactory,
         ProductLinkInterfaceFactory $productLinkFactory,
-        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
+        LoggerInterface $logger
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
