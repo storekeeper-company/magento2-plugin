@@ -259,11 +259,12 @@ class Orders extends AbstractHelper
         }
 
         foreach ($order->getItems() as $item) {
-            $shopProductId = '';
+            if (!$item->getData('has_children')) {
+                $shopProductId = '';
 
-            if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
-                $shopProductId = $item->getProduct()->getStorekeeperProductId();
-            }
+                if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
+                    $shopProductId = $item->getProduct()->getStorekeeperProductId();
+                }
 
             $payloadItem = [
                 'sku' => $item->getSku(),
@@ -272,27 +273,28 @@ class Orders extends AbstractHelper
                 'shop_product_id' => $shopProductId,
             ];
 
-            if (((float)$item->getTaxAmount()) > 0) {
-                $payloadItem['ppu_wt'] = $item->getPriceInclTax();
-                $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
-            } else {
-                $payloadItem['ppu_wt'] = $item->getPrice();
-            }
-
-            $taxPercent = ((float) $item->getTaxPercent()) / 100;
-            if ($taxPercent > 0) {
-                $rateId = null;
-                foreach ($rates['data'] ?? [] as $rate) {
-                    if ($rate['value'] == $taxPercent) {
-                        $rateId = $rate['id'];
-                        break;
-                    }
+                if (((float)$item->getTaxAmount()) > 0) {
+                    $payloadItem['ppu_wt'] = $item->getPriceInclTax();
+                    $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
+                } else {
+                    $payloadItem['ppu_wt'] = $this->getItemPrice($item);
                 }
-                $payloadItem['tax_rate_id'] = $rateId;
-            } elseif (!empty($taxFreeId)) {
-                $payloadItem['tax_rate_id'] = $taxFreeId;
+
+                $taxPercent = ((float) $item->getTaxPercent()) / 100;
+                if ($taxPercent > 0) {
+                    $rateId = null;
+                    foreach ($rates['data'] ?? [] as $rate) {
+                        if ($rate['value'] == $taxPercent) {
+                            $rateId = $rate['id'];
+                            break;
+                        }
+                    }
+                    $payloadItem['tax_rate_id'] = $rateId;
+                } elseif (!empty($taxFreeId)) {
+                    $payloadItem['tax_rate_id'] = $taxFreeId;
+                }
+                $payload[] = $payloadItem;
             }
-            $payload[] = $payloadItem;
         }
 
         if (!$order->getIsVirtual()) {
@@ -617,5 +619,27 @@ class Orders extends AbstractHelper
             ->create();
 
         return $this->orderRepository->getList($searchCriteria);
+    }
+
+    /**
+     * @param $item
+     * @return float
+     */
+    private function getItemPrice($item): float
+    {
+        $itemPrice = 0.0;
+        $parentProduct = $item->getParentItem();
+        if ($parentProduct) {
+            $parentProductType = $parentProduct->getProductType();
+            if ($parentProductType == 'bundle') {
+                $itemPrice = $item->getPrice();
+            } elseif ($parentProductType == 'configurable') {
+                $itemPrice = $parentProduct->getPrice();
+            }
+        } else {
+            $itemPrice = $item->getPrice();
+        }
+
+        return $itemPrice;
     }
 }
