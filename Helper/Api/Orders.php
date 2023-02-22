@@ -16,6 +16,7 @@ use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Orders extends AbstractHelper
 {
@@ -40,6 +41,8 @@ class Orders extends AbstractHelper
      */
     private LoggerInterface $logger;
 
+    private Json $jsonSerializer;
+
     /**
      * @param Auth $authHelper
      * @param Customers $customersHelper
@@ -50,6 +53,7 @@ class Orders extends AbstractHelper
      * @param ShipmentRepositoryInterface $shipmentRepository
      * @param TrackFactory $trackFactory
      * @param Context $context
+     * @param Json $jsonSerializer
      */
     public function __construct(
         Auth $authHelper,
@@ -62,7 +66,8 @@ class Orders extends AbstractHelper
         TrackFactory $trackFactory,
         TaxItem $taxItem,
         Context $context,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Json $jsonSerializer
     ) {
         $this->authHelper = $authHelper;
         $this->customersHelper = $customersHelper;
@@ -74,6 +79,7 @@ class Orders extends AbstractHelper
         $this->trackFactory = $trackFactory;
         $this->taxItem = $taxItem;
         $this->logger = $logger;
+        $this->jsonSerializer = $jsonSerializer;
 
         parent::__construct($context);
     }
@@ -259,42 +265,14 @@ class Orders extends AbstractHelper
         }
 
         foreach ($order->getItems() as $item) {
-            if (!$item->getData('has_children')) {
-                $shopProductId = '';
 
-                if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
-                    $shopProductId = $item->getProduct()->getStorekeeperProductId();
-                }
-
-            $payloadItem = [
-                'sku' => $item->getSku(),
-                'quantity' => $item->getQtyOrdered(),
-                'name' => $item->getName(),
-                'shop_product_id' => $shopProductId,
-            ];
-
-                if (((float)$item->getTaxAmount()) > 0) {
-                    $payloadItem['ppu_wt'] = $item->getPriceInclTax();
-                    $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
-                } else {
-                    $payloadItem['ppu_wt'] = $this->getItemPrice($item);
-                }
-
-                $taxPercent = ((float) $item->getTaxPercent()) / 100;
-                if ($taxPercent > 0) {
-                    $rateId = null;
-                    foreach ($rates['data'] ?? [] as $rate) {
-                        if ($rate['value'] == $taxPercent) {
-                            $rateId = $rate['id'];
-                            break;
-                        }
-                    }
-                    $payloadItem['tax_rate_id'] = $rateId;
-                } elseif (!empty($taxFreeId)) {
-                    $payloadItem['tax_rate_id'] = $taxFreeId;
-                }
-                $payload[] = $payloadItem;
+            if ($item->getProductType() == 'bundle') {
+                $payloadItem = $this->getBundlePayload($item, $taxFreeId);
+            } else {
+                $payloadItem = $this->getGeneralPayload($item, $taxFreeId);
             }
+
+            $payload[] = $payloadItem;
         }
 
         if (!$order->getIsVirtual()) {
@@ -641,5 +619,122 @@ class Orders extends AbstractHelper
         }
 
         return $itemPrice;
+    }
+
+    /**
+     * @param $item
+     * @param $taxFreeId
+     * @return array
+     */
+    private function getBundlePayload($item, $taxFreeId)
+    {
+        $bundleItemsPriceTotal = null;
+        $bundlePrice = $item->getPriceInclTax();
+
+        $parentProduct = $this->getParentProductData($item);
+
+        foreach ($item->getChildrenItems() as $bundleItem) {
+            $bundleItemSku = $bundleItem->getSku();
+            $bundleItemPrice = $bundleItem->getProduct()->getPrice();
+            $bundleItemsPriceTotal += $bundleItemPrice;
+            $bundleItemData = $this->jsonSerializer->unserialize(
+                $bundleItem->getProductOptions()['bundle_selection_attributes']
+            );
+            $bundlePayload[] = [
+                'quantity' => $bundleItem->getQtyOrdered(),
+                'ppu_wt' => $bundleItemData['price'],
+                'sku' => $bundleItemSku,
+                'name' => $bundleItem->getName(),
+                'description' => $bundleItemData['option_label'],
+                'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId),
+                'extra' => [
+                    'external_id' => $bundleItem->getProduct()->getId(),
+                    'options' => [
+                        'option' => $bundleItemData['option_label']
+                    ],
+                    'parent_product' => $parentProduct
+                ]
+            ];
+        }
+
+        $bundleDiscount = $this->getBundleDiscount((float)$bundleItemsPriceTotal, (float)$bundlePrice);
+
+        if ($bundleDiscount) {
+            $bundlePayload[] = $this->getBundleDiscountData($bundleDiscount, $parentProduct);
+        }
+
+        return $bundlePayload;
+    }
+
+    private function getGeneralPayload($item, $taxFreeId)
+    {
+        $shopProductId = '';
+
+        if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
+            $shopProductId = $item->getProduct()->getStorekeeperProductId();
+        }
+
+        $payloadItem = [
+            'sku' => $item->getSku(),
+            'quantity' => $item->getQtyOrdered(),
+            'name' => $item->getName(),
+            'shop_product_id' => $shopProductId,
+        ];
+
+        if (((float)$item->getTaxAmount()) > 0) {
+            $payloadItem['ppu_wt'] = $item->getPriceInclTax();
+            $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
+        } else {
+            $payloadItem['ppu_wt'] = $this->getItemPrice($item);
+        }
+
+        $payloadItem['tax_rate_id'] = $this->getTaxRateId($item, $taxFreeId);
+
+        return $payloadItem;
+    }
+
+    private function getParentProductData($item)
+    {
+        return [
+            'external_id' => $item->getId(),
+            'sku' => $item->getSku(),
+            'name' => $item->getName()
+        ];
+    }
+
+    private function getBundleDiscount($bundleItemsPriceTotal, $bundlePrice)
+    {
+        return $bundlePrice - $bundleItemsPriceTotal;
+    }
+
+    private function getBundleDiscountData($bundleDiscount, $parentProduct)
+    {
+        return [
+            'quantity' => 1,
+            'ppu_wt' => $bundleDiscount,
+            'sku' => $parentProduct['sku'],
+            'is_discount' => true,
+            'name' => $parentProduct['name'],
+            'description' => 'Discount ' . $bundleDiscount . ' for ' . $parentProduct['name']
+        ];
+    }
+
+    private function getTaxRateId($item, $taxFreeId)
+    {
+        $taxPercent = ((float) $item->getTaxPercent()) / 100;
+        if ($taxPercent > 0) {
+            $rateId = null;
+            foreach ($rates['data'] ?? [] as $rate) {
+                if ($rate['value'] == $taxPercent) {
+                    $rateId = $rate['id'];
+                    break;
+                }
+            }
+            $taxRateId = $rateId;
+        } elseif (!empty($taxFreeId)) {
+            $taxRateId = $taxFreeId;
+        }
+
+        return $taxRateId;
     }
 }
