@@ -17,9 +17,14 @@ use Magento\Shipping\Model\ShipmentNotifier;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Bundle\Model\Product\Type as Bundle;
 
 class Orders extends AbstractHelper
 {
+    private const BUNDLE_TYPE = 'bundle';
+
+    private const CONFIGURABLE_TYPE = 'configurable';
+
     private Auth $authHelper;
 
     private Customers $customersHelper;
@@ -43,6 +48,8 @@ class Orders extends AbstractHelper
 
     private Json $jsonSerializer;
 
+    private Bundle $bundle;
+
     /**
      * @param Auth $authHelper
      * @param Customers $customersHelper
@@ -54,6 +61,7 @@ class Orders extends AbstractHelper
      * @param TrackFactory $trackFactory
      * @param Context $context
      * @param Json $jsonSerializer
+     * @param Bundle $bundle
      */
     public function __construct(
         Auth $authHelper,
@@ -67,7 +75,8 @@ class Orders extends AbstractHelper
         TaxItem $taxItem,
         Context $context,
         LoggerInterface $logger,
-        Json $jsonSerializer
+        Json $jsonSerializer,
+        Bundle $bundle
     ) {
         $this->authHelper = $authHelper;
         $this->customersHelper = $customersHelper;
@@ -80,6 +89,7 @@ class Orders extends AbstractHelper
         $this->taxItem = $taxItem;
         $this->logger = $logger;
         $this->jsonSerializer = $jsonSerializer;
+        $this->bundle = $bundle;
 
         parent::__construct($context);
     }
@@ -89,7 +99,7 @@ class Orders extends AbstractHelper
      * @param $isUpdate
      * @return array
      */
-    public function prepareOrder($order, $isUpdate): array
+    public function prepareOrder(Order $order, bool $isUpdate): array
     {
         /** @var $order Order */
         $email = $order->getCustomerEmail();
@@ -265,14 +275,18 @@ class Orders extends AbstractHelper
         }
 
         foreach ($order->getItems() as $item) {
-
-            if ($item->getProductType() == 'bundle') {
-                $payloadItem = $this->getBundlePayload($item, $taxFreeId);
+            if ($item->getProductType() == self::BUNDLE_TYPE) {
+                $bundleId = $item->getProductId();
+                $payloadItems = $this->getBundlePayload($item, $taxFreeId, $rates);
             } else {
-                $payloadItem = $this->getGeneralPayload($item, $taxFreeId);
+                $parentIds = $this->bundle->getParentIdsByChild($item->getProductId());
+                if ($item->getParentItemId() || (isset($bundleId) && in_array($bundleId, $parentIds))) {
+                    continue;
+                }
+                $payloadItems[] = $this->getSimpleProductPayload($item, $taxFreeId, $rates);
             }
 
-            $payload[] = $payloadItem;
+            $payload = array_merge($payload, $payloadItems);
         }
 
         if (!$order->getIsVirtual()) {
@@ -609,9 +623,9 @@ class Orders extends AbstractHelper
         $parentProduct = $item->getParentItem();
         if ($parentProduct) {
             $parentProductType = $parentProduct->getProductType();
-            if ($parentProductType == 'bundle') {
+            if ($parentProductType == self::BUNDLE_TYPE) {
                 $itemPrice = $item->getPrice();
-            } elseif ($parentProductType == 'configurable') {
+            } elseif ($parentProductType == self::CONFIGURABLE_TYPE) {
                 $itemPrice = $parentProduct->getPrice();
             }
         } else {
@@ -624,11 +638,17 @@ class Orders extends AbstractHelper
     /**
      * @param $item
      * @param $taxFreeId
+     * @param $rates
      * @return array
      */
-    private function getBundlePayload($item, $taxFreeId)
+    private function getBundlePayload($item, $taxFreeId, $rates)
     {
+        // total of bundle's items prices as simple products
         $bundleItemsPriceTotal = null;
+
+        // total of bundle's items prices as option products
+        $bundleOptionItemsTotal = null;
+
         $bundlePrice = $item->getPriceInclTax();
 
         $parentProduct = $this->getParentProductData($item);
@@ -640,13 +660,19 @@ class Orders extends AbstractHelper
             $bundleItemData = $this->jsonSerializer->unserialize(
                 $bundleItem->getProductOptions()['bundle_selection_attributes']
             );
+            $bundleOptionItemsTotal += $bundleItemData['price'];
+
+            $hasDiscount = $bundleItem->getDiscountPercent() != 0;
+            $bundleItemWithDiscountData = $hasDiscount ? $this->getBundleItemWithDiscountData($bundleItem) : null;
+
             $bundlePayload[] = [
                 'quantity' => $bundleItem->getQtyOrdered(),
-                'ppu_wt' => $bundleItemData['price'],
+                'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : null,
+                'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $bundleItemData['price'],
                 'sku' => $bundleItemSku,
                 'name' => $bundleItem->getName(),
                 'description' => $bundleItemData['option_label'],
-                'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId),
+                'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId, $rates),
                 'extra' => [
                     'external_id' => $bundleItem->getProduct()->getId(),
                     'options' => [
@@ -659,27 +685,43 @@ class Orders extends AbstractHelper
 
         $bundleDiscount = $this->getBundleDiscount((float)$bundleItemsPriceTotal, (float)$bundlePrice);
 
-        if ($bundleDiscount) {
+        if ($bundleDiscount && $bundleOptionItemsTotal != 0) {
             $bundlePayload[] = $this->getBundleDiscountData($bundleDiscount, $parentProduct);
+        }
+
+        if ($bundleOptionItemsTotal == 0 && $bundlePrice > $bundleOptionItemsTotal) {
+            $bundlePayload[] = $this->getBundleCompensateData($bundlePrice, $parentProduct, $item, $taxFreeId, $rates);
         }
 
         return $bundlePayload;
     }
 
-    private function getGeneralPayload($item, $taxFreeId)
+    /**
+     * @param $item
+     * @param $taxFreeId
+     * @param $rates
+     * @return array
+     */
+    private function getSimpleProductPayload($item, $taxFreeId, $rates)
     {
-        $shopProductId = '';
+        $isConfigurableProduct = $item->getProductType() == self::CONFIGURABLE_TYPE;
 
-        if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
-            $shopProductId = $item->getProduct()->getStorekeeperProductId();
+        if ($isConfigurableProduct) {
+            $payloadItem = $this->getConfigurableProductData($item);
+        } else {
+            $shopProductId = '';
+
+            if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
+                $shopProductId = $item->getProduct()->getStorekeeperProductId();
+            }
+
+            $payloadItem = [
+                'sku' => $item->getSku(),
+                'quantity' => $item->getQtyOrdered(),
+                'name' => $item->getName(),
+                'shop_product_id' => $shopProductId,
+            ];
         }
-
-        $payloadItem = [
-            'sku' => $item->getSku(),
-            'quantity' => $item->getQtyOrdered(),
-            'name' => $item->getName(),
-            'shop_product_id' => $shopProductId,
-        ];
 
         if (((float)$item->getTaxAmount()) > 0) {
             $payloadItem['ppu_wt'] = $item->getPriceInclTax();
@@ -688,25 +730,39 @@ class Orders extends AbstractHelper
             $payloadItem['ppu_wt'] = $this->getItemPrice($item);
         }
 
-        $payloadItem['tax_rate_id'] = $this->getTaxRateId($item, $taxFreeId);
+        $payloadItem['tax_rate_id'] = $this->getTaxRateId($item, $taxFreeId, $rates);
 
         return $payloadItem;
     }
 
+    /**
+     * @param $item
+     * @return array
+     */
     private function getParentProductData($item)
     {
         return [
-            'external_id' => $item->getId(),
-            'sku' => $item->getSku(),
-            'name' => $item->getName()
+            'external_id' => $item->getProductId(),
+            'sku' => $item->getProduct()->getSku(),
+            'name' => $item->getProduct()->getName()
         ];
     }
 
+    /**
+     * @param $bundleItemsPriceTotal
+     * @param $bundlePrice
+     * @return mixed
+     */
     private function getBundleDiscount($bundleItemsPriceTotal, $bundlePrice)
     {
         return $bundlePrice - $bundleItemsPriceTotal;
     }
 
+    /**
+     * @param $bundleDiscount
+     * @param $parentProduct
+     * @return array
+     */
     private function getBundleDiscountData($bundleDiscount, $parentProduct)
     {
         return [
@@ -714,12 +770,78 @@ class Orders extends AbstractHelper
             'ppu_wt' => $bundleDiscount,
             'sku' => $parentProduct['sku'],
             'is_discount' => true,
-            'name' => $parentProduct['name'],
-            'description' => 'Discount ' . $bundleDiscount . ' for ' . $parentProduct['name']
+            'name' => $parentProduct['name']
         ];
     }
 
-    private function getTaxRateId($item, $taxFreeId)
+    /**
+     * @param $bundleItem
+     * @return array
+     */
+    private function getBundleItemWithDiscountData($bundleItem)
+    {
+        return [
+            'before_discount_ppu_wt' => $bundleItem->getPrice(),
+            'ppu_wt' => $bundleItem->getPrice() - $bundleItem->getDiscountAmount()
+        ];
+    }
+
+    /**
+     * @param $bundlePrice
+     * @param $parentProduct
+     * @param $item
+     * @param $taxFreeId
+     * @return array
+     */
+    private function getBundleCompensateData($bundlePrice, $parentProduct, $item, $taxFreeId, $rates)
+    {
+        return [
+            'quantity' => 1,
+            'ppu_wt' => $bundlePrice,
+            'sku' => $parentProduct['sku'],
+            'name' => $parentProduct['name'],
+            'description' => $parentProduct['name'],
+            'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId, $rates),
+            'extra' => [
+                'external_id' => $parentProduct['external_id'],
+                'parent_product' => $parentProduct
+            ]
+        ];
+    }
+
+    /**
+     * @param $item
+     * @return array
+     */
+    private function getConfigurableProductData($item)
+    {
+        foreach ($item->getProductOptions()['attributes_info'] as $attribute) {
+            $productConfigurableAttributes[$attribute['label']] = $attribute['value'];
+        }
+        foreach ($item->getChildrenItems() as $configurableProductOption) {
+            $configurableProductData = [
+                'sku' => $configurableProductOption->getSku(),
+                'quantity' => $item->getQtyOrdered(),
+                'name' => $configurableProductOption->getName(),
+                'description' => $configurableProductOption->getDescription(),
+                'extra' => [
+                    'external_id' => $configurableProductOption->getProductId(),
+                    'options' => $productConfigurableAttributes,
+                    'parent_product' => $this->getParentProductData($item)
+                ]
+            ];
+        }
+
+        return $configurableProductData;
+    }
+
+    /**
+     * @param $item
+     * @param $taxFreeId
+     * @param $rates
+     * @return mixed|null
+     */
+    private function getTaxRateId($item, $taxFreeId, $rates)
     {
         $taxPercent = ((float) $item->getTaxPercent()) / 100;
         if ($taxPercent > 0) {
