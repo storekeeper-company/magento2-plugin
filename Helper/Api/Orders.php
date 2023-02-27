@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -11,6 +13,7 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Convert\Order as ConvertOrder;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
@@ -182,12 +185,22 @@ class Orders extends AbstractHelper
         return $payload;
     }
 
-    public function hasRefund(Order $order)
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function hasRefund(Order $order): bool
     {
         return $order->getTotalRefunded() > 0;
     }
 
-    public function refundAllOrderItems(Order $order, $storeKeeperId, array $refund_payments)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @param array $refund_payments
+     * @retrun void
+     */
+    public function refundAllOrderItems(Order $order, string $storeKeeperId, array $refund_payments): void
     {
         $this->authHelper->getModule('ShopModule', $order->getStoreId())
             ->refundAllOrderItems([
@@ -196,7 +209,11 @@ class Orders extends AbstractHelper
             ]);
     }
 
-    public function applyRefund(Order $order)
+    /**
+     * @param Order $order
+     * @retrun void
+     */
+    public function applyRefund(Order $order): void
     {
         $totalRefunded = $order->getTotalRefunded();
 
@@ -239,13 +256,24 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function newWebPayment($storeId, $parameters = [])
+    /**
+     * @param string $storeId
+     * @param array $parameters
+     * @return int
+     */
+    public function newWebPayment(string $storeId, array $parameters = []): int
     {
         return $this->authHelper->getModule('PaymentModule', $storeId)
             ->newWebPayment($parameters);
     }
 
-    public function attachPaymentIdsToOrder($storeId, $storeKeeperId, $paymentIds = [])
+    /**
+     * @param string $storeId
+     * @param string $storeKeeperId
+     * @param array $paymentIds
+     * @retrun void
+     */
+    public function attachPaymentIdsToOrder(string $storeId, string $storeKeeperId, array $paymentIds = []): void
     {
         $this->authHelper->getModule('ShopModule', $storeId)
             ->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
@@ -339,7 +367,12 @@ class Orders extends AbstractHelper
         return $payload;
     }
 
-    public function getStoreKeeperOrder($storeId, $storeKeeperId)
+    /**
+     * @param string $storeId
+     * @param string $storeKeeperId
+     * @retrun ?array
+     */
+    public function getStoreKeeperOrder(string $storeId, string $storeKeeperId): ?array
     {
         try {
             $response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId);
@@ -353,9 +386,12 @@ class Orders extends AbstractHelper
     }
 
     /**
+     * @param string $storeId
+     * @param string $storeKeeperId
      * @throws LocalizedException
+     * @retrun void
      */
-    public function updateById($storeId, $storeKeeperId)
+    public function updateById(string $storeId, string $storeKeeperId): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($storeId, $storeKeeperId);
 
@@ -371,7 +407,13 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function createShipment(Order $order, $storeKeeperId)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function createShipment(Order $order, string $storeKeeperId): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
@@ -429,7 +471,11 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function getOrderByStoreKeeperId($storeKeeperId)
+    /**
+     * @param string $storeKeeperId
+     * @return ?Order
+     */
+    public function getOrderByStoreKeeperId(string $storeKeeperId): ?Order
     {
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('storekeeper_id', $storeKeeperId, 'eq')->create();
@@ -437,12 +483,20 @@ class Orders extends AbstractHelper
         return current($this->orderRepository->getList($searchCriteria)->getItems());
     }
 
-    private function getResultStoreKeeperId($result)
+    /**
+     * @param array $result
+     * @return mixed
+     */
+    private function getResultStoreKeeperId(array $result): mixed
     {
         return $result['order_id'];
     }
 
-    public function exists($order)
+    /**
+     * @param Order $order
+     * @retrun ?string
+     */
+    public function exists(Order $order): ?string
     {
         $storeKeeperId = $order->getStorekeeperId();
 
@@ -450,13 +504,16 @@ class Orders extends AbstractHelper
             return $storeKeeperId;
         }
 
-        return false;
+        return null;
     }
 
     /**
+     * @param Order $order
+     * @param string $storeKeeperId
      * @throws LocalizedException
+     * @retrun void
      */
-    public function update($order, $storeKeeperId)
+    public function update(Order $order, string $storeKeeperId): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
@@ -502,7 +559,7 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @return string[]
+     * @return array
      */
     private function statusMapping(): array
     {
@@ -514,7 +571,13 @@ class Orders extends AbstractHelper
         ];
     }
 
-    public function updateStoreKeeperOrderStatus(Order $order, $storeKeeperId)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function updateStoreKeeperOrderStatus(Order $order, string $storeKeeperId): void
     {
         $statusMapping = $this->statusMapping();
 
@@ -531,7 +594,13 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function updateStoreKeeperOrder(Order $order, $storeKeeperId)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function updateStoreKeeperOrder(Order $order, string $storeKeeperId): void
     {
         $payload = $this->prepareOrder($order, true);
 
@@ -544,7 +613,12 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function onCreate(Order $order)
+    /**
+     * @param Order $order
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function onCreate(Order $order): void
     {
         $payload = $this->prepareOrder($order, false);
         $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
@@ -586,12 +660,12 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $storeId
-     * @param $page
-     * @param $pageSize
+     * @param string $storeId
+     * @param int $page
+     * @param int $pageSize
      * @return OrderSearchResultInterface
      */
-    public function getOrders($storeId, $page, $pageSize): OrderSearchResultInterface
+    public function getOrders(string $storeId, int $page, int $pageSize): OrderSearchResultInterface
     {
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter(
@@ -614,10 +688,10 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $item
+     * @param Item $item
      * @return float
      */
-    private function getItemPrice($item): float
+    private function getItemPrice(Item $item): float
     {
         $itemPrice = 0.0;
         $parentProduct = $item->getParentItem();
@@ -636,12 +710,12 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $item
-     * @param $taxFreeId
-     * @param $rates
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
      * @return array
      */
-    private function getBundlePayload($item, $taxFreeId, $rates)
+    private function getBundlePayload(Item $item, ?int $taxFreeId, array $rates): array
     {
         // total of bundle's items prices as simple products
         $bundleItemsPriceTotal = null;
@@ -649,13 +723,13 @@ class Orders extends AbstractHelper
         // total of bundle's items prices as option products
         $bundleOptionItemsTotal = null;
 
-        $bundlePrice = $item->getPriceInclTax();
+        $bundlePrice = (float)$item->getPriceInclTax();
 
         $parentProduct = $this->getParentProductData($item);
 
         foreach ($item->getChildrenItems() as $bundleItem) {
             $bundleItemSku = $bundleItem->getSku();
-            $bundleItemPrice = $bundleItem->getProduct()->getPrice();
+            $bundleItemPrice = (float)$bundleItem->getProduct()->getPrice();
             $bundleItemsPriceTotal += $bundleItemPrice;
             $bundleItemData = $this->jsonSerializer->unserialize(
                 $bundleItem->getProductOptions()['bundle_selection_attributes']
@@ -683,7 +757,7 @@ class Orders extends AbstractHelper
             ];
         }
 
-        $bundleDiscount = $this->getBundleDiscount((float)$bundleItemsPriceTotal, (float)$bundlePrice);
+        $bundleDiscount = $this->getBundleDiscount($bundleItemsPriceTotal, $bundlePrice);
 
         if ($bundleDiscount && $bundleOptionItemsTotal != 0) {
             $bundlePayload[] = $this->getBundleDiscountData($bundleDiscount, $parentProduct);
@@ -697,12 +771,12 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $item
-     * @param $taxFreeId
-     * @param $rates
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
      * @return array
      */
-    private function getSimpleProductPayload($item, $taxFreeId, $rates)
+    private function getSimpleProductPayload(Item $item, ?int $taxFreeId, array $rates): array
     {
         $isConfigurableProduct = $item->getProductType() == self::CONFIGURABLE_TYPE;
 
@@ -736,10 +810,10 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $item
+     * @param Item $item
      * @return array
      */
-    private function getParentProductData($item)
+    private function getParentProductData(Item $item): array
     {
         return [
             'external_id' => $item->getProductId(),
@@ -749,21 +823,21 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $bundleItemsPriceTotal
-     * @param $bundlePrice
-     * @return mixed
+     * @param float $bundleItemsPriceTotal
+     * @param float $bundlePrice
+     * @return float
      */
-    private function getBundleDiscount($bundleItemsPriceTotal, $bundlePrice)
+    private function getBundleDiscount(float $bundleItemsPriceTotal, float $bundlePrice): float
     {
         return $bundlePrice - $bundleItemsPriceTotal;
     }
 
     /**
-     * @param $bundleDiscount
-     * @param $parentProduct
+     * @param float $bundleDiscount
+     * @param array $parentProduct
      * @return array
      */
-    private function getBundleDiscountData($bundleDiscount, $parentProduct)
+    private function getBundleDiscountData(float $bundleDiscount, array $parentProduct): array
     {
         return [
             'quantity' => 1,
@@ -775,10 +849,10 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $bundleItem
+     * @param Item $bundleItem
      * @return array
      */
-    private function getBundleItemWithDiscountData($bundleItem)
+    private function getBundleItemWithDiscountData(Item $bundleItem): array
     {
         return [
             'before_discount_ppu_wt' => $bundleItem->getPrice(),
@@ -787,13 +861,14 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $bundlePrice
-     * @param $parentProduct
-     * @param $item
-     * @param $taxFreeId
+     * @param float $bundlePrice
+     * @param array $parentProduct
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
      * @return array
      */
-    private function getBundleCompensateData($bundlePrice, $parentProduct, $item, $taxFreeId, $rates)
+    private function getBundleCompensateData(float $bundlePrice, array $parentProduct, Item $item, ?int $taxFreeId, array $rates): array
     {
         return [
             'quantity' => 1,
@@ -810,10 +885,10 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $item
+     * @param Item $item
      * @return array
      */
-    private function getConfigurableProductData($item)
+    private function getConfigurableProductData(Item $item): array
     {
         foreach ($item->getProductOptions()['attributes_info'] as $attribute) {
             $productConfigurableAttributes[$attribute['label']] = $attribute['value'];
@@ -836,12 +911,12 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $item
-     * @param $taxFreeId
-     * @param $rates
-     * @return mixed|null
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
+     * @return ?int
      */
-    private function getTaxRateId($item, $taxFreeId, $rates)
+    private function getTaxRateId(Item $item, ?int $taxFreeId, array $rates): ?int
     {
         $taxPercent = ((float) $item->getTaxPercent()) / 100;
         if ($taxPercent > 0) {
