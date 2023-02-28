@@ -21,6 +21,7 @@ use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Bundle\Model\Product\Type as Bundle;
+use Brick\Money\Money;
 
 class Orders extends AbstractHelper
 {
@@ -52,6 +53,8 @@ class Orders extends AbstractHelper
     private Json $jsonSerializer;
 
     private Bundle $bundle;
+
+    private Order $order;
 
     /**
      * @param Auth $authHelper
@@ -104,6 +107,7 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder(Order $order, bool $isUpdate): array
     {
+        $this->order = $order;
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -706,7 +710,7 @@ class Orders extends AbstractHelper
             $itemPrice = $item->getPrice();
         }
 
-        return $itemPrice;
+        return $this->getPriceValueForPayload($itemPrice);
     }
 
     /**
@@ -723,18 +727,29 @@ class Orders extends AbstractHelper
         // total of bundle's items prices as option products
         $bundleOptionItemsTotal = null;
 
-        $bundlePrice = (float)$item->getPriceInclTax();
+        $bundlePrice = $this->getBrickMoneyPrice($item->getPriceInclTax());
+        $bundlePriceValue = $this->getPriceByBrickMoneyObj($bundlePrice);
 
         $parentProduct = $this->getParentProductData($item);
 
         foreach ($item->getChildrenItems() as $bundleItem) {
             $bundleItemSku = $bundleItem->getSku();
-            $bundleItemPrice = (float)$bundleItem->getProduct()->getPrice();
-            $bundleItemsPriceTotal += $bundleItemPrice;
+            $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getProduct()->getPrice());
+
+            if ($bundleItemsPriceTotal == null) {
+                $bundleItemsPriceTotal = $bundleItemPrice;
+            } else {
+                $bundleItemsPriceTotal = $this->calculateBrickMoneyTotal($bundleItemPrice, $bundleItemsPriceTotal, 'plus');
+            }
+
             $bundleItemData = $this->jsonSerializer->unserialize(
                 $bundleItem->getProductOptions()['bundle_selection_attributes']
             );
-            $bundleOptionItemsTotal += $bundleItemData['price'];
+            $bundleOptionItemPrice = $this->getBrickMoneyPrice($bundleItemData['price']);
+            $bundleOptionItemsTotal = $bundleOptionItemsTotal
+                ? $this->calculateBrickMoneyTotal($bundleOptionItemPrice, $bundleOptionItemsTotal, 'plus')
+                : $bundleOptionItemPrice;
+            $bundleOptionItemsTotalValue = $this->getPriceByBrickMoneyObj($bundleOptionItemsTotal);
 
             $hasDiscount = $bundleItem->getDiscountPercent() != 0;
             $bundleItemWithDiscountData = $hasDiscount ? $this->getBundleItemWithDiscountData($bundleItem) : null;
@@ -742,7 +757,7 @@ class Orders extends AbstractHelper
             $bundlePayload[] = [
                 'quantity' => $bundleItem->getQtyOrdered(),
                 'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : null,
-                'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $bundleItemData['price'],
+                'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $this->getPriceByBrickMoneyObj($bundleOptionItemPrice),
                 'sku' => $bundleItemSku,
                 'name' => $bundleItem->getName(),
                 'description' => $bundleItemData['option_label'],
@@ -757,14 +772,15 @@ class Orders extends AbstractHelper
             ];
         }
 
-        $bundleDiscount = $this->getBundleDiscount($bundleItemsPriceTotal, $bundlePrice);
+        $bundleDiscount = $this->calculateBrickMoneyTotal($bundlePrice, $bundleItemsPriceTotal, 'minus');
+        $bundleDiscountValue = $this->getPriceByBrickMoneyObj($bundleDiscount);
 
-        if ($bundleDiscount && $bundleOptionItemsTotal != 0) {
-            $bundlePayload[] = $this->getBundleDiscountData($bundleDiscount, $parentProduct);
+        if ($bundleDiscountValue != 0 && $bundleOptionItemsTotalValue != 0) {
+            $bundlePayload[] = $this->getBundleDiscountData($bundleDiscountValue, $parentProduct);
         }
 
-        if ($bundleOptionItemsTotal == 0 && $bundlePrice > $bundleOptionItemsTotal) {
-            $bundlePayload[] = $this->getBundleCompensateData($bundlePrice, $parentProduct, $item, $taxFreeId, $rates);
+        if ($bundleOptionItemsTotalValue == 0 && $bundlePriceValue > $bundleOptionItemsTotalValue) {
+            $bundlePayload[] = $this->getBundleCompensateData($bundlePriceValue, $parentProduct, $item, $taxFreeId, $rates);
         }
 
         return $bundlePayload;
@@ -796,10 +812,9 @@ class Orders extends AbstractHelper
                 'shop_product_id' => $shopProductId,
             ];
         }
-
         if (((float)$item->getTaxAmount()) > 0) {
-            $payloadItem['ppu_wt'] = $item->getPriceInclTax();
-            $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
+            $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax());
+            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice());
         } else {
             $payloadItem['ppu_wt'] = $this->getItemPrice($item);
         }
@@ -820,16 +835,6 @@ class Orders extends AbstractHelper
             'sku' => $item->getProduct()->getSku(),
             'name' => $item->getProduct()->getName()
         ];
-    }
-
-    /**
-     * @param float $bundleItemsPriceTotal
-     * @param float $bundlePrice
-     * @return float
-     */
-    private function getBundleDiscount(float $bundleItemsPriceTotal, float $bundlePrice): float
-    {
-        return $bundlePrice - $bundleItemsPriceTotal;
     }
 
     /**
@@ -854,9 +859,12 @@ class Orders extends AbstractHelper
      */
     private function getBundleItemWithDiscountData(Item $bundleItem): array
     {
+        $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getPrice());
+        $bundleItemDiscount = $this->getBrickMoneyPrice($bundleItem->getDiscountAmount());
+        $bundleItemPriceWithoutDiscount = $this->calculateBrickMoneyTotal($bundleItemPrice, $bundleItemDiscount, 'minus');
         return [
-            'before_discount_ppu_wt' => $bundleItem->getPrice(),
-            'ppu_wt' => $bundleItem->getPrice() - $bundleItem->getDiscountAmount()
+            'before_discount_ppu_wt' => $this->getPriceValueForPayload($bundleItem->getPrice()),
+            'ppu_wt' => $this->getPriceByBrickMoneyObj($bundleItemPriceWithoutDiscount)
         ];
     }
 
@@ -933,5 +941,49 @@ class Orders extends AbstractHelper
         }
 
         return $taxRateId;
+    }
+
+    /**
+     * @param int|float|string $price
+     * @return Money
+     */
+    private function getBrickMoneyPrice($price): Money
+    {
+        return Money::of($price, $this->order->getStoreCurrencyCode());
+    }
+
+    /**
+     * @param int|float|string $price
+     * @return float
+     */
+    private function getPriceValueForPayload($price): float
+    {
+        return $this->getBrickMoneyPrice($price)->getAmount()->toFloat();
+    }
+
+    /**
+     * @param Money $brickMoneyObj
+     * @return float
+     */
+    private function getPriceByBrickMoneyObj(Money $brickMoneyObj): float
+    {
+        return $brickMoneyObj->getAmount()->toFloat();
+    }
+
+    /**
+     * @param Money $firstOperand
+     * @param Money $secondOperand
+     * @param string $operation
+     * @return Money
+     * @throws \Brick\Money\Exception\MoneyMismatchException
+     */
+    private function calculateBrickMoneyTotal(Money $firstOperand, Money $secondOperand, string $operation): Money
+    {
+        if ($operation == 'plus') {
+            return $firstOperand->plus($secondOperand);
+        }
+        if ($operation == 'minus') {
+            return $firstOperand->minus($secondOperand);
+        }
     }
 }
