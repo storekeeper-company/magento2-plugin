@@ -82,9 +82,9 @@ class Webhook
                     $response = [
                         "success" => true,
                         'vendor' => 'StoreKeeper',
-                        'platform_name' => 'Magento 2',
+                        'platform_name' => 'Magento2',
                         'platform_version' => $this->productMetadata->getVersion(),
-                        'software_name' => 'storekeeper-magento2-b2c',
+                        'software_name' => 'magento2-plugin',
                         'software_version' => $composerJson['version'],
                         'extra' => [
                             'url' => $this->authHelper->getStoreBaseUrl(),
