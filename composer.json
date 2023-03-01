@@ -2,6 +2,7 @@
     "name": "storekeeper/magento2-plugin",
     "description": "Storekeeper plugin",
     "require": {
+        "brick/money": "0.5",
         "storekeeper/api-wrapper": "v5.2",
         "erusev/parsedown": "v1.7.4"
     },
