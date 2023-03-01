@@ -105,17 +105,14 @@ class Webhook
 
                     $messages = [];
                     $success = false;
-                    $isOwnOrderStockChange = false;
+                    $skipPublish = false;
                     foreach ($eventNames as $eventName) {
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                            $isOwnOrderStockChange = $this->getIsOwnOrderStockChange($bodyParams);
-                            if ($isOwnOrderStockChange) {
+                            $skipPublish = $this->getIsOwnOrderStockChange($bodyParams);
+                            if ($skipPublish) {
                                 $messages[] = "Skipping product \"stock_change\" on order placing";
                             } else {
-                                $this->publish($eventName, $entity, $storeId, $module, $key, $value);
-                                $response['success'] = true;
-                                $response['message'] = "Processing event \"stock_change\"";
-                                continue;
+                                $messages[] = "Processing event \"stock_change\"";
                             }
                         } elseif ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"ShopProduct\"";
@@ -128,9 +125,18 @@ class Webhook
                             continue;
                         }
 
-                        if (!$isOwnOrderStockChange) {
+                        if (!$skipPublish) {
                             $success = true;
-                            $this->publish($eventName, $entity, $storeId, $module, $key, $value);
+                            $message = [
+                                "type" => $eventName,
+                                "entity" => $entity,
+                                "storeId" => $storeId,
+                                "module" => $module,
+                                "key" => $key,
+                                "value" => $value
+                            ];
+
+                            $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
                         }
 
                         $response['success'] = $success;
@@ -180,29 +186,6 @@ class Webhook
         header("Content-Type: application/json");
         echo json_encode($response);
         exit;
-    }
-
-    /**
-     * @param string $eventName
-     * @param string $entity
-     * @param string $storeId
-     * @param string $module
-     * @param string $key
-     * @param string $value
-     * @return void
-     */
-    private function publish(string $eventName, string $entity, string $storeId, string $module, string $key, string $value): void
-    {
-        $message = [
-            "type" => $eventName,
-            "entity" => $entity,
-            "storeId" => $storeId,
-            "module" => $module,
-            "key" => $key,
-            "value" => $value
-        ];
-
-        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
     }
 
     /**
