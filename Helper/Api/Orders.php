@@ -22,6 +22,7 @@ use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Bundle\Model\Product\Type as Bundle;
 use Brick\Money\Money;
+use Brick\Math\RoundingMode;
 
 class Orders extends AbstractHelper
 {
@@ -53,8 +54,6 @@ class Orders extends AbstractHelper
     private Json $jsonSerializer;
 
     private Bundle $bundle;
-
-    private Order $order;
 
     /**
      * @param Auth $authHelper
@@ -107,7 +106,6 @@ class Orders extends AbstractHelper
      */
     public function prepareOrder(Order $order, bool $isUpdate): array
     {
-        $this->order = $order;
         /** @var $order Order */
         $email = $order->getCustomerEmail();
         $relationDataId = null;
@@ -309,7 +307,7 @@ class Orders extends AbstractHelper
         foreach ($order->getItems() as $item) {
             if ($item->getProductType() == self::BUNDLE_TYPE) {
                 $bundleId = $item->getProductId();
-                $payloadItems = $this->getBundlePayload($item, $taxFreeId, $rates);
+                $payloadItems = $this->getBundlePayload($item, $taxFreeId, $rates, $order);
             } else {
                 $parentIds = $this->bundle->getParentIdsByChild($item->getProductId());
                 if ($item->getParentItemId() || (isset($bundleId) && in_array($bundleId, $parentIds))) {
@@ -710,16 +708,17 @@ class Orders extends AbstractHelper
             $itemPrice = $item->getPrice();
         }
 
-        return $this->getPriceValueForPayload($itemPrice);
+        return $this->getPriceValueForPayload($itemPrice, $item->getOrder());
     }
 
     /**
      * @param Item $item
      * @param int|null $taxFreeId
      * @param array $rates
+     * @param Order $order
      * @return array
      */
-    private function getBundlePayload(Item $item, ?int $taxFreeId, array $rates): array
+    private function getBundlePayload(Item $item, ?int $taxFreeId, array $rates, Order $order): array
     {
         // total of bundle's items prices as simple products
         $bundleItemsPriceTotal = null;
@@ -727,27 +726,27 @@ class Orders extends AbstractHelper
         // total of bundle's items prices as option products
         $bundleOptionItemsTotal = null;
 
-        $bundlePrice = $this->getBrickMoneyPrice($item->getPriceInclTax());
+        $bundlePrice = $this->getBrickMoneyPrice($item->getPriceInclTax(), $order);
         $bundlePriceValue = $this->getPriceByBrickMoneyObj($bundlePrice);
 
         $parentProduct = $this->getParentProductData($item);
 
         foreach ($item->getChildrenItems() as $bundleItem) {
             $bundleItemSku = $bundleItem->getSku();
-            $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getProduct()->getPrice());
+            $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getProduct()->getPrice(), $order);
 
             if ($bundleItemsPriceTotal == null) {
                 $bundleItemsPriceTotal = $bundleItemPrice;
             } else {
-                $bundleItemsPriceTotal = $this->calculateBrickMoneyTotal($bundleItemPrice, $bundleItemsPriceTotal, 'plus');
+                $bundleItemsPriceTotal = $bundleItemPrice->plus($bundleItemsPriceTotal);
             }
 
             $bundleItemData = $this->jsonSerializer->unserialize(
                 $bundleItem->getProductOptions()['bundle_selection_attributes']
             );
-            $bundleOptionItemPrice = $this->getBrickMoneyPrice($bundleItemData['price']);
+            $bundleOptionItemPrice = $this->getBrickMoneyPrice($bundleItemData['price'], $order);
             $bundleOptionItemsTotal = $bundleOptionItemsTotal
-                ? $this->calculateBrickMoneyTotal($bundleOptionItemPrice, $bundleOptionItemsTotal, 'plus')
+                ? $bundleOptionItemPrice->plus($bundleOptionItemsTotal)
                 : $bundleOptionItemPrice;
             $bundleOptionItemsTotalValue = $this->getPriceByBrickMoneyObj($bundleOptionItemsTotal);
 
@@ -772,7 +771,7 @@ class Orders extends AbstractHelper
             ];
         }
 
-        $bundleDiscount = $this->calculateBrickMoneyTotal($bundlePrice, $bundleItemsPriceTotal, 'minus');
+        $bundleDiscount = $bundlePrice->minus($bundleItemsPriceTotal);
         $bundleDiscountValue = $this->getPriceByBrickMoneyObj($bundleDiscount);
 
         if ($bundleDiscountValue != 0 && $bundleOptionItemsTotalValue != 0) {
@@ -859,11 +858,11 @@ class Orders extends AbstractHelper
      */
     private function getBundleItemWithDiscountData(Item $bundleItem): array
     {
-        $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getPrice());
-        $bundleItemDiscount = $this->getBrickMoneyPrice($bundleItem->getDiscountAmount());
-        $bundleItemPriceWithoutDiscount = $this->calculateBrickMoneyTotal($bundleItemPrice, $bundleItemDiscount, 'minus');
+        $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getPrice(), $bundleItem->getOrder());
+        $bundleItemDiscount = $this->getBrickMoneyPrice($bundleItem->getDiscountAmount(), $bundleItem->getOrder());
+        $bundleItemPriceWithoutDiscount = $bundleItemPrice->minus($bundleItemDiscount);
         return [
-            'before_discount_ppu_wt' => $this->getPriceValueForPayload($bundleItem->getPrice()),
+            'before_discount_ppu_wt' => $this->getPriceValueForPayload($bundleItem->getPrice(), $bundleItem->getOrder()),
             'ppu_wt' => $this->getPriceByBrickMoneyObj($bundleItemPriceWithoutDiscount)
         ];
     }
@@ -945,20 +944,21 @@ class Orders extends AbstractHelper
 
     /**
      * @param int|float|string $price
+     * @param Order $order
      * @return Money
      */
-    private function getBrickMoneyPrice($price): Money
+    private function getBrickMoneyPrice($price, Order $order): Money
     {
-        return Money::of($price, $this->order->getStoreCurrencyCode());
+        return Money::of($price, $order->getStoreCurrencyCode());
     }
 
     /**
      * @param int|float|string $price
      * @return float
      */
-    private function getPriceValueForPayload($price): float
+    private function getPriceValueForPayload($price, Order $order): float
     {
-        return $this->getBrickMoneyPrice($price)->getAmount()->toFloat();
+        return $this->getPriceByBrickMoneyObj($this->getBrickMoneyPrice($price, $order));
     }
 
     /**
@@ -967,7 +967,7 @@ class Orders extends AbstractHelper
      */
     private function getPriceByBrickMoneyObj(Money $brickMoneyObj): float
     {
-        return $brickMoneyObj->getAmount()->toFloat();
+        return $brickMoneyObj->to($brickMoneyObj->getContext(), RoundingMode::HALF_UP)->getAmount()->toFloat();
     }
 
     /**

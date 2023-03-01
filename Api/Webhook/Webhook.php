@@ -6,6 +6,8 @@ use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Webhook
 {
+    private const STOCK_CHANGE_EVENT = 'stock_change';
+
     public function __construct(
         \Magento\Framework\Webapi\Rest\Request $request,
         \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper,
@@ -103,9 +105,18 @@ class Webhook
 
                     $messages = [];
                     $success = false;
+                    $isOwnOrderStockChange = false;
                     foreach ($eventNames as $eventName) {
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
-                            $messages[] = "Processing event \"stock_change\"";
+                            $isOwnOrderStockChange = $this->getIsOwnOrderStockChange($bodyParams);
+                            if ($isOwnOrderStockChange) {
+                                $messages[] = "Skipping product \"stock_change\" on order placing";
+                            } else {
+                                $this->publish($eventName, $entity, $storeId, $module, $key, $value);
+                                $response['success'] = true;
+                                $response['message'] = "Processing event \"stock_change\"";
+                                continue;
+                            }
                         } elseif ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"ShopProduct\"";
                         } elseif ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
@@ -117,22 +128,15 @@ class Webhook
                             continue;
                         }
 
-                        $success = true;
+                        if (!$isOwnOrderStockChange) {
+                            $success = true;
+                            $this->publish($eventName, $entity, $storeId, $module, $key, $value);
+                        }
 
-                        $message = [
-                            "type" => $eventName,
-                            "entity" => $entity,
-                            "storeId" => $storeId,
-                            "module" => $module,
-                            "key" => $key,
-                            "value" => $value
-                        ];
-
-                        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
+                        $response['success'] = $success;
+                        $response['message'] = implode(', ', $messages);
                     }
 
-                    $response['success'] = $success;
-                    $response['message'] = implode(', ', $messages);
                 } elseif ($action == "deactivated") {
                     preg_match("/(\w+)\::(\w+)\(([a-z]+)\=([0-9]+)\)/", $payload['backref'], $matches);
 
@@ -176,5 +180,42 @@ class Webhook
         header("Content-Type: application/json");
         echo json_encode($response);
         exit;
+    }
+
+    /**
+     * @param string $eventName
+     * @param string $entity
+     * @param string $storeId
+     * @param string $module
+     * @param string $key
+     * @param string $value
+     * @return void
+     */
+    private function publish(string $eventName, string $entity, string $storeId, string $module, string $key, string $value): void
+    {
+        $message = [
+            "type" => $eventName,
+            "entity" => $entity,
+            "storeId" => $storeId,
+            "module" => $module,
+            "key" => $key,
+            "value" => $value
+        ];
+
+        $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
+    }
+
+    /**
+     * @param array $bodyParams
+     * @return bool
+     */
+    private function getIsOwnOrderStockChange(array $bodyParams): bool
+    {
+        $events = $bodyParams['payload']['events'];
+        foreach ($events as $event) {
+            if ($event['event'] == self::STOCK_CHANGE_EVENT) {
+                return $event['details']['is_own_order_stock_change'];
+            }
+        }
     }
 }
