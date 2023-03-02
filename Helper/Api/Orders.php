@@ -355,15 +355,9 @@ class Orders extends AbstractHelper
             $payload[] = $payloadItem;
         }
 
-        if ($discountAmount = (float) $order->getDiscountAmount()) {
-            $payload[] = [
-                'is_discount' => true,
-                'name' => __("Discount"),
-                'sku' => 'DS-101',
-                'ppu_wt' => $discountAmount,
-                'quantity' => 1,
-                'tax_rate_id' => $taxFreeId, // tax rate for discounted products
-            ];
+        $discountAmount = $this->getPriceValueForPayload($order->getDiscountAmount(), $order);
+        if ($discountAmount) {
+            $payload[] = $this->getDiscountPayload($discountAmount, $order, $taxFreeId);
         }
 
         return $payload;
@@ -458,12 +452,8 @@ class Orders extends AbstractHelper
                 try {
                     $shipment->getExtensionAttributes()->setIsStorekeeper(true);
                     $this->shipmentRepository->save($shipment);
-
                     $this->orderRepository->save($shipment->getOrder());
-
                     $this->shipmentNotifier->notify($shipment);
-
-                    $this->shipmentRepository->save($shipment);
                 } catch (\Exception $e) {
                     throw new \Magento\Framework\Exception\LocalizedException(
                         __($e->getMessage())
@@ -968,5 +958,23 @@ class Orders extends AbstractHelper
     private function getPriceByBrickMoneyObj(Money $brickMoneyObj): float
     {
         return $brickMoneyObj->to($brickMoneyObj->getContext(), RoundingMode::HALF_UP)->getAmount()->toFloat();
+    }
+
+    /**
+     * @param float $discountAmount
+     * @param Order $order
+     * @param int|null $taxFreeId
+     * @return array
+     */
+    private function getDiscountPayload(float $discountAmount, Order $order, ?int $taxFreeId): array
+    {
+        return [
+            'is_discount' => true,
+            'name' => $order->getDiscountDescription(),
+            'sku' => $order->getCouponCode(),
+            'ppu_wt' => $discountAmount,
+            'quantity' => 1,
+            'tax_rate_id' => $taxFreeId
+        ];
     }
 }
