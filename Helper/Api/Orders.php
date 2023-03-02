@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -11,14 +13,23 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Convert\Order as ConvertOrder;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Bundle\Model\Product\Type as Bundle;
+use Brick\Money\Money;
+use Brick\Math\RoundingMode;
 
 class Orders extends AbstractHelper
 {
+    private const BUNDLE_TYPE = 'bundle';
+
+    private const CONFIGURABLE_TYPE = 'configurable';
+
     private Auth $authHelper;
 
     private Customers $customersHelper;
@@ -40,6 +51,10 @@ class Orders extends AbstractHelper
      */
     private LoggerInterface $logger;
 
+    private Json $jsonSerializer;
+
+    private Bundle $bundle;
+
     /**
      * @param Auth $authHelper
      * @param Customers $customersHelper
@@ -50,6 +65,8 @@ class Orders extends AbstractHelper
      * @param ShipmentRepositoryInterface $shipmentRepository
      * @param TrackFactory $trackFactory
      * @param Context $context
+     * @param Json $jsonSerializer
+     * @param Bundle $bundle
      */
     public function __construct(
         Auth $authHelper,
@@ -62,7 +79,9 @@ class Orders extends AbstractHelper
         TrackFactory $trackFactory,
         TaxItem $taxItem,
         Context $context,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Json $jsonSerializer,
+        Bundle $bundle
     ) {
         $this->authHelper = $authHelper;
         $this->customersHelper = $customersHelper;
@@ -74,6 +93,8 @@ class Orders extends AbstractHelper
         $this->trackFactory = $trackFactory;
         $this->taxItem = $taxItem;
         $this->logger = $logger;
+        $this->jsonSerializer = $jsonSerializer;
+        $this->bundle = $bundle;
 
         parent::__construct($context);
     }
@@ -83,7 +104,7 @@ class Orders extends AbstractHelper
      * @param $isUpdate
      * @return array
      */
-    public function prepareOrder($order, $isUpdate): array
+    public function prepareOrder(Order $order, bool $isUpdate): array
     {
         /** @var $order Order */
         $email = $order->getCustomerEmail();
@@ -166,12 +187,22 @@ class Orders extends AbstractHelper
         return $payload;
     }
 
-    public function hasRefund(Order $order)
+    /**
+     * @param Order $order
+     * @return bool
+     */
+    public function hasRefund(Order $order): bool
     {
         return $order->getTotalRefunded() > 0;
     }
 
-    public function refundAllOrderItems(Order $order, $storeKeeperId, array $refund_payments)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @param array $refund_payments
+     * @retrun void
+     */
+    public function refundAllOrderItems(Order $order, string $storeKeeperId, array $refund_payments): void
     {
         $this->authHelper->getModule('ShopModule', $order->getStoreId())
             ->refundAllOrderItems([
@@ -180,7 +211,11 @@ class Orders extends AbstractHelper
             ]);
     }
 
-    public function applyRefund(Order $order)
+    /**
+     * @param Order $order
+     * @retrun void
+     */
+    public function applyRefund(Order $order): void
     {
         $totalRefunded = $order->getTotalRefunded();
 
@@ -223,13 +258,24 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function newWebPayment($storeId, $parameters = [])
+    /**
+     * @param string $storeId
+     * @param array $parameters
+     * @return int
+     */
+    public function newWebPayment(string $storeId, array $parameters = []): int
     {
         return $this->authHelper->getModule('PaymentModule', $storeId)
             ->newWebPayment($parameters);
     }
 
-    public function attachPaymentIdsToOrder($storeId, $storeKeeperId, $paymentIds = [])
+    /**
+     * @param string $storeId
+     * @param string $storeKeeperId
+     * @param array $paymentIds
+     * @retrun void
+     */
+    public function attachPaymentIdsToOrder(string $storeId, string $storeKeeperId, array $paymentIds = []): void
     {
         $this->authHelper->getModule('ShopModule', $storeId)
             ->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
@@ -259,40 +305,18 @@ class Orders extends AbstractHelper
         }
 
         foreach ($order->getItems() as $item) {
-            $shopProductId = '';
-
-            if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
-                $shopProductId = $item->getProduct()->getStorekeeperProductId();
-            }
-
-            $payloadItem = [
-                'sku' => $item->getSku(),
-                'quantity' => $item->getQtyOrdered(),
-                'name' => $item->getName(),
-                'shop_product_id' => $shopProductId,
-            ];
-
-            if (((float)$item->getTaxAmount()) > 0) {
-                $payloadItem['ppu_wt'] = $item->getPriceInclTax();
-                $payloadItem['before_discount_ppu_wt'] = (float) $item->getOriginalPrice();
+            if ($item->getProductType() == self::BUNDLE_TYPE) {
+                $bundleId = $item->getProductId();
+                $payloadItems = $this->getBundlePayload($item, $taxFreeId, $rates, $order);
             } else {
-                $payloadItem['ppu_wt'] = $item->getPrice();
+                $parentIds = $this->bundle->getParentIdsByChild($item->getProductId());
+                if ($item->getParentItemId() || (isset($bundleId) && in_array($bundleId, $parentIds))) {
+                    continue;
+                }
+                $payloadItems[] = $this->getSimpleProductPayload($item, $taxFreeId, $rates);
             }
 
-            $taxPercent = ((float) $item->getTaxPercent()) / 100;
-            if ($taxPercent > 0) {
-                $rateId = null;
-                foreach ($rates['data'] ?? [] as $rate) {
-                    if ($rate['value'] == $taxPercent) {
-                        $rateId = $rate['id'];
-                        break;
-                    }
-                }
-                $payloadItem['tax_rate_id'] = $rateId;
-            } elseif (!empty($taxFreeId)) {
-                $payloadItem['tax_rate_id'] = $taxFreeId;
-            }
-            $payload[] = $payloadItem;
+            $payload = array_merge($payload, $payloadItems);
         }
 
         if (!$order->getIsVirtual()) {
@@ -345,7 +369,12 @@ class Orders extends AbstractHelper
         return $payload;
     }
 
-    public function getStoreKeeperOrder($storeId, $storeKeeperId)
+    /**
+     * @param string $storeId
+     * @param string $storeKeeperId
+     * @retrun ?array
+     */
+    public function getStoreKeeperOrder(string $storeId, string $storeKeeperId): ?array
     {
         try {
             $response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId);
@@ -359,9 +388,12 @@ class Orders extends AbstractHelper
     }
 
     /**
+     * @param string $storeId
+     * @param string $storeKeeperId
      * @throws LocalizedException
+     * @retrun void
      */
-    public function updateById($storeId, $storeKeeperId)
+    public function updateById(string $storeId, string $storeKeeperId): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($storeId, $storeKeeperId);
 
@@ -377,7 +409,13 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function createShipment(Order $order, $storeKeeperId)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function createShipment(Order $order, string $storeKeeperId): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
@@ -435,7 +473,11 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function getOrderByStoreKeeperId($storeKeeperId)
+    /**
+     * @param string $storeKeeperId
+     * @return ?Order
+     */
+    public function getOrderByStoreKeeperId(string $storeKeeperId): ?Order
     {
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('storekeeper_id', $storeKeeperId, 'eq')->create();
@@ -443,12 +485,20 @@ class Orders extends AbstractHelper
         return current($this->orderRepository->getList($searchCriteria)->getItems());
     }
 
-    private function getResultStoreKeeperId($result)
+    /**
+     * @param array $result
+     * @return mixed
+     */
+    private function getResultStoreKeeperId(array $result): mixed
     {
         return $result['order_id'];
     }
 
-    public function exists($order)
+    /**
+     * @param Order $order
+     * @retrun ?string
+     */
+    public function exists(Order $order): ?string
     {
         $storeKeeperId = $order->getStorekeeperId();
 
@@ -456,13 +506,16 @@ class Orders extends AbstractHelper
             return $storeKeeperId;
         }
 
-        return false;
+        return null;
     }
 
     /**
+     * @param Order $order
+     * @param string $storeKeeperId
      * @throws LocalizedException
+     * @retrun void
      */
-    public function update($order, $storeKeeperId)
+    public function update(Order $order, string $storeKeeperId): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
@@ -508,7 +561,7 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @return string[]
+     * @return array
      */
     private function statusMapping(): array
     {
@@ -520,7 +573,13 @@ class Orders extends AbstractHelper
         ];
     }
 
-    public function updateStoreKeeperOrderStatus(Order $order, $storeKeeperId)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function updateStoreKeeperOrderStatus(Order $order, string $storeKeeperId): void
     {
         $statusMapping = $this->statusMapping();
 
@@ -537,7 +596,13 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function updateStoreKeeperOrder(Order $order, $storeKeeperId)
+    /**
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function updateStoreKeeperOrder(Order $order, string $storeKeeperId): void
     {
         $payload = $this->prepareOrder($order, true);
 
@@ -550,7 +615,12 @@ class Orders extends AbstractHelper
         }
     }
 
-    public function onCreate(Order $order)
+    /**
+     * @param Order $order
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function onCreate(Order $order): void
     {
         $payload = $this->prepareOrder($order, false);
         $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
@@ -592,12 +662,12 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param $storeId
-     * @param $page
-     * @param $pageSize
+     * @param string $storeId
+     * @param int $page
+     * @param int $pageSize
      * @return OrderSearchResultInterface
      */
-    public function getOrders($storeId, $page, $pageSize): OrderSearchResultInterface
+    public function getOrders(string $storeId, int $page, int $pageSize): OrderSearchResultInterface
     {
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter(
@@ -617,5 +687,286 @@ class Orders extends AbstractHelper
             ->create();
 
         return $this->orderRepository->getList($searchCriteria);
+    }
+
+    /**
+     * @param Item $item
+     * @return float
+     */
+    private function getItemPrice(Item $item): float
+    {
+        $itemPrice = 0.0;
+        $parentProduct = $item->getParentItem();
+        if ($parentProduct) {
+            $parentProductType = $parentProduct->getProductType();
+            if ($parentProductType == self::BUNDLE_TYPE) {
+                $itemPrice = $item->getPrice();
+            } elseif ($parentProductType == self::CONFIGURABLE_TYPE) {
+                $itemPrice = $parentProduct->getPrice();
+            }
+        } else {
+            $itemPrice = $item->getPrice();
+        }
+
+        return $this->getPriceValueForPayload($itemPrice, $item->getOrder());
+    }
+
+    /**
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
+     * @param Order $order
+     * @return array
+     */
+    private function getBundlePayload(Item $item, ?int $taxFreeId, array $rates, Order $order): array
+    {
+        // total of bundle's items prices as simple products
+        $bundleItemsPriceTotal = null;
+
+        // total of bundle's items prices as option products
+        $bundleOptionItemsTotal = null;
+
+        $bundlePrice = $this->getBrickMoneyPrice($item->getPriceInclTax(), $order);
+        $bundlePriceValue = $this->getPriceByBrickMoneyObj($bundlePrice);
+
+        $parentProduct = $this->getParentProductData($item);
+
+        foreach ($item->getChildrenItems() as $bundleItem) {
+            $bundleItemSku = $bundleItem->getSku();
+            $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getProduct()->getPrice(), $order);
+
+            if ($bundleItemsPriceTotal == null) {
+                $bundleItemsPriceTotal = $bundleItemPrice;
+            } else {
+                $bundleItemsPriceTotal = $bundleItemPrice->plus($bundleItemsPriceTotal);
+            }
+
+            $bundleItemData = $this->jsonSerializer->unserialize(
+                $bundleItem->getProductOptions()['bundle_selection_attributes']
+            );
+            $bundleOptionItemPrice = $this->getBrickMoneyPrice($bundleItemData['price'], $order);
+            $bundleOptionItemsTotal = $bundleOptionItemsTotal
+                ? $bundleOptionItemPrice->plus($bundleOptionItemsTotal)
+                : $bundleOptionItemPrice;
+            $bundleOptionItemsTotalValue = $this->getPriceByBrickMoneyObj($bundleOptionItemsTotal);
+
+            $hasDiscount = $bundleItem->getDiscountPercent() != 0;
+            $bundleItemWithDiscountData = $hasDiscount ? $this->getBundleItemWithDiscountData($bundleItem) : null;
+
+            $bundlePayload[] = [
+                'quantity' => $bundleItem->getQtyOrdered(),
+                'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : null,
+                'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $this->getPriceByBrickMoneyObj($bundleOptionItemPrice),
+                'sku' => $bundleItemSku,
+                'name' => $bundleItem->getName(),
+                'description' => $bundleItemData['option_label'],
+                'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId, $rates),
+                'extra' => [
+                    'external_id' => $bundleItem->getProduct()->getId(),
+                    'options' => [
+                        'option' => $bundleItemData['option_label']
+                    ],
+                    'parent_product' => $parentProduct
+                ]
+            ];
+        }
+
+        $bundleDiscount = $bundlePrice->minus($bundleItemsPriceTotal);
+        $bundleDiscountValue = $this->getPriceByBrickMoneyObj($bundleDiscount);
+
+        if ($bundleDiscountValue != 0 && $bundleOptionItemsTotalValue != 0) {
+            $bundlePayload[] = $this->getBundleDiscountData($bundleDiscountValue, $parentProduct);
+        }
+
+        if ($bundleOptionItemsTotalValue == 0 && $bundlePriceValue > $bundleOptionItemsTotalValue) {
+            $bundlePayload[] = $this->getBundleCompensateData($bundlePriceValue, $parentProduct, $item, $taxFreeId, $rates);
+        }
+
+        return $bundlePayload;
+    }
+
+    /**
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
+     * @return array
+     */
+    private function getSimpleProductPayload(Item $item, ?int $taxFreeId, array $rates): array
+    {
+        $isConfigurableProduct = $item->getProductType() == self::CONFIGURABLE_TYPE;
+
+        if ($isConfigurableProduct) {
+            $payloadItem = $this->getConfigurableProductData($item);
+        } else {
+            $shopProductId = '';
+
+            if ($item->getProduct() !== null && $item->getProduct()->getStorekeeperProductId()) {
+                $shopProductId = $item->getProduct()->getStorekeeperProductId();
+            }
+
+            $payloadItem = [
+                'sku' => $item->getSku(),
+                'quantity' => $item->getQtyOrdered(),
+                'name' => $item->getName(),
+                'shop_product_id' => $shopProductId,
+            ];
+        }
+        if (((float)$item->getTaxAmount()) > 0) {
+            $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax());
+            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice());
+        } else {
+            $payloadItem['ppu_wt'] = $this->getItemPrice($item);
+        }
+
+        $payloadItem['tax_rate_id'] = $this->getTaxRateId($item, $taxFreeId, $rates);
+
+        return $payloadItem;
+    }
+
+    /**
+     * @param Item $item
+     * @return array
+     */
+    private function getParentProductData(Item $item): array
+    {
+        return [
+            'external_id' => $item->getProductId(),
+            'sku' => $item->getProduct()->getSku(),
+            'name' => $item->getProduct()->getName()
+        ];
+    }
+
+    /**
+     * @param float $bundleDiscount
+     * @param array $parentProduct
+     * @return array
+     */
+    private function getBundleDiscountData(float $bundleDiscount, array $parentProduct): array
+    {
+        return [
+            'quantity' => 1,
+            'ppu_wt' => $bundleDiscount,
+            'sku' => $parentProduct['sku'],
+            'is_discount' => true,
+            'name' => $parentProduct['name']
+        ];
+    }
+
+    /**
+     * @param Item $bundleItem
+     * @return array
+     */
+    private function getBundleItemWithDiscountData(Item $bundleItem): array
+    {
+        $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getPrice(), $bundleItem->getOrder());
+        $bundleItemDiscount = $this->getBrickMoneyPrice($bundleItem->getDiscountAmount(), $bundleItem->getOrder());
+        $bundleItemPriceWithoutDiscount = $bundleItemPrice->minus($bundleItemDiscount);
+        return [
+            'before_discount_ppu_wt' => $this->getPriceValueForPayload($bundleItem->getPrice(), $bundleItem->getOrder()),
+            'ppu_wt' => $this->getPriceByBrickMoneyObj($bundleItemPriceWithoutDiscount)
+        ];
+    }
+
+    /**
+     * @param float $bundlePrice
+     * @param array $parentProduct
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
+     * @return array
+     */
+    private function getBundleCompensateData(float $bundlePrice, array $parentProduct, Item $item, ?int $taxFreeId, array $rates): array
+    {
+        return [
+            'quantity' => 1,
+            'ppu_wt' => $bundlePrice,
+            'sku' => $parentProduct['sku'],
+            'name' => $parentProduct['name'],
+            'description' => $parentProduct['name'],
+            'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId, $rates),
+            'extra' => [
+                'external_id' => $parentProduct['external_id'],
+                'parent_product' => $parentProduct
+            ]
+        ];
+    }
+
+    /**
+     * @param Item $item
+     * @return array
+     */
+    private function getConfigurableProductData(Item $item): array
+    {
+        foreach ($item->getProductOptions()['attributes_info'] as $attribute) {
+            $productConfigurableAttributes[$attribute['label']] = $attribute['value'];
+        }
+        foreach ($item->getChildrenItems() as $configurableProductOption) {
+            $configurableProductData = [
+                'sku' => $configurableProductOption->getSku(),
+                'quantity' => $item->getQtyOrdered(),
+                'name' => $configurableProductOption->getName(),
+                'description' => $configurableProductOption->getDescription(),
+                'extra' => [
+                    'external_id' => $configurableProductOption->getProductId(),
+                    'options' => $productConfigurableAttributes,
+                    'parent_product' => $this->getParentProductData($item)
+                ]
+            ];
+        }
+
+        return $configurableProductData;
+    }
+
+    /**
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
+     * @return ?int
+     */
+    private function getTaxRateId(Item $item, ?int $taxFreeId, array $rates): ?int
+    {
+        $taxPercent = ((float) $item->getTaxPercent()) / 100;
+        if ($taxPercent > 0) {
+            $rateId = null;
+            foreach ($rates['data'] ?? [] as $rate) {
+                if ($rate['value'] == $taxPercent) {
+                    $rateId = $rate['id'];
+                    break;
+                }
+            }
+            $taxRateId = $rateId;
+        } elseif (!empty($taxFreeId)) {
+            $taxRateId = $taxFreeId;
+        }
+
+        return $taxRateId;
+    }
+
+    /**
+     * @param int|float|string $price
+     * @param Order $order
+     * @return Money
+     */
+    private function getBrickMoneyPrice($price, Order $order): Money
+    {
+        return Money::of($price, $order->getStoreCurrencyCode());
+    }
+
+    /**
+     * @param int|float|string $price
+     * @return float
+     */
+    private function getPriceValueForPayload($price, Order $order): float
+    {
+        return $this->getPriceByBrickMoneyObj($this->getBrickMoneyPrice($price, $order));
+    }
+
+    /**
+     * @param Money $brickMoneyObj
+     * @return float
+     */
+    private function getPriceByBrickMoneyObj(Money $brickMoneyObj): float
+    {
+        return $brickMoneyObj->to($brickMoneyObj->getContext(), RoundingMode::HALF_UP)->getAmount()->toFloat();
     }
 }
