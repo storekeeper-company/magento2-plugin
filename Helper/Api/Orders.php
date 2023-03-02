@@ -969,21 +969,4 @@ class Orders extends AbstractHelper
     {
         return $brickMoneyObj->to($brickMoneyObj->getContext(), RoundingMode::HALF_UP)->getAmount()->toFloat();
     }
-
-    /**
-     * @param Money $firstOperand
-     * @param Money $secondOperand
-     * @param string $operation
-     * @return Money
-     * @throws \Brick\Money\Exception\MoneyMismatchException
-     */
-    private function calculateBrickMoneyTotal(Money $firstOperand, Money $secondOperand, string $operation): Money
-    {
-        if ($operation == 'plus') {
-            return $firstOperand->plus($secondOperand);
-        }
-        if ($operation == 'minus') {
-            return $firstOperand->minus($secondOperand);
-        }
-    }
 }
