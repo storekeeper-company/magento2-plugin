@@ -106,6 +106,7 @@ class Webhook
                     $messages = [];
                     $success = false;
                     $skipPublish = false;
+                    $message = [];
                     foreach ($eventNames as $eventName) {
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $skipPublish = $this->getIsOwnOrderStockChange($bodyParams);
@@ -141,6 +142,10 @@ class Webhook
 
                         $response['success'] = $success;
                         $response['message'] = implode(', ', $messages);
+
+                        if ($this->configHelper->isDebugLogs($storeId)) {
+                            $this->logger->info("Received event {$eventName}: " . json_encode($message));
+                        }
                     }
 
                 } elseif ($action == "deactivated") {

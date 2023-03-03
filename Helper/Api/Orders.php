@@ -376,7 +376,7 @@ class Orders extends AbstractHelper
                 return $response;
             }
         } catch (\Exception $e) {
-            $this->logger->error($exception->getMessage());
+            $this->logger->error($e->getMessage());
             return null;
         }
     }
