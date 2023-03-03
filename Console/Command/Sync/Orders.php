@@ -86,6 +86,9 @@ class Orders extends Command
             while ($current < $orders->getTotalCount()) {
                 foreach ($orders as $order) {
                     try {
+                        if ($this->configHelper->isDebugLogs($storeId)) {
+                            $this->logger->info('Processing order: '.$order->getId());
+                        }
                         if ($storeKeeperId = $this->ordersHelper->exists($order)) {
                             $this->ordersHelper->update($order, $storeKeeperId);
                         } else {

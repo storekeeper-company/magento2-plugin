@@ -16,6 +16,8 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
 
     const STOREKEEPER_TOKEN = 'storekeeper_general/general/storekeeper_token';
 
+    const IS_DEBUG_LOGS = 'storekeeper_general/general/debug_logs';
+
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
@@ -63,5 +65,10 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
     public function getToken($storeId)
     {
         return $this->getScopeConfigValue(self::STOREKEEPER_TOKEN, ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
+    public function isDebugLogs($storeId)
+    {
+        return $this->getScopeConfigValue(self::IS_DEBUG_LOGS, ScopeInterface::SCOPE_STORE, $storeId);
     }
 }
