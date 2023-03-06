@@ -308,15 +308,16 @@ class Orders extends AbstractHelper
             if ($item->getProductType() == self::BUNDLE_TYPE) {
                 $bundleId = $item->getProductId();
                 $payloadItems = $this->getBundlePayload($item, $taxFreeId, $rates, $order);
+                foreach ($payloadItems as $payloadItem) {
+                    $payload[] = $payloadItem;
+                }
             } else {
                 $parentIds = $this->bundle->getParentIdsByChild($item->getProductId());
                 if ($item->getParentItemId() || (isset($bundleId) && in_array($bundleId, $parentIds))) {
                     continue;
                 }
-                $payloadItems[] = $this->getSimpleProductPayload($item, $taxFreeId, $rates);
+                $payload[] = $this->getSimpleProductPayload($item, $taxFreeId, $rates);
             }
-
-            $payload = array_merge($payload, $payloadItems);
         }
 
         if (!$order->getIsVirtual()) {
