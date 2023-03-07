@@ -806,7 +806,12 @@ class Orders extends AbstractHelper
             $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax());
             $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice());
         } else {
-            $payloadItem['ppu_wt'] = $this->getItemPrice($item);
+            $itemPrice = $this->getItemPrice($item);
+            $itemOriginalPrice = $this->getPriceValueForPayload($item->getOriginalPrice(), $item->getOrder());
+            $payloadItem['ppu_wt'] = $itemPrice;
+            if ($itemPrice != $itemOriginalPrice) {
+                $payloadItem['before_discount_ppu_wt'] = $itemOriginalPrice;
+            }
         }
 
         $payloadItem['tax_rate_id'] = $this->getTaxRateId($item, $taxFreeId, $rates);
