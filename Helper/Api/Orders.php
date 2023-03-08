@@ -292,7 +292,7 @@ class Orders extends AbstractHelper
         $rates = [];
         $taxFreeId = null;
 
-        $rates = $this->authHelper->getTaxRates($order->getStoreId(), 'WO');
+        $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
         foreach ($rates['data'] ?? [] as $rate) {
             if ($rate['alias'] == 'special_applicable_not_vat') {
                 $taxFreeId = $rate['id'];
@@ -784,6 +784,7 @@ class Orders extends AbstractHelper
      */
     private function getSimpleProductPayload(Item $item, ?int $taxFreeId, array $rates): array
     {
+        $order = $item->getOrder();
         $isConfigurableProduct = $item->getProductType() == self::CONFIGURABLE_TYPE;
 
         if ($isConfigurableProduct) {
@@ -803,11 +804,11 @@ class Orders extends AbstractHelper
             ];
         }
         if (((float)$item->getTaxAmount()) > 0) {
-            $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax());
-            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice());
+            $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax(), $order);
+            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice(), $order);
         } else {
             $itemPrice = $this->getItemPrice($item);
-            $itemOriginalPrice = $this->getPriceValueForPayload($item->getOriginalPrice(), $item->getOrder());
+            $itemOriginalPrice = $this->getPriceValueForPayload($item->getOriginalPrice(), $order);
             $payloadItem['ppu_wt'] = $itemPrice;
             if ($itemPrice != $itemOriginalPrice) {
                 $payloadItem['before_discount_ppu_wt'] = $itemOriginalPrice;
