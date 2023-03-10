@@ -2,7 +2,7 @@
     "name": "storekeeper/magento2-plugin",
     "description": "Storekeeper plugin",
     "require": {
-        "php": ">=7.4|>=8.1",
+        "php": ">=7.4",
         "magento/product-community-edition": "^2.4.5",
         "brick/money": "0.5",
         "storekeeper/api-wrapper": "v5.2",
