@@ -2,7 +2,7 @@
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="sales_order">
-        <column xsi:type="int" name="storekeeper_order_id" comment="StoreKeeper ID"/>
+        <column xsi:type="int" name="storekeeper_id" comment="StoreKeeper ID"/>
         <column xsi:type="varchar" name="storekeeper_order_number" comment="StoreKeeper Order Number"/>
         <column xsi:type="varchar" name="storekeeper_order_pending_sync" comment="StoreKeeper Order Pending Sync"/>
         <column xsi:type="varchar" name="storekeeper_order_last_sync" comment="StoreKeeper Order Last Sync"/>
