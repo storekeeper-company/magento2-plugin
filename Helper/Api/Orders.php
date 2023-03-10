@@ -55,6 +55,8 @@ class Orders extends AbstractHelper
 
     private Bundle $bundle;
 
+    private $taxClassesDiscounts;
+
     /**
      * @param Auth $authHelper
      * @param Customers $customersHelper
@@ -95,6 +97,7 @@ class Orders extends AbstractHelper
         $this->logger = $logger;
         $this->jsonSerializer = $jsonSerializer;
         $this->bundle = $bundle;
+        $this->taxClassesDiscounts = [];
 
         parent::__construct($context);
     }
@@ -356,9 +359,10 @@ class Orders extends AbstractHelper
             $payload[] = $payloadItem;
         }
 
-        $discountAmount = $this->getPriceValueForPayload($order->getDiscountAmount(), $order);
-        if ($discountAmount) {
-            $payload[] = $this->getDiscountPayload($discountAmount, $order, $taxFreeId);
+        if ($this->taxClassesDiscounts) {
+            foreach ($this->taxClassesDiscounts as $taxPercent => $taxClassDiscount) {
+                $payload[] = $this->getDiscountPayload($rates, $order, $taxFreeId, $taxPercent, $taxClassDiscount);
+            }
         }
 
         return $payload;
@@ -717,12 +721,13 @@ class Orders extends AbstractHelper
         // total of bundle's items prices as option products
         $bundleOptionItemsTotal = null;
 
-        $bundlePrice = $this->getBrickMoneyPrice($item->getPriceInclTax(), $order);
+        $bundlePrice = $this->getBrickMoneyPrice($item->getPrice(), $order);
         $bundlePriceValue = $this->getPriceByBrickMoneyObj($bundlePrice);
 
         $parentProduct = $this->getParentProductData($item);
 
         foreach ($item->getChildrenItems() as $bundleItem) {
+            $this->calculateTaxClassesDiscounts($bundleItem, $order);
             $bundleItemSku = $bundleItem->getSku();
             $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getProduct()->getPrice(), $order);
 
@@ -751,7 +756,7 @@ class Orders extends AbstractHelper
                 'sku' => $bundleItemSku,
                 'name' => $bundleItem->getName(),
                 'description' => $bundleItemData['option_label'],
-                'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId, $rates),
+                'tax_rate_id' => $this->getTaxRateId($bundleItem, $taxFreeId, $rates),
                 'extra' => [
                     'external_id' => $bundleItem->getProduct()->getId(),
                     'options' => [
@@ -785,6 +790,7 @@ class Orders extends AbstractHelper
     private function getSimpleProductPayload(Item $item, ?int $taxFreeId, array $rates): array
     {
         $order = $item->getOrder();
+        $this->calculateTaxClassesDiscounts($item, $order);
         $isConfigurableProduct = $item->getProductType() == self::CONFIGURABLE_TYPE;
 
         if ($isConfigurableProduct) {
@@ -968,20 +974,46 @@ class Orders extends AbstractHelper
     }
 
     /**
-     * @param float $discountAmount
+     * @param array $rates
      * @param Order $order
      * @param int|null $taxFreeId
+     * @param string $taxPercent
+     * @param Money $taxClassDiscount
      * @return array
      */
-    private function getDiscountPayload(float $discountAmount, Order $order, ?int $taxFreeId): array
+    private function getDiscountPayload(array $rates, Order $order, ?int $taxFreeId, string $taxPercent, Money $taxClassDiscount): array
     {
-        return [
-            'is_discount' => true,
-            'name' => $order->getDiscountDescription(),
-            'sku' => $order->getCouponCode(),
-            'ppu_wt' => $discountAmount,
-            'quantity' => 1,
-            'tax_rate_id' => $taxFreeId
-        ];
+        foreach ($rates['data'] as $rate) {
+            if ($rate['value'] == $taxPercent / 100) {
+                return [
+                    'is_discount' => true,
+                    'name' => $order->getDiscountDescription(),
+                    'sku' => $order->getCouponCode(),
+                    'ppu_wt' => -$this->getPriceByBrickMoneyObj($taxClassDiscount),
+                    'quantity' => 1,
+                    'tax_rate_id' => $rate['id']
+                ];
+            }
+        }
+    }
+
+    /**
+     * @param Item $item
+     * @param Order $order
+     * @return void
+     */
+    private function calculateTaxClassesDiscounts(Item $item, Order $order): void
+    {
+        $itemTaxPercent = $item->getTaxPercent();
+        $itemDiscountAmount = $item->getDiscountAmount();
+        if (!key_exists($itemTaxPercent, $this->taxClassesDiscounts)) {
+            $this->taxClassesDiscounts[$itemTaxPercent] = $this->getBrickMoneyPrice($itemDiscountAmount, $order);
+        } else {
+            foreach ($this->taxClassesDiscounts as $key => $value) {
+                if ($key == $itemTaxPercent) {
+                    $this->taxClassesDiscounts[$key] = $value->plus($this->getBrickMoneyPrice($itemDiscountAmount, $order));
+                }
+            }
+        }
     }
 }
