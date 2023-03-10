@@ -4,17 +4,7 @@ Connect your Magento 2 stores to StoreKeeper.
 
 # Important Notice
 
-Due to Tax Calculations, your shop has to have it's Customer Taxes set to be calculated "Before Discount".
-
-Here's a quick guide on how to configure your store:
-
-1. Log into the Magento 2 back
-
-2. Go to "Stores" > "Configuration"
-
-3. In the sidebar expand the "Sales" section and click on "Tax"
-
-3. Expand the "Calculation Settings" section and set "Apply Customer Tax" to "Before Discount"
+Before using module make sure that your shop have all tax rules, classes and rates configured accordingly to your shop's region. Please follow this [official Magento guide](https://experienceleague.adobe.com/docs/commerce-admin/stores-sales/site-store/taxes/international-tax-guidelines.html#eu-tax-configuration).
 
 # Installation
 
@@ -60,19 +50,13 @@ bin/magento cache:clean;
 To synchronise data to StoreKeeper, the following commands have been made available
 
 ```
-bin/magento storekeeper:sync:categories --stores={storeIds}
-bin/magento storekeeper:sync:customers --stores={storeIds}
 bin/magento storekeeper:sync:orders --stores={storeIds}
-bin/magento storekeeper:sync:products --stores={storeIds}
 ```
 
 It is recommended to add these commands to a `crontab` for them to be automatically executed. The preferred `cron` schedule would be
 
 ```
-0 * * * * bin/magento storekeeper:sync:categories --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
-15 * * * * bin/magento storekeeper:sync:customers --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
-30 * * * * bin/magento storekeeper:sync:orders --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
-45 * * * * bin/magento storekeeper:sync:products --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
+* * * * * bin/magento storekeeper:sync:orders --stores=1 >> /magento2/var/log/storekeeper.log 2>&1
 ```
 
 ## Queue
