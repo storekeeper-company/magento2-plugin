@@ -790,7 +790,9 @@ class Orders extends AbstractHelper
     private function getSimpleProductPayload(Item $item, ?int $taxFreeId, array $rates): array
     {
         $order = $item->getOrder();
-        $this->calculateTaxClassesDiscounts($item, $order);
+        if ($item->getDiscountAmount() != 0) {
+            $this->calculateTaxClassesDiscounts($item, $order);
+        }
         $isConfigurableProduct = $item->getProductType() == self::CONFIGURABLE_TYPE;
 
         if ($isConfigurableProduct) {
@@ -940,6 +942,8 @@ class Orders extends AbstractHelper
             $taxRateId = $rateId;
         } elseif (!empty($taxFreeId)) {
             $taxRateId = $taxFreeId;
+        } else {
+            throw new \Exception('Item with SKU: "' . $item->getSku() . '" doesn\'t match any tax rate');
         }
 
         return $taxRateId;
