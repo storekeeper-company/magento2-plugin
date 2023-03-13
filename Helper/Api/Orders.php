@@ -727,7 +727,9 @@ class Orders extends AbstractHelper
         $parentProduct = $this->getParentProductData($item);
 
         foreach ($item->getChildrenItems() as $bundleItem) {
-            $this->calculateTaxClassesDiscounts($bundleItem, $order);
+            if ($item->getDiscountAmount() != 0) {
+                $this->calculateTaxClassesDiscounts($bundleItem, $order);
+            }
             $bundleItemSku = $bundleItem->getSku();
             $bundleItemPrice = $this->getBrickMoneyPrice($bundleItem->getProduct()->getPrice(), $order);
 
