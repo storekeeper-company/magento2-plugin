@@ -618,6 +618,7 @@ class Orders extends AbstractHelper
     public function onCreate(Order $order): void
     {
         $payload = $this->prepareOrder($order, false);
+        $this->logger->info('Order #' . $order->getId() . ' payload: ' . $this->jsonSerializer->serialize($payload));
         $storeKeeperOrder = $this->authHelper->getModule('ShopModule', $order->getStoreid())->newOrderWithReturn($payload);
         $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
@@ -727,6 +728,7 @@ class Orders extends AbstractHelper
         $parentProduct = $this->getParentProductData($item);
 
         foreach ($item->getChildrenItems() as $bundleItem) {
+            $this->logItemTaxAmount($bundleItem, $order);
             if ($item->getDiscountAmount() != 0) {
                 $this->calculateTaxClassesDiscounts($bundleItem, $order);
             }
@@ -792,6 +794,7 @@ class Orders extends AbstractHelper
     private function getSimpleProductPayload(Item $item, ?int $taxFreeId, array $rates): array
     {
         $order = $item->getOrder();
+        $this->logItemTaxAmount($item, $order);
         if ($item->getDiscountAmount() != 0) {
             $this->calculateTaxClassesDiscounts($item, $order);
         }
@@ -1021,5 +1024,16 @@ class Orders extends AbstractHelper
                 }
             }
         }
+    }
+
+    /**
+     * @param Item $item
+     * @param Order $order
+     * @return void
+     */
+    private function logItemTaxAmount(Item $item, Order $order): void
+    {
+        $itemTaxAmount = $this->getPriceValueForPayload($item->getTaxAmount(), $order);
+        $this->logger->info('Order: #' . $order->getId() . ', item: SKU: "' . $item->getSku() . '", tax amount: ' . $itemTaxAmount);
     }
 }
