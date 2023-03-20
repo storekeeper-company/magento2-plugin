@@ -760,7 +760,9 @@ class Orders extends AbstractHelper
                 'sku' => $bundleItemSku,
                 'name' => $bundleItem->getName(),
                 'description' => $bundleItemData['option_label'],
-                'tax_rate_id' => $this->getTaxRateId($bundleItem, $taxFreeId, $rates),
+                'tax_rate_id' => $this->getPriceByBrickMoneyObj($bundleOptionItemPrice)
+                    ? $this->getTaxRateId($bundleItem, $taxFreeId, $rates)
+                    : $this->getTaxRateId($item, $taxFreeId, $rates),
                 'extra' => [
                     'external_id' => $bundleItem->getProduct()->getId(),
                     'options' => [
