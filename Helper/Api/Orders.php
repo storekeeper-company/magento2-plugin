@@ -753,10 +753,8 @@ class Orders extends AbstractHelper
             $hasDiscount = $bundleItem->getDiscountPercent() != 0;
             $bundleItemWithDiscountData = $hasDiscount ? $this->getBundleItemWithDiscountData($bundleItem) : null;
 
-            $bundlePayload[] = [
+            $bundlePayloadItem = [
                 'quantity' => $bundleItem->getQtyOrdered(),
-                'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : null,
-                'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $this->getPriceByBrickMoneyObj($bundleOptionItemPrice),
                 'sku' => $bundleItemSku,
                 'name' => $bundleItem->getName(),
                 'description' => $bundleItemData['option_label'],
@@ -771,13 +769,18 @@ class Orders extends AbstractHelper
                     'parent_product' => $parentProduct
                 ]
             ];
+            foreach ($this->getPricePerUnitPayload($item, $bundleItem, $order, $hasDiscount, $bundleItemWithDiscountData) as $key => $value) {
+                $bundlePayloadItem[$key] = $value;
+            }
+
+            $bundlePayload[] = $bundlePayloadItem;
         }
 
         $bundleDiscount = $bundlePrice->minus($bundleItemsPriceTotal);
         $bundleDiscountValue = $this->getPriceByBrickMoneyObj($bundleDiscount);
 
-        if ($bundleDiscountValue != 0 && $bundleOptionItemsTotalValue != 0) {
-            $bundlePayload[] = $this->getBundleDiscountData($bundleDiscountValue, $parentProduct);
+        if ($item->getTaxPercent() && $bundleDiscountValue != 0 && $bundleOptionItemsTotalValue != 0) {
+            $bundlePayload[] = $this->getBundleDiscountData($item, $taxFreeId, $rates, $bundleDiscountValue, $parentProduct);
         }
 
         if ($bundleOptionItemsTotalValue == 0 && $bundlePriceValue > $bundleOptionItemsTotalValue) {
@@ -849,18 +852,22 @@ class Orders extends AbstractHelper
     }
 
     /**
+     * @param Item $item
+     * @param int|null $taxFreeId
+     * @param array $rates
      * @param float $bundleDiscount
      * @param array $parentProduct
      * @return array
      */
-    private function getBundleDiscountData(float $bundleDiscount, array $parentProduct): array
+    private function getBundleDiscountData(Item $item, ?int $taxFreeId, array $rates, float $bundleDiscount, array $parentProduct): array
     {
         return [
             'quantity' => 1,
             'ppu_wt' => $bundleDiscount,
             'sku' => $parentProduct['sku'],
             'is_discount' => true,
-            'name' => $parentProduct['name']
+            'name' => $parentProduct['name'],
+            'tax_rate_id' => $this->getTaxRateId($item, $taxFreeId, $rates)
         ];
     }
 
@@ -1037,5 +1044,35 @@ class Orders extends AbstractHelper
     {
         $itemTaxAmount = $this->getPriceValueForPayload($item->getTaxAmount(), $order);
         $this->logger->info('Order: #' . $order->getId() . ', item: SKU: "' . $item->getSku() . '", tax amount: ' . $itemTaxAmount);
+    }
+
+    /**
+     * @param Item $item
+     * @param Item $bundleItem
+     * @param Order $order
+     * @param bool $hasDiscount
+     * @param array|null $bundleItemWithDiscountData
+     * @return array
+     */
+    private function getPricePerUnitPayload(Item $item, Item $bundleItem, Order $order, bool $hasDiscount, ?array $bundleItemWithDiscountData): array
+    {
+        $bundleItemOriginalPrice = $bundleItem->getOriginalPrice();
+        $bundleItemSpecialPrice = $bundleItem->getPrice();
+        if (!$item->getTaxPercent() && $bundleItemOriginalPrice != $bundleItemSpecialPrice) {
+            $payload = [
+                'before_discount_ppu' => $this->getPriceValueForPayload($bundleItemOriginalPrice, $order),
+                'ppu' => $this->getPriceValueForPayload($bundleItemSpecialPrice, $order)
+            ];
+        } else {
+            $priceWithTax = $bundleItem->getPriceInclTax();
+            $bundleItemPriceWithTax = $priceWithTax ? $this->getPriceValueForPayload($bundleItem->getPriceInclTax(), $order) : 0.0;
+            $payload = [
+                'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : $bundleItemPriceWithTax,
+                'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $bundleItemPriceWithTax
+            ];
+
+        }
+
+        return $payload;
     }
 }
