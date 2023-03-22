@@ -9,9 +9,12 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Sales\Model\Order;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use Magento\Sales\Model\Order\Address;
 
 class Customers extends AbstractHelper
 {
+    private const SEPARATE_STREET_NAME_AND_NUMBER_PATTERN = "/\A(.*?)\s+(\d+[a-zA-Z]{0,1}\s{0,1}[-]{1}\s{0,1}\d*[a-zA-Z]{0,1}|\d+[a-zA-Z-]{0,1}\d*[a-zA-Z]{0,1})/";
+
     private $authHelper;
 
     private AddressFactory $addressFactory;
@@ -23,7 +26,7 @@ class Customers extends AbstractHelper
 
     /**
      * Constructor
-     * 
+     *
      * @param Auth $authHelper
      * @param AddressFactory $addressFactory
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface
@@ -181,12 +184,13 @@ class Customers extends AbstractHelper
      */
     public function mapAddress($address): array
     {
+        $streetData = $this->getStreetData($address);
         return [
             'name' => $address->getName(),
             'city' => $address->getCity(),
             'zipcode' => $address->getPostcode(),
-            'street' => $address->getStreet()[0],
-            'streetnumber' => $address->getStreet()[1] ?? '',
+            'street' => $streetData[0],
+            'streetnumber' => $streetData[1],
             'country_iso2' => $address->getCountryId(),
         ];
     }
@@ -250,5 +254,22 @@ class Customers extends AbstractHelper
             'phone' => $billingAddress->getTelephone(),
             'name' => $customer->getLastname()
         ];
+    }
+
+    /**
+     * @param Address $address
+     * @return array
+     */
+    private function getStreetData(Address $address): array
+    {
+        $streetData = $address->getStreet();
+        if (count($streetData) < 1) {
+            return $streetData;
+        }
+
+        preg_match(self::SEPARATE_STREET_NAME_AND_NUMBER_PATTERN, $streetData[0], $streetData);
+        array_shift($streetData);
+
+        return $streetData;
     }
 }
