@@ -263,7 +263,7 @@ class Customers extends AbstractHelper
     private function getStreetData(Address $address): array
     {
         $streetData = $address->getStreet();
-        if (count($streetData) < 1) {
+        if (count($streetData) > 1) {
             return $streetData;
         }
 
