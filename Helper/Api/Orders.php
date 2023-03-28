@@ -636,10 +636,7 @@ class Orders extends AbstractHelper
         }
 
         if ($order->getPaymentsCollection()->count() && $order->getStatus() !== 'canceled') {
-            $paymentId = $this->authHelper->getModule('PaymentModule', $order->getStoreId())->newWebPayment([
-                'amount' => $order->getGrandTotal(),
-                'description' => $order->getCustomerNote()
-            ]);
+            $paymentId = $order->getStorekeeperPaymentId();
 
             if ($paymentId) {
                 try {
