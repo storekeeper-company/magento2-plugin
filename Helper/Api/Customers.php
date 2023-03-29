@@ -184,13 +184,11 @@ class Customers extends AbstractHelper
      */
     public function mapAddress($address): array
     {
-        $streetData = $this->getStreetData($address);
         return [
             'name' => $address->getName(),
             'city' => $address->getCity(),
             'zipcode' => $address->getPostcode(),
-            'street' => $streetData[0],
-            'streetnumber' => $streetData[1] ?? '',
+            'street' => implode(' ', $address->getStreet()),
             'country_iso2' => $address->getCountryId(),
         ];
     }
@@ -254,25 +252,5 @@ class Customers extends AbstractHelper
             'phone' => $billingAddress->getTelephone(),
             'name' => $customer->getLastname()
         ];
-    }
-
-    /**
-     * @param Address $address
-     * @return array
-     */
-    private function getStreetData(Address $address): array
-    {
-        $streetData = $address->getStreet();
-        if (count($streetData) > 1) {
-            return $streetData;
-        }
-        preg_match(self::SEPARATE_STREET_NAME_AND_NUMBER_PATTERN, $streetData[0], $streetDataMatched);
-        if ($streetDataMatched) {
-            array_shift($streetDataMatched);
-
-            return $streetDataMatched;
-        }
-
-        return $streetData;
     }
 }
