@@ -188,7 +188,7 @@ class Customers extends AbstractHelper
             'name' => $address->getName(),
             'city' => $address->getCity(),
             'zipcode' => $address->getPostcode(),
-            'street' => implode(' ', $address->getStreet()),
+            'street' => implode(', ', $address->getStreet()),
             'country_iso2' => $address->getCountryId(),
         ];
     }
