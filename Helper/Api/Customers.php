@@ -190,7 +190,7 @@ class Customers extends AbstractHelper
             'city' => $address->getCity(),
             'zipcode' => $address->getPostcode(),
             'street' => $streetData[0],
-            'streetnumber' => $streetData[1],
+            'streetnumber' => $streetData[1] ?? '',
             'country_iso2' => $address->getCountryId(),
         ];
     }
@@ -266,9 +266,12 @@ class Customers extends AbstractHelper
         if (count($streetData) > 1) {
             return $streetData;
         }
+        preg_match(self::SEPARATE_STREET_NAME_AND_NUMBER_PATTERN, $streetData[0], $streetDataMatched);
+        if ($streetDataMatched) {
+            array_shift($streetDataMatched);
 
-        preg_match(self::SEPARATE_STREET_NAME_AND_NUMBER_PATTERN, $streetData[0], $streetData);
-        array_shift($streetData);
+            return $streetDataMatched;
+        }
 
         return $streetData;
     }
