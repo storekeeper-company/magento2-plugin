@@ -112,7 +112,7 @@
 
         <section id="payment">
             <group id="storekeeper_payment" translate="label" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>StoreKeeper Payment</label>
+                <label>StoreKeeper Payments</label>
                 <field id="active" translate="label comment" sortOrder="1" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

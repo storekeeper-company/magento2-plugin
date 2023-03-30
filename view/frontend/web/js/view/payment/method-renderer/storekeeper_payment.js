@@ -13,7 +13,9 @@ define(
         return Component.extend({
             defaults: {
                 redirectAfterPlaceOrder: false,
-                template: 'StoreKeeper_StoreKeeper/payment/storekeeper_payment'
+                template: 'StoreKeeper_StoreKeeper/payment/storekeeper_payment',
+                logo: '',
+                paymentId: 0
             },
             getData: function () {
                 var dob_format = '';
@@ -37,7 +39,7 @@ define(
                 };
             },
             afterPlaceOrder: function () {
-                window.location.replace(url.build('storekeeper_payment/checkout/redirect'));
+                window.location.replace(url.build('storekeeper_payment/checkout/redirect?storekeeper_payment_method_id=' + this.getPaymentId()));
             },
             placeOrder: function (data, event) {
                 if (event) {
@@ -70,6 +72,27 @@ define(
                     storekeeperPaymentMethodsList.push(data)
                 })
                 return storekeeperPaymentMethodsList;
+            },
+            showSubmethods: function () {
+                return this.item.method == 'storekeeper_payment';
+            },
+            getPaymentIcon: function () {
+                var list = this.getPaymentMethodsList();
+                list.forEach((item) => {
+                    if (item.magento_payment_method_code == this.item.method) {
+                        this.logo = item.storekeeper_payment_method_logo_url;
+                    }
+                })
+                return this.logo;
+            },
+            getPaymentId: function () {
+                var list = this.getPaymentMethodsList();
+                list.forEach((item) => {
+                    if (item.magento_payment_method_code == this.item.method) {
+                        this.paymentId = item.storekeeper_payment_method_id;
+                    }
+                })
+                return this.paymentId;
             }
         });
     }

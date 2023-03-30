@@ -5,6 +5,7 @@ namespace StoreKeeper\StoreKeeper\Controller\Checkout;
 use Magento\Framework\App\Action\Action;
 use Magento\Quote\Model\QuoteRepository;
 use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Api\Data\OrderInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Model\OrderItems;
 use StoreKeeper\StoreKeeper\Model\CustomerInfo;
@@ -59,6 +60,7 @@ class Redirect extends Action
     public function execute(): void
     {
         try {
+            $storeKeeperPaymentMethodId = $this->getRequest()->getParam('storekeeper_payment_method_id');
             $order = $this->checkoutSession->getLastRealOrder();
             $payload = $this->ordersHelper->prepareOrder($order, false);
             $redirect_url =  $this->_url->getUrl(self::FINISH_PAGE_ROUTE);
@@ -66,17 +68,7 @@ class Redirect extends Action
             $products = $this->getPaymentProductFromOrderItems($payload['order_items']);
             $billingInfo = $this->applyAddressName($payload['billing_address'] ?? $payload['shipping_address']);
 
-            $payment = $shopModule->newLinkWebShopPaymentForHookWithReturn(
-                [
-                    'redirect_url' => $redirect_url . '?trx={{trx}}&orderId=' . $order->getId(),
-                    'amount' => $this->getOrderTotal($payload['order_items'], $shopModule),
-                    'title' => 'Order: ' . $order->getIncrementId(),
-                    'relation_data_id' => $payload['relation_data_id'],
-                    'relation_data_snapshot' => $billingInfo,
-                    'end_user_ip' => $_SERVER['REMOTE_ADDR'] ?? null,
-                    'products' => $products,
-                ]
-            );
+            $payment = $this->getStoreKeeperPayment($storeKeeperPaymentMethodId, $shopModule, $redirect_url, $order, $payload, $billingInfo, $products);
 
             $order->setStorekeeperPaymentId($payment['id']);
 
@@ -169,5 +161,52 @@ class Redirect extends Action
         ));
 
         return $order['value_wt'];
+    }
+
+    /**
+     * @param string $storeKeeperPaymentMethodId
+     * @param ModuleApiWrapper $shopModule
+     * @param string $redirect_url
+     * @param OrderInterface $order
+     * @param array $payload
+     * @param array $billingInfo
+     * @param array $products
+     * @return array
+     */
+    private function getStoreKeeperPayment(
+        string $storeKeeperPaymentMethodId,
+        ModuleApiWrapper $shopModule,
+        string $redirect_url,
+        OrderInterface $order,
+        array $payload,
+        array $billingInfo,
+        array $products
+    ): array {
+        if ($storeKeeperPaymentMethodId) {
+            return $shopModule->newWebShopPaymentWithReturn(
+                [
+                    'redirect_url' => $redirect_url . '?trx={{trx}}&orderID=' . $order->getId(),
+                    'amount' => $this->getOrderTotal($payload['order_items'], $shopModule),
+                    'title' => 'Order: ' . $order->getIncrementId(),
+                    'provider_method_id' => $storeKeeperPaymentMethodId,
+                    'relation_data_id' => $payload['relation_data_id'],
+                    'relation_data_snapshot' => $billingInfo,
+                    'end_user_ip' => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'products' => $products,
+                ]
+            );
+        } else {
+            return $shopModule->newLinkWebShopPaymentForHookWithReturn(
+                [
+                    'redirect_url' => $redirect_url . '?trx={{trx}}&orderID=' . $order->getId(),
+                    'amount' => $this->getOrderTotal($payload['order_items'], $shopModule),
+                    'title' => 'Order: ' . $order->getIncrementId(),
+                    'relation_data_id' => $payload['relation_data_id'],
+                    'relation_data_snapshot' => $billingInfo,
+                    'end_user_ip' => $_SERVER['REMOTE_ADDR'] ?? null,
+                    'products' => $products,
+                ]
+            );
+        }
     }
 }

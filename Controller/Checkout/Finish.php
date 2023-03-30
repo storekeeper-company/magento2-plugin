@@ -61,7 +61,7 @@ class Finish extends Action
     {
         $resultRedirect = $this->resultRedirectFactory->create();
         $params = $this->getRequest()->getParams();
-        $order = $this->orderRepository->get($params['orderId']);
+        $order = $this->orderRepository->get($params['orderID']);
         $storekeeperPaymentId = $order->getStorekeeperPaymentId();
         $payment = $this->authHelper->getModule('ShopModule', $order->getStoreid())->syncWebShopPaymentWithReturn($storekeeperPaymentId);
 
