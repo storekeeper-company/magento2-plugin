@@ -15,7 +15,8 @@ define(
                 redirectAfterPlaceOrder: false,
                 template: 'StoreKeeper_StoreKeeper/payment/storekeeper_payment',
                 logo: '',
-                paymentId: 0
+                paymentId: 0,
+                paymentQty: 2
             },
             getData: function () {
                 var dob_format = '';
@@ -68,8 +69,17 @@ define(
             getPaymentMethodsList: function () {
                 var storekeeperPaymentMethodsList = [];
                 var storekeeperPaymentMethods = window.checkoutConfig.storekeeper_payment_methods;
-                $.each(storekeeperPaymentMethods, function (id, data) {
-                    storekeeperPaymentMethodsList.push(data)
+                var magentoActivePaymentMethods = window.checkoutConfig.magento_active_payment_methods;
+                $.each(storekeeperPaymentMethods, function (id, storeKeeperData) {
+                    var isFound = false;
+                    $.each(magentoActivePaymentMethods, function (id, magentoActivePayment) {
+                        if (storeKeeperData.magento_payment_method_code == magentoActivePayment) {
+                            isFound = true;
+                        }
+                    })
+                    if (!isFound) {
+                        storekeeperPaymentMethodsList.push(storeKeeperData)
+                    }
                 })
                 return storekeeperPaymentMethodsList;
             },
@@ -93,6 +103,32 @@ define(
                     }
                 })
                 return this.paymentId;
+            },
+            expand: function () {
+                let self = this;
+                this.container = $('.expanded-ul');
+                this.el = $('li', this.container);
+
+                if (this.el.length > this.paymentQty) {
+                    let containerHeight = this.el.outerHeight() * this.paymentQty + 'px';
+                    let loadMore = '<a href="#" class="load-more-btn" style="padding-left: 40px">Show more</a>';
+
+                    this.container.addClass('collapsed').css({"maxHeight": containerHeight});
+
+                    if (!$('.payment-method-title .load-more-btn').length) {
+                        this.container.after(loadMore);
+
+                        $('body').on('click', '.load-more-btn', function () {
+                            if (self.container.hasClass('collapsed')) {
+                                self.container.removeClass('collapsed').css({"maxHeight": 'none'});
+                                $(this).text('Show Less');
+                            } else {
+                                self.container.addClass('collapsed').css({"maxHeight": containerHeight});
+                                $(this).text('Show More');
+                            }
+                        });
+                    }
+                }
             }
         });
     }

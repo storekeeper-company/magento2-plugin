@@ -8,8 +8,8 @@
             <img data-bind="attr: {src: getPaymentIcon()}" class="payment-icon"/>
             <span data-bind="text: getTitle()"></span>
         </label>
-        <ul data-bind="foreach: getPaymentMethodsList(), visible: showSubmethods()" style="list-style-type: none; padding-top: 10px">
-            <li style="display: flex; align-items: center">
+        <ul class="expanded-ul" data-bind="foreach: getPaymentMethodsList(), visible: showSubmethods(), enable: expand()" style="overflow: hidden; list-style-type: none; padding-top: 10px">
+            <li style="display: flex; align-items: center; margin-bottom: 0; padding-bottom: 10px;">
                 <img height="35px" width="35px" data-bind="attr: {src: storekeeper_payment_method_logo_url, alt: storekeeper_payment_method_title}">
                 <span style="margin-left: 10px" data-bind="text: storekeeper_payment_method_title"></span>
             </li>

@@ -6,6 +6,8 @@ use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\ApiWrapper\ModuleApiWrapper;
+use StoreKeeper\ApiWrapper\Iterator\ListCallByIdPaginatedIterator;
+use Magento\Payment\Model\Config;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -22,6 +24,8 @@ class ConfigProvider implements ConfigProviderInterface
 
     private PaymentHelper $paymentHelper;
 
+    private Config $paymentConfig;
+
     /**
      * ConfigProvider constructor.
      * @param Auth $authHelper
@@ -29,10 +33,12 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function __construct(
         Auth $authHelper,
-        PaymentHelper $paymentHelper
+        PaymentHelper $paymentHelper,
+        Config $paymentConfig
     ) {
         $this->authHelper = $authHelper;
         $this->paymentHelper = $paymentHelper;
+        $this->paymentConfig = $paymentConfig;
     }
 
     /**
@@ -42,6 +48,7 @@ class ConfigProvider implements ConfigProviderInterface
     {
         $config = [];
         $config['storekeeper_payment_methods'] = $this->getMappedPaymentMethods();
+        $config['magento_active_payment_methods'] = array_keys($this->paymentConfig->getActiveMethods());
 
         return $config;
     }
@@ -56,7 +63,7 @@ class ConfigProvider implements ConfigProviderInterface
             $paymentMethods[$storeKeeperPaymentMethod['id']] = [
                 'storekeeper_payment_method_id' => $storeKeeperPaymentMethod['id'],
                 'storekeeper_payment_method_title' => $storeKeeperPaymentMethod['title'],
-                'storekeeper_payment_method_logo_url' => $storeKeeperPaymentMethod['image_url'],
+                'storekeeper_payment_method_logo_url' => $storeKeeperPaymentMethod['image_url'] ?? '',
                 'storekeeper_payment_method_eId' => $storeKeeperPaymentMethod['eid']
             ];
         }
