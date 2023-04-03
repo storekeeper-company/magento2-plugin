@@ -6,7 +6,7 @@
                 <payment_action>order</payment_action>
                 <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Ideal</model>
                 <active>1</active>
-                <title>StoreKeeper Payment iDEAL</title>
+                <title>iDEAL</title>
                 <order_status>pending_payment</order_status>
             </storekeeper_payment_ideal>
             <storekeeper_payment>
