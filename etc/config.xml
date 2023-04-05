@@ -23,6 +23,13 @@
                 <title>Apple Pay</title>
                 <order_status>pending_payment</order_status>
             </storekeeper_payment_applepay>
+            <storekeeper_payment_bataviacadeaukaart>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\BataviastadCadeaukaart</model>
+                <active>1</active>
+                <title>Bataviastad Cadeaukaart</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_bataviacadeaukaart>
             <storekeeper_payment_billink>
                 <payment_action>order</payment_action>
                 <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Billink</model>
@@ -51,6 +58,55 @@
                 <title>Creditclick</title>
                 <order_status>pending_payment</order_status>
             </storekeeper_payment_creditclick>
+            <storekeeper_payment_dankort>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Dankort</model>
+                <active>1</active>
+                <title>Dankort</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_dankort>
+            <storekeeper_payment_eps>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Eps</model>
+                <active>1</active>
+                <title>EPS uberweisung</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_eps>
+            <storekeeper_payment_fashioncheque>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Fashioncheque</model>
+                <active>1</active>
+                <title>Fashioncheque</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_fashioncheque>
+            <storekeeper_payment_fashiongiftcard>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\FashionGiftcard</model>
+                <active>1</active>
+                <title>Fashion Giftcard</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_fashiongiftcard>
+            <storekeeper_payment_gezondheidsbon>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Gezondheidsbon</model>
+                <active>1</active>
+                <title>Gezondheidsbon</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_gezondheidsbon>
+            <storekeeper_payment_giropay>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Giropay</model>
+                <active>1</active>
+                <title>Giropay</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_giropay>
+            <storekeeper_payment_givacard>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\GivaCard</model>
+                <active>1</active>
+                <title>Giva Card</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_givacard>
             <storekeeper_payment_ideal>
                 <payment_action>order</payment_action>
                 <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Ideal</model>
@@ -58,6 +114,104 @@
                 <title>iDEAL</title>
                 <order_status>pending_payment</order_status>
             </storekeeper_payment_ideal>
+            <storekeeper_payment_maestro>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Maestro</model>
+                <active>1</active>
+                <title>Maestro</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_maestro>
+            <storekeeper_payment_multibanco>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\MultiBanco</model>
+                <active>1</active>
+                <title>MultiBanco</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_multibanco>
+            <storekeeper_payment_nexi>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Nexi</model>
+                <active>1</active>
+                <title>Nexi</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_nexi>
+            <storekeeper_payment_overboeking>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Overboeking</model>
+                <active>1</active>
+                <title>Overboeking (SCT)</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_overboeking>
+            <storekeeper_payment_payconiq>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Payconiq</model>
+                <active>1</active>
+                <title>Payconiq</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_payconiq>
+            <storekeeper_payment_paypal>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\PayPal</model>
+                <active>1</active>
+                <title>PayPal</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_paypal>
+            <storekeeper_payment_paysafecard>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Paysafecard</model>
+                <active>1</active>
+                <title>Paysafecard</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_paysafecard>
+            <storekeeper_payment_postepay>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Postepay</model>
+                <active>1</active>
+                <title>Postepay</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_postepay>
+            <storekeeper_payment_przelewy24>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Przelewy24</model>
+                <active>1</active>
+                <title>Przelewy24</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_przelewy24>
+            <storekeeper_payment_spraypay>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\SprayPay</model>
+                <active>1</active>
+                <title>SprayPay</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_spraypay>
+            <storekeeper_payment_telefonischbetalen>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\TelefonischBetalen</model>
+                <active>1</active>
+                <title>Telefonisch betalen</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_telefonischbetalen>
+            <storekeeper_payment_visamastercard>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\VisaMastercard</model>
+                <active>1</active>
+                <title>Visa Mastercard</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_visamastercard>
+            <storekeeper_payment_wechatpay>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\WeChatPay</model>
+                <active>1</active>
+                <title>WeChat Pay</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_wechatpay>
+            <storekeeper_payment_yourgift>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\YourGift</model>
+                <active>1</active>
+                <title>YourGift</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_yourgift>
             <storekeeper_payment>
                 <payment_action>order</payment_action>
                 <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\PaymentMethod</model>

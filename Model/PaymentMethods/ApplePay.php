@@ -2,9 +2,9 @@
 
 namespace StoreKeeper\StoreKeeper\Model\PaymentMethods;
 
-use StoreKeeper\StoreKeeper\Model\PaymentMethods\StoreKeeperPaymentMethod;
+use StoreKeeper\StoreKeeper\Model\PaymentMethods\AbstractStoreKeeperPaymentMethod;
 
-class ApplePay extends StoreKeeperPaymentMethod
+class ApplePay extends AbstractStoreKeeperPaymentMethod
 {
     /**
      * Payment code

@@ -2,9 +2,9 @@
 
 namespace StoreKeeper\StoreKeeper\Model\PaymentMethods;
 
-use StoreKeeper\StoreKeeper\Model\PaymentMethods\StoreKeeperPaymentMethod;
+use StoreKeeper\StoreKeeper\Model\PaymentMethods\AbstractStoreKeeperPaymentMethod;
 
-class Blik extends StoreKeeperPaymentMethod
+class Blik extends AbstractStoreKeeperPaymentMethod
 {
     /**
      * Payment code

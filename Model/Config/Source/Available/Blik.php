@@ -13,7 +13,7 @@ class Blik implements OptionSourceInterface
     private Available $available;
 
     /**
-     * Amex constructor.
+     * Blik constructor.
      * @param PaymentMethod $paymentMethod
      * @param Available $available
      */

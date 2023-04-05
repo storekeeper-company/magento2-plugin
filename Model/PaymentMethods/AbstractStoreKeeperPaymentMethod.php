@@ -4,7 +4,7 @@ namespace StoreKeeper\StoreKeeper\Model\PaymentMethods;
 
 use Magento\Payment\Model\Method\AbstractMethod;
 
-abstract class StoreKeeperPaymentMethod extends AbstractMethod
+abstract class AbstractStoreKeeperPaymentMethod extends AbstractMethod
 {
     /**
      * StoreKeeper Payment Method eId

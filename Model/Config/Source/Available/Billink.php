@@ -13,7 +13,7 @@ class Billink implements OptionSourceInterface
     private Available $available;
 
     /**
-     * Amex constructor.
+     * Billink constructor.
      * @param PaymentMethod $paymentMethod
      * @param Available $available
      */

@@ -13,7 +13,7 @@ class ApplePay implements OptionSourceInterface
     private Available $available;
 
     /**
-     * Amex constructor.
+     * ApplePay constructor.
      * @param PaymentMethod $paymentMethod
      * @param Available $available
      */

@@ -2,9 +2,9 @@
 
 namespace StoreKeeper\StoreKeeper\Model\PaymentMethods;
 
-use StoreKeeper\StoreKeeper\Model\PaymentMethods\StoreKeeperPaymentMethod;
+use StoreKeeper\StoreKeeper\Model\PaymentMethods\AbstractStoreKeeperPaymentMethod;
 
-class Billink extends StoreKeeperPaymentMethod
+class Billink extends AbstractStoreKeeperPaymentMethod
 {
     /**
      * Payment code

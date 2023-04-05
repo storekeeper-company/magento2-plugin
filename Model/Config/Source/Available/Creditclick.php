@@ -13,7 +13,7 @@ class Creditclick implements OptionSourceInterface
     private Available $available;
 
     /**
-     * Amex constructor.
+     * Creditclick constructor.
      * @param PaymentMethod $paymentMethod
      * @param Available $available
      */

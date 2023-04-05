@@ -13,7 +13,7 @@ class CarteBleue implements OptionSourceInterface
     private Available $available;
 
     /**
-     * Amex constructor.
+     * CarteBleue constructor.
      * @param PaymentMethod $paymentMethod
      * @param Available $available
      */
