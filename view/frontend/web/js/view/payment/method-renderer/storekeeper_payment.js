@@ -4,11 +4,12 @@ define(
     [
         'ko',
         'jquery',
+        'mage/translate',
         'Magento_Checkout/js/view/payment/default',
         'mage/url',
         'Magento_Checkout/js/action/place-order'
     ],
-    function (ko, $, Component, url, placeOrderAction) {
+    function (ko, $, $t, Component, url, placeOrderAction) {
         'use strict';
         return Component.extend({
             defaults: {
@@ -108,10 +109,12 @@ define(
                 let self = this;
                 this.container = $('.expanded-ul');
                 this.el = $('li', this.container);
+                this.showMoreText = $t('Show More');
+                this.showLessText = $t('Show Less');
 
                 if (this.el.length > this.paymentQty) {
                     let containerHeight = this.el.outerHeight() * this.paymentQty + 'px';
-                    let loadMore = '<a href="#" class="load-more-btn" style="padding-left: 40px">Show more</a>';
+                    let loadMore = '<a href="#" class="load-more-btn" style="padding-left: 40px">' + self.showMoreText + '</a>';
 
                     this.container.addClass('collapsed').css({"maxHeight": containerHeight});
 
@@ -121,10 +124,10 @@ define(
                         $('body').on('click', '.load-more-btn', function () {
                             if (self.container.hasClass('collapsed')) {
                                 self.container.removeClass('collapsed').css({"maxHeight": 'none'});
-                                $(this).text('Show Less');
+                                $(this).text(self.showLessText);
                             } else {
                                 self.container.addClass('collapsed').css({"maxHeight": containerHeight});
-                                $(this).text('Show More');
+                                $(this).text(self.showMoreText);
                             }
                         });
                     }
