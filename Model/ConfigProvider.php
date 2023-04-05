@@ -14,6 +14,7 @@ class ConfigProvider implements ConfigProviderInterface
     const STOREKEEPER_SHOP_MODULE_NAME = 'ShopModule';
 
     private $methodCodes = [
+        'storekeeper_payment_alipay',
         'storekeeper_payment_ideal',
         'storekeeper_payment'
     ];
@@ -91,7 +92,7 @@ class ConfigProvider implements ConfigProviderInterface
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function getMappedPaymentMethods(): array
+    public function getMappedPaymentMethods(): array
     {
         foreach ($this->methodCodes as $code) {
             $this->methods[$code] = [

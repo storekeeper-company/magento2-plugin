@@ -2,6 +2,55 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
     <default>
         <payment>
+            <storekeeper_payment_alipay>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\AliPay</model>
+                <active>1</active>
+                <title>AliPay</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_alipay>
+            <storekeeper_payment_amex>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Amex</model>
+                <active>1</active>
+                <title>Amex</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_amex>
+            <storekeeper_payment_applepay>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\ApplePay</model>
+                <active>1</active>
+                <title>Apple Pay</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_applepay>
+            <storekeeper_payment_billink>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Billink</model>
+                <active>1</active>
+                <title>Billink</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_billink>
+            <storekeeper_payment_blik>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Blik</model>
+                <active>1</active>
+                <title>Blik</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_blik>
+            <storekeeper_payment_cartebleue>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\CarteBleue</model>
+                <active>1</active>
+                <title>Carte Bleue</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_cartebleue>
+            <storekeeper_payment_creditclick>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Creditclick</model>
+                <active>1</active>
+                <title>Creditclick</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_creditclick>
             <storekeeper_payment_ideal>
                 <payment_action>order</payment_action>
                 <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Ideal</model>

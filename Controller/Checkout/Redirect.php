@@ -60,7 +60,7 @@ class Redirect extends Action
     public function execute(): void
     {
         try {
-            $storeKeeperPaymentMethodId = $this->getRequest()->getParam('storekeeper_payment_method_id');
+            $storeKeeperPaymentMethodId = (int)$this->getRequest()->getParam('storekeeper_payment_method_id');
             $order = $this->checkoutSession->getLastRealOrder();
             $payload = $this->ordersHelper->prepareOrder($order, false);
             $redirect_url =  $this->_url->getUrl(self::FINISH_PAGE_ROUTE);
@@ -164,7 +164,7 @@ class Redirect extends Action
     }
 
     /**
-     * @param string $storeKeeperPaymentMethodId
+     * @param ?int $storeKeeperPaymentMethodId
      * @param ModuleApiWrapper $shopModule
      * @param string $redirect_url
      * @param OrderInterface $order
@@ -174,7 +174,7 @@ class Redirect extends Action
      * @return array
      */
     private function getStoreKeeperPayment(
-        string $storeKeeperPaymentMethodId,
+        ?int $storeKeeperPaymentMethodId,
         ModuleApiWrapper $shopModule,
         string $redirect_url,
         OrderInterface $order,
