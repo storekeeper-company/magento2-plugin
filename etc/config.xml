@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
+    <default>
+        <payment>
+            <storekeeper_payment_ideal>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\Ideal</model>
+                <active>1</active>
+                <title>iDEAL</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment_ideal>
+            <storekeeper_payment>
+                <payment_action>order</payment_action>
+                <model>StoreKeeper\StoreKeeper\Model\PaymentMethods\PaymentMethod</model>
+                <active>1</active>
+                <title>StoreKeeper Payment</title>
+                <order_status>pending_payment</order_status>
+            </storekeeper_payment>
+        </payment>
+    </default>
+</config>

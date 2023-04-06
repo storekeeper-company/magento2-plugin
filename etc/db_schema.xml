@@ -7,5 +7,6 @@
         <column xsi:type="varchar" name="storekeeper_order_pending_sync" comment="StoreKeeper Order Pending Sync"/>
         <column xsi:type="varchar" name="storekeeper_order_last_sync" comment="StoreKeeper Order Last Sync"/>
         <column xsi:type="int" name="storekeeper_relation_data_id" comment="StoreKeeper relation data ID"/>
+        <column xsi:type="int" name="storekeeper_payment_id" comment="StoreKeeper Payment ID"/>
     </table>
 </schema>

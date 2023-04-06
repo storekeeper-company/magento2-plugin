@@ -110,15 +110,15 @@
             </group>
         </section> -->
 
-        <!-- <section id="payment">
-            <group id="storekeeperpayment" translate="label" type="text" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
-                <label>StoreKeeper Payment</label>
-                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
-                    <label>Enabled</label>
+        <section id="payment">
+            <group id="storekeeper_payment" translate="label" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>StoreKeeper Payments</label>
+                <field id="active" translate="label comment" sortOrder="1" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
-        </section> -->
+        </section>
 
         <!-- <section id="storekeeper_payment_methods" translate="label" type="text" sortOrder="20" showInDefault="0" showInWebsite="0" showInStore="1">
             <label>Payment Methods</label>
