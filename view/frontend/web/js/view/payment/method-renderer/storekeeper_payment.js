@@ -88,7 +88,7 @@ define(
                 return this.item.method == 'storekeeper_payment';
             },
             getPaymentIcon: function () {
-                var list = this.getPaymentMethodsList();
+                var list = window.checkoutConfig.storekeeper_payment_methods;
                 list.forEach((item) => {
                     if (item.magento_payment_method_code == this.item.method) {
                         this.logo = item.storekeeper_payment_method_logo_url;

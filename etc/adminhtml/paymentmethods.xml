@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<include xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_include.xsd">
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/alipay.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/amex.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/applepay.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/bataviacadeaukaart.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/billink.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/blik.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/cartebleue.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/creditclick.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/dankort.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/eps.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/fashioncheque.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/fashiongiftcard.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/gezondheidsbon.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/giropay.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/givacard.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/ideal.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/maestro.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/multibanco.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/nexi.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/overboeking.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/payconiq.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/paypal.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/paysafecard.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/postepay.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/przelewy24.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/spraypay.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/telefonischbetalen.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/visamastercard.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/wechatpay.xml" />
+    <include path="StoreKeeper_StoreKeeper::paymentmethods/yourgift.xml" />
+</include>
