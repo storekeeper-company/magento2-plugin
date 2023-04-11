@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory;
+use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrder;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
 
 class Orders extends Command
@@ -100,25 +101,25 @@ class Orders extends Command
 
             while ($current < $orders->getTotalCount()) {
                 foreach ($orders as $order) {
+                    $orderId = $order->getId();
+                    $storeKeeperFailedSyncOrder = $this->getStoreKeeperFailedSyncOrder($orderId);
                     try {
                         if ($this->configHelper->isDebugLogs($storeId)) {
-                            $this->logger->info('Processing order: '.$order->getId());
+                            $this->logger->info('Processing order: ' . $orderId);
                         }
                         if ($storeKeeperId = $this->ordersHelper->exists($order)) {
                             $this->ordersHelper->update($order, $storeKeeperId);
                         } else {
                             $this->ordersHelper->onCreate($order);
                         }
+                        if ($storeKeeperFailedSyncOrder->hasData('order_id')) {
+                            $storeKeeperFailedSyncOrder->setIsFailed(0);
+                            $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
+                        }
                     } catch(\Exception $e) {
                         $this->logger->error($e->getMessage());
-                        $storeKeeperFailedSyncOrder = $this->storeKeeperFailedSyncOrder->create();
-                        $this->storeKeeperFailedSyncOrderResource->load(
-                            $storeKeeperFailedSyncOrder,
-                            $order->getId(),
-                            'order_id'
-                        );
                         if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
-                            $storeKeeperFailedSyncOrder->setOrderId((int)$order->getId());
+                            $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
                             $storeKeeperFailedSyncOrder->setIsFailed(1);
                             $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
                         }
@@ -131,5 +132,21 @@ class Orders extends Command
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
+    }
+
+    /**
+     * @param string $orderId
+     * @return StoreKeeperFailedSyncOrder
+     */
+    private function getStoreKeeperFailedSyncOrder(string $orderId):StoreKeeperFailedSyncOrder
+    {
+        $storeKeeperFailedSyncOrder = $this->storeKeeperFailedSyncOrder->create();
+        $this->storeKeeperFailedSyncOrderResource->load(
+            $storeKeeperFailedSyncOrder,
+            $orderId,
+            'order_id'
+        );
+
+        return $storeKeeperFailedSyncOrder;
     }
 }
