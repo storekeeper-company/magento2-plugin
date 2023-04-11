@@ -12,6 +12,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory;
+use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
 
 class Orders extends Command
 {
@@ -21,9 +23,18 @@ class Orders extends Command
 
     private OrdersHelper $ordersHelper;
 
+    private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
+
+    private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
+
     /**
+     * Orders constructor.
      * @param State $state
      * @param OrdersHelper $ordersHelper
+     * @param Config $configHelper
+     * @param LoggerInterface $logger
+     * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
+     * @param StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder
      * @param string|null $name
      */
     public function __construct(
@@ -31,6 +42,8 @@ class Orders extends Command
         OrdersHelper $ordersHelper,
         Config $configHelper,
         LoggerInterface $logger,
+        StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
+        StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder,
         string $name = null
     ) {
         parent::__construct($name);
@@ -39,6 +52,8 @@ class Orders extends Command
         $this->ordersHelper = $ordersHelper;
         $this->configHelper = $configHelper;
         $this->logger = $logger;
+        $this->storeKeeperFailedSyncOrderResource = $storeKeeperFailedSyncOrderResource;
+        $this->storeKeeperFailedSyncOrder = $storeKeeperFailedSyncOrder;
     }
 
     /**
@@ -96,6 +111,33 @@ class Orders extends Command
                         }
                     } catch(\Exception $e) {
                         $this->logger->error($e->getMessage());
+                        $storeKeeperFailedSyncOrder = $this->storeKeeperFailedSyncOrder->create();
+                        $this->storeKeeperFailedSyncOrderResource->load(
+                            $storeKeeperFailedSyncOrder,
+                            $order->getId(),
+                            'order_id'
+                        );
+                        if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
+                            $storeKeeperFailedSyncOrder->setOrderId((int)$order->getId());
+                            $storeKeeperFailedSyncOrder->setIsFailed(1);
+                            $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
+                        }
+
+//                        $orderId = (int)$order->getId();
+//                        $connection = $this->storeKeeperFailedSyncOrderResource->getConnection();
+//
+//                        $select = $connection->select()
+//                            ->from($this->storeKeeperFailedSyncOrderResource->getMainTable(), 'order_id')
+//                            ->where('order_id = ?', $orderId);
+//
+//                        if (!$connection->fetchOne($select)) {
+//                            $data = [
+//                                'order_id' => $orderId,
+//                                'is_failed' => 1,
+//                            ];
+//                            $connection->insert($this->storeKeeperFailedSyncOrderResource->getMainTable(), $data);
+//                        }
+
                     }
                 }
                 $current += count($orders);

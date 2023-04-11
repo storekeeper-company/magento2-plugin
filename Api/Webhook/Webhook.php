@@ -3,10 +3,24 @@ namespace StoreKeeper\StoreKeeper\Api\Webhook;
 
 use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
+use Magento\Backend\Model\UrlInterface;
+use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder\Collection as StoreKeeperFailedSyncOrderCollection;
 
 class Webhook
 {
+    private const DATE_TIME_FORMAT = 'D, d M Y H:i:s O';
+
     private const STOCK_CHANGE_EVENT = 'stock_change';
+
+    private TimezoneInterface $timezone;
+
+    private CollectionFactory $orderCollectionFactory;
+
+    private UrlInterface $backendUrl;
+
+    private StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection;
 
     public function __construct(
         \Magento\Framework\Webapi\Rest\Request $request,
@@ -15,7 +29,11 @@ class Webhook
         \Magento\Framework\MessageQueue\PublisherInterface $publisher,
         \Magento\Framework\App\ProductMetadataInterface $productMetadata,
         Config $configHelper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        TimezoneInterface $timezone,
+        CollectionFactory $orderCollectionFactory,
+        UrlInterface $backendUrl,
+        StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection
     ) {
         $this->request = $request;
         $this->authHelper = $authHelper;
@@ -24,6 +42,10 @@ class Webhook
         $this->productMetadata = $productMetadata;
         $this->configHelper = $configHelper;
         $this->logger = $logger;
+        $this->timezone = $timezone;
+        $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->backendUrl = $backendUrl;
+        $this->storeKeeperFailedSyncOrderCollection = $storeKeeperFailedSyncOrderCollection;
     }
 
     /**
@@ -88,6 +110,15 @@ class Webhook
                         'platform_version' => $this->productMetadata->getVersion(),
                         'software_name' => 'magento2-plugin',
                         'software_version' => $composerJson['version'],
+                        'plugin_settings_url' => $this->getPluginSettingsUrl(),
+                        'now_date' => $this->getCurrentDateTime(),
+                        'system_status' => [
+                            'order' => [
+                                'last_date' => $this->getLastOrderDateTime(),
+                                'last_synchronized_date' => $this->getLastSynchronizedOrderDateTime(),
+                                'ids_with_failed_tasks' => $this->getIdsWithFailedTasks()
+                            ]
+                        ],
                         'extra' => [
                             'url' => $this->authHelper->getStoreBaseUrl(),
                             'sync_mode' => $sync_mode
@@ -205,5 +236,55 @@ class Webhook
                 return $event['details']['is_own_order_stock_change'];
             }
         }
+    }
+
+    /**
+     * @return string
+     */
+    private function getCurrentDateTime(): string
+    {
+        return $this->timezone->date()->format(self::DATE_TIME_FORMAT);
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function getLastOrderDateTime(): string
+    {
+        $orderCollection = $this->orderCollectionFactory->create()->addAttributeToSort('created_at', 'desc');
+        $lastOrder = $orderCollection->getFirstItem();
+        $lastOrderDateTime = $this->timezone->date($lastOrder->getCreatedAt())->format(self::DATE_TIME_FORMAT);
+
+        return $lastOrderDateTime;
+    }
+
+    private function getPluginSettingsUrl()
+    {
+        $sectionId = 'storekeeper_general';
+        $params = [
+            '_nosid' => true,
+            '_query' => ['key' => $this->backendUrl->getSecretKey()]
+        ];
+        $url = $this->backendUrl->getUrl(
+            'admin/system_config/edit',
+            ['section' => $sectionId],
+            $params
+        );
+        return $url;
+    }
+
+    private function getLastSynchronizedOrderDateTime()
+    {
+        $orderCollection = $this->orderCollectionFactory->create()->addAttributeToSort('storekeeper_order_last_sync', 'desc');
+        $lastSynchronizedOrder = $orderCollection->getFirstItem();
+        $lastSynchronizedOrderDateTime = $this->timezone->date($lastSynchronizedOrder->getData('storekeeper_order_last_sync'))->format(self::DATE_TIME_FORMAT);
+
+        return $lastSynchronizedOrderDateTime;
+    }
+
+    private function getIdsWithFailedTasks()
+    {
+        return array_keys($this->storeKeeperFailedSyncOrderCollection->addFieldToFilter('is_failed', 1)->getItems());
     }
 }
