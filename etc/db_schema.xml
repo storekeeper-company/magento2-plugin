@@ -11,7 +11,6 @@
     </table>
     <table name="storekeeper_failed_sync_order">
         <column xsi:type="int" name="order_id" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
-<!--        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="false" comment="Entity ID"/>-->
         <column xsi:type="tinyint" name="is_failed" nullable="false" default="0" identity="false" comment="Flag for failed sync order"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="order_id"/>

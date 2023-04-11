@@ -122,22 +122,6 @@ class Orders extends Command
                             $storeKeeperFailedSyncOrder->setIsFailed(1);
                             $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
                         }
-
-//                        $orderId = (int)$order->getId();
-//                        $connection = $this->storeKeeperFailedSyncOrderResource->getConnection();
-//
-//                        $select = $connection->select()
-//                            ->from($this->storeKeeperFailedSyncOrderResource->getMainTable(), 'order_id')
-//                            ->where('order_id = ?', $orderId);
-//
-//                        if (!$connection->fetchOne($select)) {
-//                            $data = [
-//                                'order_id' => $orderId,
-//                                'is_failed' => 1,
-//                            ];
-//                            $connection->insert($this->storeKeeperFailedSyncOrderResource->getMainTable(), $data);
-//                        }
-
                     }
                 }
                 $current += count($orders);

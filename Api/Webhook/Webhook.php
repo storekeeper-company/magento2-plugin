@@ -259,7 +259,10 @@ class Webhook
         return $lastOrderDateTime;
     }
 
-    private function getPluginSettingsUrl()
+    /**
+     * @return string
+     */
+    private function getPluginSettingsUrl():string
     {
         $sectionId = 'storekeeper_general';
         $params = [
@@ -274,7 +277,10 @@ class Webhook
         return $url;
     }
 
-    private function getLastSynchronizedOrderDateTime()
+    /**
+     * @return string
+     */
+    private function getLastSynchronizedOrderDateTime():string
     {
         $orderCollection = $this->orderCollectionFactory->create()->addAttributeToSort('storekeeper_order_last_sync', 'desc');
         $lastSynchronizedOrder = $orderCollection->getFirstItem();
@@ -283,7 +289,10 @@ class Webhook
         return $lastSynchronizedOrderDateTime;
     }
 
-    private function getIdsWithFailedTasks()
+    /**
+     * @return array
+     */
+    private function getIdsWithFailedTasks():array
     {
         return array_keys($this->storeKeeperFailedSyncOrderCollection->addFieldToFilter('is_failed', 1)->getItems());
     }
