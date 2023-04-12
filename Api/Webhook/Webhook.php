@@ -6,7 +6,7 @@ use StoreKeeper\StoreKeeper\Helper\Config;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Backend\Model\UrlInterface;
-use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder\Collection as StoreKeeperFailedSyncOrderCollection;
+use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder\CollectionFactory as StoreKeeperFailedSyncOrderCollectionFactory;
 
 class Webhook
 {
@@ -33,7 +33,7 @@ class Webhook
         TimezoneInterface $timezone,
         CollectionFactory $orderCollectionFactory,
         UrlInterface $backendUrl,
-        StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection
+        StoreKeeperFailedSyncOrderCollectionFactory $storeKeeperFailedSyncOrderCollectionFactory
     ) {
         $this->request = $request;
         $this->authHelper = $authHelper;
@@ -45,7 +45,7 @@ class Webhook
         $this->timezone = $timezone;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->backendUrl = $backendUrl;
-        $this->storeKeeperFailedSyncOrderCollection = $storeKeeperFailedSyncOrderCollection;
+        $this->storeKeeperFailedSyncOrderCollectionFactory = $storeKeeperFailedSyncOrderCollectionFactory;
     }
 
     /**
@@ -110,13 +110,15 @@ class Webhook
                         'platform_version' => $this->productMetadata->getVersion(),
                         'software_name' => 'magento2-plugin',
                         'software_version' => $composerJson['version'],
+                        'task_failed_quantity' => $this->getAmountOfFailedTasks(),
                         'plugin_settings_url' => $this->getPluginSettingsUrl(),
                         'now_date' => $this->getCurrentDateTime(),
                         'system_status' => [
                             'order' => [
                                 'last_date' => $this->getLastOrderDateTime(),
                                 'last_synchronized_date' => $this->getLastSynchronizedOrderDateTime(),
-                                'ids_with_failed_tasks' => $this->getIdsWithFailedTasks()
+                                'ids_with_failed_tasks' => $this->getIdsWithFailedTasks(),
+                                'last_date_of_failed_task' => $this->getLastDateOfFailedTask() //'last_date_of_failed_task' it is my custom key
                             ]
                         ],
                         'extra' => [
@@ -262,7 +264,7 @@ class Webhook
     /**
      * @return string
      */
-    private function getPluginSettingsUrl():string
+    private function getPluginSettingsUrl(): string
     {
         $sectionId = 'storekeeper_general';
         $params = [
@@ -280,7 +282,7 @@ class Webhook
     /**
      * @return string
      */
-    private function getLastSynchronizedOrderDateTime():string
+    private function getLastSynchronizedOrderDateTime(): string
     {
         $orderCollection = $this->orderCollectionFactory->create()->addAttributeToSort('storekeeper_order_last_sync', 'desc');
         $lastSynchronizedOrder = $orderCollection->getFirstItem();
@@ -292,8 +294,30 @@ class Webhook
     /**
      * @return array
      */
-    private function getIdsWithFailedTasks():array
+    private function getIdsWithFailedTasks(): array
     {
-        return array_keys($this->storeKeeperFailedSyncOrderCollection->addFieldToFilter('is_failed', 1)->getItems());
+        return array_keys($this->storeKeeperFailedSyncOrderCollectionFactory->create()->addFieldToFilter('is_failed', 1)->getItems());
+    }
+
+    /**
+     * @return string
+     */
+    private function getLastDateOfFailedTask(): string
+    {
+        $failedOrders = $this->storeKeeperFailedSyncOrderCollectionFactory->create()
+            ->addFieldToFilter('is_failed', 1)
+            ->addOrder('updated_at');
+        $lastFailedOrder = $failedOrders->getFirstItem();
+        $lastFailedOrderDateTime = $this->timezone->date($lastFailedOrder->getData('updated_at'))->format(self::DATE_TIME_FORMAT);
+
+        return $lastFailedOrderDateTime;
+    }
+
+    /**
+     * @return int
+     */
+    private function getAmountOfFailedTasks(): int
+    {
+        return count($this->getIdsWithFailedTasks());
     }
 }

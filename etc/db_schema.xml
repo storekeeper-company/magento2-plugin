@@ -12,6 +12,8 @@
     <table name="storekeeper_failed_sync_order">
         <column xsi:type="int" name="order_id" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
         <column xsi:type="tinyint" name="is_failed" nullable="false" default="0" identity="false" comment="Flag for failed sync order"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="order_id"/>
         </constraint>

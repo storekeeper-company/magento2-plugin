@@ -121,8 +121,10 @@ class Orders extends Command
                         if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
                             $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
                             $storeKeeperFailedSyncOrder->setIsFailed(1);
-                            $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
+                        } else {
+                            $storeKeeperFailedSyncOrder->setUpdatedAt(time());
                         }
+                        $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
                     }
                 }
                 $current += count($orders);
