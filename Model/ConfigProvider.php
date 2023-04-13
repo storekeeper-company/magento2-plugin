@@ -88,23 +88,8 @@ class ConfigProvider implements ConfigProviderInterface
      */
     private function getStoreKeeperPaymentMethods(): array
     {
-        $ShopModule =  $this->getShopModule();
-        $storeKeeperPaymentMethods = new ListCallByIdPaginatedIterator(function (ListCallByIdPaginatedIterator $iter) use ($ShopModule) {
-            return $ShopModule->listTranslatedPaymentMethodForHooks(
-                0,
-                $iter->getStart(),
-                $iter->getPerPage(),
-                [
-                    [
-                        'name' => 'id',
-                        'dir' => 'asc'
-                    ],
-                ]
-            );
-        });
-
-        $paymentMethods = [];
-        foreach ($storeKeeperPaymentMethods as $storeKeeperPaymentMethod) {
+        $storeKeeperPaymentMethods =  $this->getShopModule()->listTranslatedPaymentMethodForHooks('0', 0, 10, null, []);
+        foreach ($storeKeeperPaymentMethods['data'] as $storeKeeperPaymentMethod) {
             $paymentMethods[$storeKeeperPaymentMethod['id']] = [
                 'storekeeper_payment_method_id' => $storeKeeperPaymentMethod['id'],
                 'storekeeper_payment_method_title' => $storeKeeperPaymentMethod['title'],
