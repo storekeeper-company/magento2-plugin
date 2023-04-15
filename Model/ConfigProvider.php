@@ -9,6 +9,7 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\ApiWrapper\ModuleApiWrapper;
 use StoreKeeper\ApiWrapper\Iterator\ListCallByIdPaginatedIterator;
 use Magento\Payment\Model\Config;
+use Magento\Theme\Block\Html\Header\Logo;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -56,19 +57,25 @@ class ConfigProvider implements ConfigProviderInterface
 
     private Config $paymentConfig;
 
+    private Logo $logo;
+
     /**
      * ConfigProvider constructor.
      * @param Auth $authHelper
      * @param PaymentHelper $paymentHelper
+     * @param Config $paymentConfig
+     * @param Logo $logo
      */
     public function __construct(
         Auth $authHelper,
         PaymentHelper $paymentHelper,
-        Config $paymentConfig
+        Config $paymentConfig,
+        Logo $logo
     ) {
         $this->authHelper = $authHelper;
         $this->paymentHelper = $paymentHelper;
         $this->paymentConfig = $paymentConfig;
+        $this->logo = $logo;
     }
 
     /**
@@ -90,12 +97,14 @@ class ConfigProvider implements ConfigProviderInterface
     {
         $storeKeeperPaymentMethods =  $this->getShopModule()->listTranslatedPaymentMethodForHooks('0', 0, 10, null, []);
         foreach ($storeKeeperPaymentMethods['data'] as $storeKeeperPaymentMethod) {
-            $paymentMethods[$storeKeeperPaymentMethod['id']] = [
-                'storekeeper_payment_method_id' => $storeKeeperPaymentMethod['id'],
-                'storekeeper_payment_method_title' => $storeKeeperPaymentMethod['title'],
-                'storekeeper_payment_method_logo_url' => $storeKeeperPaymentMethod['image_url'] ?? '',
-                'storekeeper_payment_method_eId' => $storeKeeperPaymentMethod['eid']
-            ];
+            if ($storeKeeperPaymentMethod['eid'] != 'Web::PaymentModule') {
+                $paymentMethods[$storeKeeperPaymentMethod['id']] = [
+                    'storekeeper_payment_method_id' => $storeKeeperPaymentMethod['id'],
+                    'storekeeper_payment_method_title' => $storeKeeperPaymentMethod['title'],
+                    'storekeeper_payment_method_logo_url' => $storeKeeperPaymentMethod['image_url'] ?? $this->logo->getLogoSrc(),
+                    'storekeeper_payment_method_eId' => $storeKeeperPaymentMethod['eid']
+                ];
+            }
         }
 
         return $paymentMethods;

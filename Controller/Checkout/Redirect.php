@@ -97,7 +97,6 @@ class Redirect extends Action
             $this->_getCheckoutSession()->restoreQuote();
             $this->messageManager->addExceptionMessage($e, __('Something went wrong, please try again later'));
             $this->messageManager->addExceptionMessage($e, $e->getMessage());
-            payHelper::logCritical($e, array(), $order->getStore());
 
             $this->_redirect('checkout/cart');
         }
