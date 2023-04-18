@@ -8,15 +8,17 @@
             <img data-bind="attr: {src: getPaymentIcon()}" class="payment-icon"/>
             <span data-bind="text: getTitle()"></span>
         </label>
-        <ul class="expanded-ul" data-bind="foreach: getPaymentMethodsList(), visible: showSubmethods(), enable: expand()" style="overflow: hidden; list-style-type: none; padding-top: 10px">
-            <li style="display: flex; align-items: center; margin-bottom: 0; padding-bottom: 10px;">
-                <!-- ko if: storekeeper_payment_method_logo_url -->
-                    <img height="35px" width="35px" data-bind="attr: {src: storekeeper_payment_method_logo_url, alt: storekeeper_payment_method_title}">
-                <!-- /ko -->
-                <span style="margin-left: 10px" data-bind="text: storekeeper_payment_method_title, visible: storekeeper_payment_method_logo_url"></span>
-                <span style="margin-left: 45px" data-bind="text: storekeeper_payment_method_title, visible: !storekeeper_payment_method_logo_url"></span>
-            </li>
-        </ul>
+        <!-- ko if: showSubmethods() -->
+            <ul class="expanded-ul" data-bind="foreach: getPaymentMethodsList(), visible: showSubmethods(), enable: expand()" style="overflow: hidden; list-style-type: none; padding-top: 10px">
+                <li style="display: flex; align-items: center; margin-bottom: 0; padding-bottom: 10px;">
+                    <!-- ko if: storekeeper_payment_method_logo_url -->
+                        <img height="35px" width="35px" data-bind="attr: {src: storekeeper_payment_method_logo_url, alt: storekeeper_payment_method_title}">
+                    <!-- /ko -->
+                    <span style="margin-left: 10px" data-bind="text: storekeeper_payment_method_title, visible: storekeeper_payment_method_logo_url"></span>
+                    <span style="margin-left: 45px" data-bind="text: storekeeper_payment_method_title, visible: !storekeeper_payment_method_logo_url"></span>
+                </li>
+            </ul>
+        <!-- /ko -->
     </div>
     <div class="payment-method-content">
         <div class="actions-toolbar">
