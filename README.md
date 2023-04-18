@@ -46,13 +46,14 @@ bin/magento cache:clean;
 13. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
 
 ## Payment Methods Configuration
-Payment methods awaylable via Storekeeper Payment Gateway can be activated in two palces:
- 1. As an option of **StoreKeeper Payments** payment method, available under:<br />
-_Stores->Configuration->Sales->Payment Methods->Other Payment Methods->**StoreKeeper Payments** (Yes/No)_
+Payment methods awaylable via Storekeeper Payment Gateway can be activated in two places:
+ 1. As an option of **StoreKeeper Payments** payment method, available under:<br/>
+_Stores->Configuration->Sales->Payment Methods->Other Payment Methods->**StoreKeeper Payments** (Yes/No)_<br/>
+<br/>
 In this case customer will see all Payment options activated on their storekeeper account.
     ![Storekeeper Payments available in Magento as single Payment option](docs/storekeeper_payments.png)
-2. As separate Payment option:
-In order to display in Magento Checkout any of Payment Methods available on storekeeper account, admin user needs to activate  method under:<br />
+2. As separate Payment option:<br/>
+In order to display in Magento Checkout any of Payment Methods available on storekeeper account as an individual payment option, admin user needs to activate  method under:<br />
    _Stores->Configuration->Storekeeper->**StoreKeeper Payments**_
    ![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually_adminarea.png)
 
