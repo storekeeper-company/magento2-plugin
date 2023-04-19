@@ -51,11 +51,12 @@ Payment methods awaylable via Storekeeper Payment Gateway can be activated in tw
 _Stores->Configuration->Sales->Payment Methods->Other Payment Methods->**StoreKeeper Payments** (Yes/No)_<br/>
 <br/>
 In this case customer will see all Payment options activated on their storekeeper account.
-    ![Storekeeper Payments available in Magento as single Payment option](docs/storekeeper_payments.png)
+![Storekeeper Payments available in Magento as single Payment option](docs/storekeeper_payments.png)
 2. As separate Payment option:<br/>
 In order to display in Magento Checkout any of Payment Methods available on storekeeper account as an individual payment option, admin user needs to activate  method under:<br />
-   _Stores->Configuration->Storekeeper->**StoreKeeper Payments**_
-   ![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually_adminarea.png)
+_Stores->Configuration->Storekeeper->**StoreKeeper Payments**_
+![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually_adminarea.png)
+<br />
 
 In this case activated Payment Method(s) will appear as individual Payment Method option, and dissapear as sub-option on **StoreKeeper Payments**
 ![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually.png)
