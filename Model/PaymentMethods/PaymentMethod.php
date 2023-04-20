@@ -2,9 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Model\PaymentMethods;
 
-class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
-{
+use StoreKeeper\StoreKeeper\Model\PaymentMethods\AbstractStoreKeeperPaymentMethod;
 
+class PaymentMethod extends AbstractStoreKeeperPaymentMethod
+{
     /**
      * Payment code
      *
@@ -18,27 +19,4 @@ class PaymentMethod extends \Magento\Payment\Model\Method\AbstractMethod
      * @var string
      */
     protected $_eId = '';
-
-    /**
-     * Availability option
-     *
-     * @var bool
-     */
-    protected $_isInitializeNeeded = true;
-
-    /**
-     * @return string
-     */
-    public function getCode(): string
-    {
-        return $this->_code;
-    }
-
-    /**
-     * @return string
-     */
-    public function getEId(): string
-    {
-        return $this->_eId;
-    }
 }
