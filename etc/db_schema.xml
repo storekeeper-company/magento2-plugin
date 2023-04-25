@@ -9,4 +9,20 @@
         <column xsi:type="int" name="storekeeper_relation_data_id" comment="StoreKeeper relation data ID"/>
         <column xsi:type="int" name="storekeeper_payment_id" comment="StoreKeeper Payment ID"/>
     </table>
+    <table name="storekeeper_failed_sync_order">
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
+        <column xsi:type="tinyint" name="is_failed" nullable="false" default="0" identity="false" comment="Flag for failed sync order"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="order_id"/>
+        </constraint>
+        <constraint xsi:type="foreign"
+                    referenceId="STOREKEEPER_FAILED_SYNC_ORDER_SALES_ORDER_ENTITY_ID"
+                    table="storekeeper_failed_sync_order"
+                    column="order_id"
+                    referenceTable="sales_order"
+                    referenceColumn="entity_id"
+                    onDelete="CASCADE"/>
+    </table>
 </schema>
