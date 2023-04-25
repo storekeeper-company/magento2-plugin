@@ -90,6 +90,10 @@ class Webhook
                     // retrieve the current plugin version
                     $composerFile = file_get_contents(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "composer.json");
                     $composerJson = json_decode($composerFile, true);
+                    $capabilities = [
+                        'b2s_payment_method', // has the capability to use the payment method from backoffice
+                        's2b_report_system_status' // display failed order and other(?) report stats on dashboard
+                    ];
 
                     $sync_mode = null;
 
@@ -105,10 +109,10 @@ class Webhook
 
                     $response = [
                         "success" => true,
-                        'vendor' => 'StoreKeeper',
-                        'platform_name' => 'Magento2',
+                        'vendor' => $this->authHelper->getVendor(),
+                        'platform_name' => $this->authHelper->getPlatformName(),
                         'platform_version' => $this->productMetadata->getVersion(),
-                        'software_name' => 'magento2-plugin',
+                        'software_name' => $this->authHelper->getSoftwareName(),
                         'software_version' => $composerJson['version'],
                         'task_failed_quantity' => $this->getAmountOfFailedTasks(),
                         'plugin_settings_url' => $this->getPluginSettingsUrl(),
@@ -123,7 +127,8 @@ class Webhook
                         ],
                         'extra' => [
                             'url' => $this->authHelper->getStoreBaseUrl(),
-                            'sync_mode' => $sync_mode
+                            'sync_mode' => $sync_mode,
+                            'active_capability' => $capabilities
                         ],
                     ];
                 } elseif ($action == "events") {

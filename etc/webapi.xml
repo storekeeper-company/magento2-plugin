@@ -6,6 +6,12 @@
 			<resource ref="anonymous"/>
 		</resources>
 	</route>
+    <route method="GET" url="/V1/storekeeper/connectinfo">
+        <service class="StoreKeeper\StoreKeeper\Api\Webhook\InfoWebhookInterface" method="getExecute"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
     <route method="POST" url="/V1/storekeeper/webhook">
 		<service class="StoreKeeper\StoreKeeper\Api\Webhook\WebhookInterface" method="postExecute"/>
 		<resources>

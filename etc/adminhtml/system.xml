@@ -18,7 +18,7 @@
                 <field
                     id="storekeeper_additional_data"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\AdditionalData"
-                    translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    translate="label" sortOrder="1" showInDefault="0" showInWebsite="1" showInStore="1">
                     <label>Additional information</label>
                 </field>
 
@@ -27,88 +27,105 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
 
-                <field id="debug_logs" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="debug_logs" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Debug logs</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
 
-                <!-- <field id="storekeeper_api_url" type="text" translate="label" sortOrder="1" showInDefault="0" showInWebsite="0" showInStore="1">
-                    <label>API URL</label>
-                </field> -->
+                <field id="storekeeper_connect" translate="label comment" type="button" sortOrder="3" showInDefault="0" showInWebsite="0" showInStore="1">
+                    <frontend_model>StoreKeeper\StoreKeeper\Block\System\Config\Connect</frontend_model>
+                    <label>StoreKeeper Connect</label>
+                </field>
 
-                <field id="storekeeper_token" type="text" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="storekeeper_token" type="text" translate="label" sortOrder="5" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Token</label>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
                 </field>
 
-                <field id="storekeeper_sync_auth" type="text" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="storekeeper_info_token" type="text" translate="label" sortOrder="6" showInDefault="0" showInWebsite="1" showInStore="1">
+                    <label>Info Token</label>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
+                </field>
+
+                <field id="shop_uuid" type="text" translate="label" sortOrder="7" showInDefault="0" showInWebsite="1" showInStore="1">
+                    <label>Shop Uuid</label>
+                    <attribute type="disabled">1</attribute>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
+                </field>
+
+                <field id="storekeeper_sync_auth" type="text" translate="label" sortOrder="8" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Sync Auth</label>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
                 </field>
 
-                <field id="storekeeper_guest_auth" type="text" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="storekeeper_guest_auth" type="text" translate="label" sortOrder="9" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Guest Auth</label>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
                 </field>
 
-                <field id="storekeeper_store_information" type="text" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="storekeeper_store_information" type="text" translate="label" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Store Information</label>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
                 </field>
 
                 <field
                     id="storekeeper_shop_id"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\ShopId"
-                    translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    translate="label" sortOrder="11" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Store ID</label>
                 </field>
 
                 <field
                     id="storekeeper_store_name"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\StoreName"
-                    translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    translate="label" sortOrder="12" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Store Name</label>
                 </field>
 
-                <field id="storekeeper_shop_language" type="text" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="storekeeper_shop_language" type="text" translate="label" sortOrder="13" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Shop Language</label>
                 </field>
 
-                <field id="storekeeper_sync_mode" type="select" translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="storekeeper_sync_mode" type="select" translate="label" sortOrder="14" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Sync Mode</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\SyncModes</source_model>
                 </field>
 
                 <field id="storekeeper_refresh_store"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\RefreshStore"
-                    translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    translate="label" sortOrder="15" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Store</label>
                 </field>
 
                 <field id="storekeeper_auth_key"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\AuthKey"
-                    translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    translate="label" sortOrder="16" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Auth Key</label>
+                    <depends>
+                        <field id="storekeeper_general/general/debug_logs">1</field>
+                    </depends>
                 </field>
 
                 <field id="storekeeper_disconnect_storeview"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\DisconnectStore"
-                    translate="label" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    translate="label" sortOrder="17" showInDefault="0" showInWebsite="0" showInStore="1">
                     <label>Disconnect Store</label>
                 </field>
 
             </group>
         </section>
-
-        <!-- <section id="storekeeper_products" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-            <class>separator-top</class>
-            <label>Products</label>
-            <tab>storekeeper</tab>
-            <resource>StoreKeeper_StoreKeeper::configuration</resource>
-            <group id="products" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Enable product synchronisation</label>
-                <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Enabled</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-            </group>
-        </section> -->
 
         <section id="payment">
             <group id="storekeeper_payment" translate="label" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
