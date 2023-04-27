@@ -5,8 +5,8 @@ namespace StoreKeeper\StoreKeeper\Setup;
 use Exception;
 use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Product;
-
 use Magento\Customer\Model\Customer;
+use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Model\Config as EavConfig;
 use Magento\Eav\Setup\EavSetupFactory;
 use Magento\Framework\Setup\ModuleContextInterface;
@@ -16,10 +16,14 @@ use Magento\Framework\Setup\UpgradeDataInterface;
 
 class UpgradeData implements UpgradeDataInterface
 {
+    private EavSetupFactory $eavSetupFactory;
+    private EavConfig $eavConfig;
+    private AttributeRepositoryInterface $eavAttributeRepository;
+
     public function __construct(
         EavSetupFactory $eavSetupFactory,
         EavConfig $eavConfig,
-        \Magento\Eav\Api\AttributeRepositoryInterface $eavAttributeRepository
+        AttributeRepositoryInterface $eavAttributeRepository
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->eavConfig = $eavConfig;

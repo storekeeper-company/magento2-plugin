@@ -2,26 +2,23 @@
 
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
+use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\AddressFactory;
 use Magento\Customer\Model\Data\Customer;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Address;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
-use Magento\Sales\Model\Order\Address;
 
 class Customers extends AbstractHelper
 {
     private const SEPARATE_STREET_NAME_AND_NUMBER_PATTERN = "/\A(.*?)\s+(\d+[a-zA-Z]{0,1}\s{0,1}[-]{1}\s{0,1}\d*[a-zA-Z]{0,1}|\d+[a-zA-Z-]{0,1}\d*[a-zA-Z]{0,1})/";
-
-    private $authHelper;
-
+    private Auth $authHelper;
     private AddressFactory $addressFactory;
-
-    /**
-     * @var LoggerInterface
-     */
+    private CustomerRepositoryInterface $customerRepositoryInterface;
+    private Context $context;
     private LoggerInterface $logger;
 
     /**
@@ -29,14 +26,14 @@ class Customers extends AbstractHelper
      *
      * @param Auth $authHelper
      * @param AddressFactory $addressFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface
+     * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param Context $context
      * @param LoggerInterface $logger
      */
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepositoryInterface,
+        CustomerRepositoryInterface $customerRepositoryInterface,
         Context $context,
         LoggerInterface $logger
     ) {
@@ -49,6 +46,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Find customer relation dataId by email
+     *
      * @param $email
      * @param $storeId
      * @return false|int
@@ -72,6 +71,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Create StoreKeeper customer
+     *
      * @param Customer $customer
      * @return int
      */
@@ -106,12 +107,17 @@ class Customers extends AbstractHelper
             ]
         ];
 
-        $relationDataId = $this->authHelper->getModule('ShopModule', $customer->getStoreId())->newShopCustomer($data);
+        $relationDataId = $this->authHelper->getModule(
+            'ShopModule',
+            $customer->getStoreId()
+        )->newShopCustomer($data);
 
         return (int) $relationDataId;
     }
 
     /**
+     * Create StoreKeeper customer by order
+     *
      * @param $order Order
      * @return int
      */
@@ -143,12 +149,17 @@ class Customers extends AbstractHelper
             ]
         ];
 
-        $relationDataId = $this->authHelper->getModule('ShopModule', $order->getStoreId())->newShopCustomer($data);
+        $relationDataId = $this->authHelper->getModule(
+            'ShopModule',
+            $order->getStoreId()
+        )->newShopCustomer($data);
 
         return (int) $relationDataId;
     }
 
     /**
+     * Get Business data from order
+     *
      * @param Order $order
      * @return array|null
      */
@@ -166,6 +177,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Get contact person from order
+     *
      * @param Order $order
      * @return array
      */
@@ -179,6 +192,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Map address
+     *
      * @param $address
      * @return array
      */
@@ -194,6 +209,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Get contact set from order
+     *
      * @param Order $order
      * @return array
      */
@@ -207,6 +224,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Get business data
+     *
      * @param Customer $customer
      * @return array|null
      */
@@ -225,6 +244,12 @@ class Customers extends AbstractHelper
         return null;
     }
 
+    /**
+     * Get Default Billing Address
+     *
+     * @param $customer
+     * @return \Magento\Customer\Model\Address
+     */
     private function getDefaultBillingAddress($customer): \Magento\Customer\Model\Address
     {
         $billingAddressId = $customer->getDefaultBilling();
@@ -232,6 +257,12 @@ class Customers extends AbstractHelper
         return $this->addressFactory->create()->load($billingAddressId);
     }
 
+    /**
+     * Get Default Shipping Address
+     *
+     * @param $customer
+     * @return \Magento\Customer\Model\Address
+     */
     private function getDefaultShippingAddress($customer): \Magento\Customer\Model\Address
     {
         $shippingAddressId = $customer->getDefaultShipping();
@@ -240,6 +271,8 @@ class Customers extends AbstractHelper
     }
 
     /**
+     * Get contact set from customer
+     *
      * @param Customer $customer
      * @return array
      */

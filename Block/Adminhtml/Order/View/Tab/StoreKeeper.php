@@ -1,27 +1,44 @@
 <?php
-/**
- * Copyright © Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
+
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Order\View\Tab;
 
-class StoreKeeper extends \Magento\Backend\Block\Template implements \Magento\Backend\Block\Widget\Tab\TabInterface
+use Magento\Backend\Block\Template;
+use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget\Tab\TabInterface;
+use Magento\Framework\Registry;
+use StoreKeeper\StoreKeeper\Helper\Config;
+
+class StoreKeeper extends Template implements TabInterface
 {
     protected $_template = "StoreKeeper_StoreKeeper::storekeeper/order/view/tab/storekeeper.phtml";
+    private Registry $_coreRegistry;
+    private Config $config;
 
-    private $_coreRegistry;
-
+    /**
+     * Constructor
+     *
+     * @param Context $context
+     * @param Registry $registry
+     * @param Config $config
+     * @param array $data
+     */
     public function __construct(
-        \Magento\Backend\Block\Template\Context $context,
-        \Magento\Framework\Registry $registry,
-        \StoreKeeper\StoreKeeper\Helper\Config $config,
+        Context $context,
+        Registry $registry,
+        Config $config,
         array $data = []
     ) {
-        $this->_coreRegistry = $registry;
         parent::__construct($context, $data);
+        $this->_coreRegistry = $registry;
         $this->config = $config;
     }
 
+    /**
+     * Get SK backoffice url
+     *
+     * @param $order
+     * @return string|null
+     */
     public function getStorekeeperBackofficeOrderUrl($order)
     {
         $sync_auth = $this->config->getSyncAuth($order->getStoreId());
@@ -31,36 +48,70 @@ class StoreKeeper extends \Magento\Backend\Block\Template implements \Magento\Ba
         return null;
     }
 
+    /**
+     * Get current order
+     *
+     * @return mixed|null
+     */
     public function getOrder()
     {
         return $this->_coreRegistry->registry('current_order');
     }
 
+    /**
+     * Get order ID
+     *
+     * @return mixed
+     */
     public function getOrderId()
     {
         return $this->getOrder()->getEntityId();
     }
 
+    /**
+     * Get Order Increment ID
+     *
+     * @return mixed
+     */
     public function getOrderIncrementId()
     {
         return $this->getOrder()->getIncrementId();
     }
 
+    /**
+     * Get SK label
+     *
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTabLabel()
     {
         return __('Storekeeper');
     }
 
+    /**
+     * Get Tab Title
+     *
+     * @return \Magento\Framework\Phrase|string
+     */
     public function getTabTitle()
     {
-        return __('My Custom Tab');
+        return __('StoreKeeper Order Data');
     }
 
+    /**
+     * Can show tab
+     * @return true
+     */
     public function canShowTab()
     {
         return true;
     }
 
+    /**
+     * Is Hidden
+     *
+     * @return false
+     */
     public function isHidden()
     {
         return false;

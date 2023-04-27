@@ -11,13 +11,12 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 class Connect extends Field
 {
     protected $_template = 'StoreKeeper_StoreKeeper::system/config/connect.phtml';
-
     private Auth $authHelper;
-
     private Http $request;
 
-
     /**
+     * Constructor
+     *
      * @param Auth $authHelper
      * @param Http $request
      * @param Context $context
@@ -58,6 +57,8 @@ class Connect extends Field
     }
 
     /**
+     * Get SK connect url
+     *
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
      */

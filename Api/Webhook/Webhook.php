@@ -1,33 +1,53 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Api\Webhook;
 
-use Psr\Log\LoggerInterface;
-use StoreKeeper\StoreKeeper\Helper\Config;
+use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Backend\Model\UrlInterface;
+use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder\CollectionFactory as StoreKeeperFailedSyncOrderCollectionFactory;
 
 class Webhook
 {
     private const DATE_TIME_FORMAT = 'D, d M Y H:i:s O';
-
     private const STOCK_CHANGE_EVENT = 'stock_change';
-
+    private Request $request;
+    private Auth $authHelper;
+    private Json $json;
+    private PublisherInterface $publisher;
+    private ProductMetadataInterface $productMetadata;
+    private Config $configHelper;
+    private LoggerInterface $logger;
     private TimezoneInterface $timezone;
-
     private CollectionFactory $orderCollectionFactory;
-
     private UrlInterface $backendUrl;
-
     private StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection;
 
+    /**
+     * @param Request $request
+     * @param Auth $authHelper
+     * @param Json $json
+     * @param PublisherInterface $publisher
+     * @param ProductMetadataInterface $productMetadata
+     * @param Config $configHelper
+     * @param LoggerInterface $logger
+     * @param TimezoneInterface $timezone
+     * @param CollectionFactory $orderCollectionFactory
+     * @param UrlInterface $backendUrl
+     * @param StoreKeeperFailedSyncOrderCollectionFactory $storeKeeperFailedSyncOrderCollectionFactory
+     */
     public function __construct(
-        \Magento\Framework\Webapi\Rest\Request $request,
-        \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper,
-        \Magento\Framework\Serialize\Serializer\Json $json,
-        \Magento\Framework\MessageQueue\PublisherInterface $publisher,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata,
+        Request $request,
+        Auth $authHelper,
+        Json $json,
+        PublisherInterface $publisher,
+        ProductMetadataInterface $productMetadata,
         Config $configHelper,
         LoggerInterface $logger,
         TimezoneInterface $timezone,

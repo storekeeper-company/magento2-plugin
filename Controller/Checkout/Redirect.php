@@ -18,19 +18,15 @@ use Magento\Framework\App\Action\Context;
 class Redirect extends Action
 {
     private const FINISH_PAGE_ROUTE = 'storekeeper_payment/checkout/finish';
-
     private Session $checkoutSession;
-
     private QuoteRepository $quoteRepository;
-
     private OrderRepository $orderRepository;
-
     private Auth $authHelper;
-
     private OrdersHelper $ordersHelper;
 
     /**
-     * Redirect constructor.
+     * Redirect constructor
+     *
      * @param Context $context
      * @param Session $checkoutSession
      * @param QuoteRepository $quoteRepository
@@ -55,6 +51,8 @@ class Redirect extends Action
     }
 
     /**
+     * Redirect action to SK payment methods
+     *
      * @return void
      */
     public function execute(): void
@@ -103,6 +101,8 @@ class Redirect extends Action
     }
 
     /**
+     * Get checkout sessions
+     *
      * @return Session
      */
     protected function _getCheckoutSession(): Session
@@ -111,6 +111,8 @@ class Redirect extends Action
     }
 
     /**
+     * Get product from order items
+     *
      * @param array $items
      * @return array
      */
@@ -127,6 +129,8 @@ class Redirect extends Action
     }
 
     /**
+     * Apply address name
+     *
      * @param array $customerInfo
      * @return array
      */
@@ -149,6 +153,8 @@ class Redirect extends Action
     }
 
     /**
+     * Get Order total
+     *
      * @param array $items
      * @param ModuleApiWrapper $shopModule
      * @return float
@@ -163,6 +169,8 @@ class Redirect extends Action
     }
 
     /**
+     * Get SK payment
+     *
      * @param ?int $storeKeeperPaymentMethodId
      * @param ModuleApiWrapper $shopModule
      * @param string $redirect_url

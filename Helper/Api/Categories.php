@@ -5,34 +5,64 @@ namespace StoreKeeper\StoreKeeper\Helper\Api;
 use Magento\Catalog\Model\CategoryFactory;
 use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Store\Model\StoreManagerInterface;
 use Parsedown;
 
-class Categories extends \Magento\Framework\App\Helper\AbstractHelper
+class Categories extends AbstractHelper
 {
+    private Auth $authHelper;
+    private CategoryFactory $categoryFactory;
     private CategoryRepository $categoryRepository;
+    private CollectionFactory $categoryCollectionFactory;
+    private StoreManagerInterface $storeManager;
 
+    /**
+     * Constructor
+     *
+     * @param Auth $authHelper
+     * @param CategoryFactory $categoryFactory
+     * @param CategoryRepository $categoryRepository
+     * @param CollectionFactory $categoryCollectionFactory
+     * @param StoreManagerInterface $storeManager
+     */
     public function __construct(
         Auth $authHelper,
         CategoryFactory $categoryFactory,
         CategoryRepository $categoryRepository,
         CollectionFactory $categoryCollectionFactory,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager
     ) {
         $this->authHelper = $authHelper;
         $this->categoryFactory = $categoryFactory;
         $this->categoryRepository = $categoryRepository;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->storeManager = $storeManager;
-
-        $this->storeShopIds = $this->authHelper->getStoreShopIds();
-        $this->websiteShopIds = $this->authHelper->getWebsiteShopIds();
     }
 
+    /**
+     * Get language for Store
+     *
+     * @param $storeId
+     * @return mixed|string
+     */
     public function getLanguageForStore($storeId)
     {
         return $this->authHelper->getLanguageForStore($storeId);
     }
 
+    /**
+     * Get list translated category for hooks
+     *
+     * @param $storeId
+     * @param $language
+     * @param int $offset
+     * @param int $limit
+     * @param array $order
+     * @param array $filters
+     * @return mixed
+     * @throws \Exception
+     */
     public function listTranslatedCategoryForHooks(
         $storeId,
         $language,
@@ -50,6 +80,14 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    /**
+     * Update Category by Id
+     *
+     * @param $storeId
+     * @param $storeKeeperId
+     * @return void
+     * @throws \Exception
+     */
     public function updateById($storeId, $storeKeeperId)
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
@@ -84,6 +122,14 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
+    /**
+     * Check if category Exist
+     *
+     * @param $storeId
+     * @param array $result
+     * @return false|\Magento\Framework\DataObject
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
@@ -100,6 +146,14 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
     }
 
+    /**
+     * Check if parent category Exist
+     *
+     * @param $storeId
+     * @param array $result
+     * @return false|\Magento\Framework\DataObject
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function parentExists($storeId, array $result)
     {
         if ($storekeeper_parent_id = $this->getResultParentId($result)) {
@@ -117,11 +171,27 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
     }
 
+    /**
+     * Create category
+     *
+     * @param $storeId
+     * @param array $result
+     * @return null
+     */
     public function create($storeId, array $result)
     {
         return $this->update($storeId, null, $result);
     }
 
+    /**
+     * On deleted
+     *
+     * @param $storeId
+     * @param $targetId
+     * @return void
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function onDeleted($storeId, $targetId)
     {
         if ($target = $this->exists($storeId, [
@@ -136,6 +206,15 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
+    /**
+     * On created
+     *
+     * @param $storeId
+     * @param $targetId
+     * @return void
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function onCreated($storeId, $targetId)
     {
         if ($target = $this->exists($storeId, [
@@ -150,6 +229,16 @@ class Categories extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
+    /**
+     * Update category
+     *
+     * @param $storeId
+     * @param $target
+     * @param array $result
+     * @return void
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     public function update($storeId, $target = null, array $result = [])
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
@@ -294,16 +383,36 @@ HTML;
         }
     }
 
+    /**
+     * Get result StoreKeeperId
+     *
+     * @param array $result
+     * @return mixed
+     */
     private function getResultStoreKeeperId(array $result)
     {
         return $result['id'];
     }
 
+    /**
+     * Get result parent Id
+     *
+     * @param array $result
+     * @return false|mixed
+     */
     private function getResultParentId(array $result)
     {
         return $result['parent_id'] ?? false;
     }
 
+    /**
+     * Set category to use Default Values
+     *
+     * @param $target
+     * @param $storeId
+     * @return void
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     */
     private function setCategoryToUseDefaultValues($target, $storeId)
     {
         $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);

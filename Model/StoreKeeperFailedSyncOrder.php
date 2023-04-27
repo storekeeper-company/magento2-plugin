@@ -7,6 +7,12 @@ use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as St
 
 class StoreKeeperFailedSyncOrder extends AbstractModel
 {
+
+    /**
+     * Constructed
+     *
+     * @return void
+     */
     protected function _construct()
     {
         $this->_init(StoreKeeperFailedSyncOrderResourceModel::class);

@@ -15,25 +15,18 @@ use Magento\Framework\Controller\ResultInterface;
 class Finish extends Action
 {
     const STOREKEEPER_PAYMENT_STATUS_PAID = 'paid';
-
     const STOREKEEPER_PAYMENT_STATUS_CANCELLED = 'cancelled';
-
     const SUCCESS_PAYMENT_PATH = 'checkout/onepage/success';
-
     const FAIL_PAYMENT_PATH = 'checkout/cart';
-
     private Session $checkoutSession;
-
     private OrderRepository $orderRepository;
-
     private QuoteRepository $quoteRepository;
-
     private Auth $authHelper;
-
     private Invoice $invoice;
 
     /**
-     * Finish constructor.
+     * Finish constructor
+     *
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderRepository $orderRepository
@@ -57,6 +50,13 @@ class Finish extends Action
         parent::__construct($context);
     }
 
+    /**
+     * Finish transaction action
+     *
+     * @return ResultInterface
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function execute(): ResultInterface
     {
         $resultRedirect = $this->resultRedirectFactory->create();
@@ -85,6 +85,8 @@ class Finish extends Action
     }
 
     /**
+     * Deactivate cart
+     *
      * @return void
      */
     private function deactivateCart(): void

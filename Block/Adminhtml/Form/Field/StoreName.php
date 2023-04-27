@@ -2,17 +2,35 @@
 
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\Data\Form\Element\CollectionFactory;
 use Magento\Framework\Data\Form\Element\Factory;
 use Magento\Framework\Escaper;
-
 use Magento\Framework\Math\Random;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
-
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class StoreName extends \Magento\Framework\Data\Form\Element\AbstractElement
+class StoreName extends AbstractElement
 {
+    private Auth $authHelper;
+    private Http $request;
+    private ScopeConfigInterface $scopeConfig;
+
+    /**
+     * Constructor
+     *
+     * @param Factory $factoryElement
+     * @param CollectionFactory $factoryCollection
+     * @param Escaper $escaper
+     * @param SecureHtmlRenderer|null $secureRenderer
+     * @param Random|null $random
+     * @param Auth $authHelper
+     * @param Http $request
+     * @param ScopeConfigInterface $scopeConfig
+     * @param $data
+     */
     public function __construct(
         Factory $factoryElement,
         CollectionFactory $factoryCollection,
@@ -20,8 +38,8 @@ class StoreName extends \Magento\Framework\Data\Form\Element\AbstractElement
         ?SecureHtmlRenderer $secureRenderer,
         ?Random $random,
         Auth $authHelper,
-        \Magento\Framework\App\Request\Http $request,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        Http $request,
+        ScopeConfigInterface $scopeConfig,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
@@ -30,6 +48,11 @@ class StoreName extends \Magento\Framework\Data\Form\Element\AbstractElement
         $this->scopeConfig = $scopeConfig;
     }
 
+    /**
+     * Get Store name
+     *
+     * @return string
+     */
     public function getElementHtml()
     {
         $storeName = null;

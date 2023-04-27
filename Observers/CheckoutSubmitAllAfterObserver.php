@@ -1,16 +1,33 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Observers;
 
-class CheckoutSubmitAllAfterObserver implements \Magento\Framework\Event\ObserverInterface
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+
+class CheckoutSubmitAllAfterObserver implements ObserverInterface
 {
+    private Auth $authHelper;
+
+    /**
+     * Constructor
+     *
+     * @param Auth $authHelper
+     */
     public function __construct(
-        \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper
+        Auth $authHelper
     ) {
         $this->authHelper = $authHelper;
     }
 
+    /**
+     * Set order as pending for sync
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(
-        \Magento\Framework\Event\Observer $observer
+        Observer $observer
     ) {
         $order = $observer->getEvent()->getOrder();
 
