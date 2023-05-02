@@ -16,39 +16,16 @@ use Psr\Log\LoggerInterface;
 
 class RelationDataId implements DataPatchInterface
 {
-    /**
-     * @var ModuleDataSetupInterface
-     */
-    private $moduleDataSetup;
-
-    /**
-     * @var SalesSetupFactory
-     */
-    private $salesSetupFactory;
-
-    /**
-     * @var CustomerSetupFactory
-     */
-    private $customerSetupFactory;
-
-    /**
-     * @var AttributeResource
-     */
-    private $attributeResource;
-
-    /**
-     * @var CustomerSetup
-     */
-    private $customerSetup;
-
-    /**
-     * @var LoggerInterface
-     */
+    private ModuleDataSetupInterface $moduleDataSetup;
+    private SalesSetupFactory $salesSetupFactory;
+    private CustomerSetupFactory $customerSetupFactory;
+    private AttributeResource $attributeResource;
+    private CustomerSetup $customerSetup;
     private LoggerInterface $logger;
 
-    /*** 
+    /***
      * Construcor
-     * 
+     *
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param CustomerSetupFactory $customerSetupFactory
      * @param AttributeResource $attributeResource

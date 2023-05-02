@@ -2,26 +2,38 @@
 
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
+use Magento\Framework\App\State;
+use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Products as ProductsHelper;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Class SomeCommand
- */
 class Products extends Command
 {
     const STORES = 'stores';
-
     public $phpsessid = null;
+    private State $state;
+    private ProductsHelper $productsHelper;
+    private StoreManagerInterface $storeManager;
+    private Config $configHelper;
+    private LoggerInterface $logger;
 
+    /**
+     * @param State $state
+     * @param ProductsHelper $productsHelper
+     * @param StoreManagerInterface $storeManager
+     * @param Config $configHelper
+     * @param LoggerInterface $logger
+     * @param string|null $name
+     */
     public function __construct(
-        \Magento\Framework\App\State $state,
-        \StoreKeeper\StoreKeeper\Helper\Api\Products $productsHelper,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        State $state,
+        ProductsHelper $productsHelper,
+        StoreManagerInterface $storeManager,
         Config $configHelper,
         LoggerInterface $logger,
         string $name = null

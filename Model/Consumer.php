@@ -15,15 +15,10 @@ use StoreKeeper\StoreKeeper\Helper\Config;
 class Consumer
 {
     const CONSUMER_NAME = "storekeeper.queue.events";
-
     const QUEUE_NAME = "storekeeper.queue.events";
-
     private Products $productsHelper;
-
     private Categories $categoriesHelper;
-
     private Orders $ordersHelper;
-
     private Config $configHelper;
 
     public function __construct(

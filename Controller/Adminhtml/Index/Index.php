@@ -2,19 +2,37 @@
 
 namespace StoreKeeper\StoreKeeper\Controller\Adminhtml\Index;
 
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Backend\Model\Url;
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
-
+use Magento\Framework\Message\ManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class Index extends \Magento\Backend\App\Action implements \Magento\Framework\App\Action\HttpGetActionInterface
+class Index extends Action implements HttpGetActionInterface
 {
+    private Http $request;
+    private Auth $authHelper;
+    private Url $url;
+
+    /**
+     * Constructor
+     *
+     * @param Context $context
+     * @param Http $request
+     * @param Auth $authHelper
+     * @param ManagerInterface $messageManager
+     * @param Url $url
+     */
     public function __construct(
-        \Magento\Backend\App\Action\Context $context,
-        \Magento\Framework\App\Request\Http $request,
+        Context $context,
+        Http $request,
         Auth $authHelper,
-        \Magento\Framework\Message\ManagerInterface $messageManager,
-        \Magento\Backend\Model\Url $url
+        ManagerInterface $messageManager,
+        Url $url
     ) {
         parent::__construct($context);
 
@@ -24,16 +42,33 @@ class Index extends \Magento\Backend\App\Action implements \Magento\Framework\Ap
         $this->url = $url;
     }
 
+    /**
+     * Create validation exception
+     *
+     * @param RequestInterface $request
+     * @return InvalidRequestException|null
+     */
     public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
     {
         return null;
     }
 
+    /**
+     * Validate for csrf
+     *
+     * @param RequestInterface $request
+     * @return bool|null
+     */
     public function validateForCsrf(RequestInterface $request): ?bool
     {
         return true;
     }
 
+    /**
+     * SK index action
+     *
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\ResultInterface
+     */
     public function execute()
     {
         $storeId = $this->request->getParam('storeId');
@@ -51,6 +86,11 @@ class Index extends \Magento\Backend\App\Action implements \Magento\Framework\Ap
         return $this->_redirect('adminhtml/system_config/edit/section/storekeeper_general', ['store' => $storeId]);
     }
 
+    /**
+     * Index action allowed
+     *
+     * @return true
+     */
     protected function _isAllowed()
     {
         return true;

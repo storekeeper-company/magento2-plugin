@@ -2,25 +2,36 @@
 
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
+use Magento\Framework\App\State;
 use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Categories as CategoriesHelper;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Class SomeCommand
- */
 class Categories extends Command
 {
     const STORES = 'stores';
-
     public $phpsessid = null;
+    private State $state;
+    private CategoriesHelper $categoriesHelper;
+    private Config $configHelper;
+    private LoggerInterface $logger;
 
+
+    /**
+     * Constructor
+     *
+     * @param State $state
+     * @param CategoriesHelper $categoriesHelper
+     * @param Config $configHelper
+     * @param LoggerInterface $logger
+     */
     public function __construct(
-        \Magento\Framework\App\State $state,
-        \StoreKeeper\StoreKeeper\Helper\Api\Categories $categoriesHelper,
+        State $state,
+        CategoriesHelper $categoriesHelper,
         Config $configHelper,
         LoggerInterface $logger
     ) {

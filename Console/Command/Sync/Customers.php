@@ -18,26 +18,24 @@ class Customers extends Command
 {
     const STORES = 'stores';
 
-    /**
-     * @var State
-     */
-    private $state;
+    private State $state;
+    private SearchCriteriaBuilder $searchCriteriaBuilder;
+    private CustomerRepositoryInterface $customerRepository;
+    private CustomersHelper $customersHelper;
+    private Config $configHelper;
+    private LoggerInterface $logger;
 
     /**
-     * @var SearchCriteriaBuilder
+     * Constructor
+     *
+     * @param State $state
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param CustomerRepositoryInterface $customerRepository
+     * @param CustomersHelper $customersHelper
+     * @param Config $configHelper
+     * @param LoggerInterface $logger
+     * @param string|null $name
      */
-    private $searchCriteriaBuilder;
-
-    /**
-     * @var CustomerRepositoryInterface
-     */
-    private $customerRepository;
-
-    /**
-     * @var CustomersHelper
-     */
-    private $customersHelper;
-
     public function __construct(
         State $state,
         SearchCriteriaBuilder $searchCriteriaBuilder,
@@ -48,7 +46,6 @@ class Customers extends Command
         string $name = null
     ) {
         parent::__construct($name);
-
         $this->state = $state;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->customerRepository = $customerRepository;
@@ -57,6 +54,9 @@ class Customers extends Command
         $this->logger = $logger;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function configure()
     {
         $this->setName('storekeeper:sync:customers');
@@ -73,6 +73,13 @@ class Customers extends Command
         parent::configure();
     }
 
+    /**
+     * Sync customers
+     *
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
@@ -110,6 +117,13 @@ class Customers extends Command
         }
     }
 
+    /**
+     * Get store customers list
+     *
+     * @param $storeId
+     * @return \Magento\Customer\Api\Data\CustomerSearchResultsInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
     private function getCustomers($storeId)
     {
         $searchCriteria = $this->searchCriteriaBuilder

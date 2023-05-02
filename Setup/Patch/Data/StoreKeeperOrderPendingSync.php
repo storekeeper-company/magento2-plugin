@@ -9,16 +9,15 @@ use Magento\Sales\Setup\SalesSetupFactory;
 
 class StoreKeeperOrderPendingSync implements DataPatchInterface
 {
-    /**
-     * @var ModuleDataSetupInterface
-     */
-    private $moduleDataSetup;
+    private ModuleDataSetupInterface $moduleDataSetup;
+    private SalesSetupFactory $salesSetupFactory;
 
     /**
-     * @var SalesSetupFactory
+     * Constructor
+     *
+     * @param ModuleDataSetupInterface $moduleDataSetup
+     * @param SalesSetupFactory $salesSetupFactory
      */
-    private $salesSetupFactory;
-
     public function __construct(
         ModuleDataSetupInterface $moduleDataSetup,
         SalesSetupFactory $salesSetupFactory

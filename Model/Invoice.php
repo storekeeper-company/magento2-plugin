@@ -10,13 +10,12 @@ use Magento\Sales\Api\Data\OrderInterface;
 class Invoice
 {
     private InvoiceService $invoiceService;
-
     private Transaction $transaction;
-
     private InvoiceSender $invoiceSender;
 
     /**
-     * Invoice constructor.
+     * Invoice constructor
+     *
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
      * @param Transaction $transaction
@@ -32,6 +31,8 @@ class Invoice
     }
 
     /**
+     * Create invoice
+     *
      * @param OrderInterface $order
      * @return void
      */

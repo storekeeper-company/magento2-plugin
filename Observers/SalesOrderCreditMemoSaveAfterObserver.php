@@ -1,17 +1,32 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Observers;
 
-class SalesOrderCreditMemoSaveAfterObserver implements \Magento\Framework\Event\ObserverInterface
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+
+class SalesOrderCreditMemoSaveAfterObserver implements ObserverInterface
 {
+    private Auth $authHelper;
+    /**
+     * Constructor
+     *
+     * @param Auth $authHelper
+     */
     public function __construct(
-        \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper
+        Auth $authHelper
     ) {
         $this->authHelper = $authHelper;
     }
 
-    public function execute(
-        \Magento\Framework\Event\Observer $observer
-    ) {
+    /**
+     * Set order as pending for sync
+     *
+     * @param Observer $observer
+     * @return void
+     */
+    public function execute(Observer $observer)
+    {
         $creditmemo = $observer->getEvent()->getCreditmemo();
         $order = $creditmemo->getOrder();
 
