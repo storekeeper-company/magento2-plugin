@@ -1,6 +1,6 @@
 <?php
 
-namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
+namespace StoreKeeper\StoreKeeper\Cron;
 
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\LocalizedException;
@@ -51,7 +51,7 @@ class Orders
     /**
      * @return void
      */
-    protected function execute()
+    public function execute()
     {
         try {
             $stores = $this->storeManager->getStores();
