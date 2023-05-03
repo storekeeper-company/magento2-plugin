@@ -140,7 +140,7 @@ class Orders extends Command
      * @param string $orderId
      * @return StoreKeeperFailedSyncOrder
      */
-    private function getStoreKeeperFailedSyncOrder(string $orderId):StoreKeeperFailedSyncOrder
+    public function getStoreKeeperFailedSyncOrder(string $orderId):StoreKeeperFailedSyncOrder
     {
         $storeKeeperFailedSyncOrder = $this->storeKeeperFailedSyncOrder->create();
         $this->storeKeeperFailedSyncOrderResource->load(
