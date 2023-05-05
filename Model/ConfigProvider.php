@@ -10,11 +10,10 @@ use StoreKeeper\ApiWrapper\ModuleApiWrapper;
 use StoreKeeper\ApiWrapper\Iterator\ListCallByIdPaginatedIterator;
 use Magento\Payment\Model\Config;
 use Magento\Theme\Block\Html\Header\Logo;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
 class ConfigProvider implements ConfigProviderInterface
 {
-    const STOREKEEPER_SHOP_MODULE_NAME = 'ShopModule';
-
     private $methodCodes = [
         'storekeeper_payment_alipay',
         'storekeeper_payment_amex',
@@ -48,16 +47,12 @@ class ConfigProvider implements ConfigProviderInterface
         'storekeeper_payment_yourgift',
         'storekeeper_payment'
     ];
-
     private $methods;
-
     private Auth $authHelper;
-
     private PaymentHelper $paymentHelper;
-
     private Config $paymentConfig;
-
     private Logo $logo;
+    private OrderApiClient $orderApiClient;
 
     /**
      * ConfigProvider constructor.
@@ -65,17 +60,20 @@ class ConfigProvider implements ConfigProviderInterface
      * @param PaymentHelper $paymentHelper
      * @param Config $paymentConfig
      * @param Logo $logo
+     * @param OrderApiClient $orderApiClient
      */
     public function __construct(
         Auth $authHelper,
         PaymentHelper $paymentHelper,
         Config $paymentConfig,
-        Logo $logo
+        Logo $logo,
+        OrderApiClient $orderApiClient
     ) {
         $this->authHelper = $authHelper;
         $this->paymentHelper = $paymentHelper;
         $this->paymentConfig = $paymentConfig;
         $this->logo = $logo;
+        $this->orderApiClient = $orderApiClient;
     }
 
     /**
@@ -115,7 +113,7 @@ class ConfigProvider implements ConfigProviderInterface
      */
     private function getShopModule(): ModuleApiWrapper
     {
-        return $this->authHelper->getModule(self::STOREKEEPER_SHOP_MODULE_NAME, $this->getStoreId());
+        return $this->orderApiClient->getShopModule($this->getStoreId());
     }
 
     /**

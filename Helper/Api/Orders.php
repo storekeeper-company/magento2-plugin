@@ -23,6 +23,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Bundle\Model\Product\Type as Bundle;
 use Brick\Money\Money;
 use Brick\Math\RoundingMode;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
 class Orders extends AbstractHelper
 {
@@ -41,6 +42,7 @@ class Orders extends AbstractHelper
     private Json $jsonSerializer;
     private Bundle $bundle;
     private $taxClassesDiscounts;
+    private OrderApiClient $orderApiClient;
 
     /**
      * Constructor
@@ -58,6 +60,7 @@ class Orders extends AbstractHelper
      * @param LoggerInterface $logger
      * @param Json $jsonSerializer
      * @param Bundle $bundle
+     * @param OrderApiClient $orderApiClient
      */
     public function __construct(
         Auth $authHelper,
@@ -72,7 +75,8 @@ class Orders extends AbstractHelper
         Context $context,
         LoggerInterface $logger,
         Json $jsonSerializer,
-        Bundle $bundle
+        Bundle $bundle,
+        OrderApiClient $orderApiClient
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -87,6 +91,7 @@ class Orders extends AbstractHelper
         $this->logger = $logger;
         $this->jsonSerializer = $jsonSerializer;
         $this->bundle = $bundle;
+        $this->orderApiClient = $orderApiClient;
         $this->taxClassesDiscounts = [];
     }
 
@@ -201,7 +206,7 @@ class Orders extends AbstractHelper
      */
     public function refundAllOrderItems(Order $order, string $storeKeeperId, array $refund_payments): void
     {
-        $this->authHelper->getModule('ShopModule', $order->getStoreId())
+        $this->orderApiClient->getShopModule($order->getStoreId())
             ->refundAllOrderItems([
                 'id' => $storeKeeperId,
                 'refund_payments' => $refund_payments
@@ -220,10 +225,7 @@ class Orders extends AbstractHelper
 
         if ((float) $totalRefunded > 0) {
             $storekeeperId = $order->getStorekeeperId();
-            $storeKeeperOrder = $this->authHelper->getModule(
-                'ShopModule',
-                $order->getStoreId()
-            )->getOrder($storekeeperId);
+            $storeKeeperOrder = $this->orderApiClient->getShopModule($order->getStoreId())->getOrder($storekeeperId);
 
             // check if the difference between Magento 2 and StoreKeeper exists
             $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
@@ -269,8 +271,7 @@ class Orders extends AbstractHelper
      */
     public function newWebPayment(string $storeId, array $parameters = []): int
     {
-        return $this->authHelper->getModule('PaymentModule', $storeId)
-            ->newWebPayment($parameters);
+        return $this->orderApiClient->getPaymentModule($storeId)->newWebPayment($parameters);
     }
 
     /**
@@ -283,8 +284,7 @@ class Orders extends AbstractHelper
      */
     public function attachPaymentIdsToOrder(string $storeId, string $storeKeeperId, array $paymentIds = []): void
     {
-        $this->authHelper->getModule('ShopModule', $storeId)
-            ->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
+        $this->orderApiClient->getShopModule($storeId)->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
     }
 
     /**
@@ -383,7 +383,7 @@ class Orders extends AbstractHelper
     public function getStoreKeeperOrder(string $storeId, string $storeKeeperId): ?array
     {
         try {
-            $response = $this->authHelper->getModule('ShopModule', $storeId)->getOrder($storeKeeperId);
+            $response = $this->orderApiClient->getShopModule($storeId)->getOrder($storeKeeperId);
             if (is_array($response)) {
                 return $response;
             }
@@ -453,10 +453,7 @@ class Orders extends AbstractHelper
                 }
 
                 $track = $this->trackFactory->create();
-                $statusUrl = $this->authHelper->getModule(
-                    'ShopModule',
-                    $order->getStoreId()
-                )->getOrderStatusPageUrl($storeKeeperId);
+                $statusUrl = $this->orderApiClient->getShopModule($order->getStoreId())->getOrderStatusPageUrl($storeKeeperId);
                 $track->setNumber($storeKeeperId);
                 $track->setCarrierCode($storeKeeperOrder['shipping_name']);
                 $track->setTitle('StoreKeeper Shipment Tracking Number');
@@ -608,7 +605,7 @@ class Orders extends AbstractHelper
 
         try {
             if ($status = array_search($order->getStatus(), $statusMapping)) {
-                $this->authHelper->getModule('ShopModule', $order->getStoreId())->updateOrderStatus([
+                $this->orderApiClient->getShopModule($order->getStoreId())->updateOrderStatus([
                     'status' => $status
                 ], $storeKeeperId);
             }
@@ -632,10 +629,7 @@ class Orders extends AbstractHelper
         $payload = $this->prepareOrder($order, true);
 
         try {
-            $this->authHelper->getModule(
-                'ShopModule',
-                $order->getStoreId()
-            )->updateOrder($payload, $storeKeeperId);
+            $this->orderApiClient->getShopModule($order->getStoreId())->updateOrder($payload, $storeKeeperId);
         } catch (GeneralException $e) {
             throw new \Magento\Framework\Exception\LocalizedException(
                 __($e->getMessage())
@@ -656,10 +650,7 @@ class Orders extends AbstractHelper
         $this->logger->info(
             'Order #' . $order->getId() . ' payload: ' . $this->jsonSerializer->serialize($payload)
         );
-        $storeKeeperOrder = $this->authHelper->getModule(
-            'ShopModule',
-            $order->getStoreid()
-        )->newOrderWithReturn($payload);
+        $storeKeeperOrder = $this->orderApiClient->getShopModule($order->getStoreid())->newOrderWithReturn($payload);
         $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
         $order->setStorekeeperOrderLastSync(time());
@@ -680,10 +671,7 @@ class Orders extends AbstractHelper
 
             if ($paymentId) {
                 try {
-                    $this->authHelper->getModule(
-                        'ShopModule',
-                        $order->getStoreId()
-                    )->attachPaymentIdsToOrder(['payment_ids' => [$paymentId]], $storeKeeperId);
+                    $this->orderApiClient->getShopModule($order->getStoreId())->attachPaymentIdsToOrder(['payment_ids' => [$paymentId]], $storeKeeperId);
                 } catch (GeneralException $e) {
                     throw new \Magento\Framework\Exception\LocalizedException(
                         __($e->getMessage())

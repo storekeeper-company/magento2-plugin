@@ -11,7 +11,11 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Address;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
+/**
+ * @depracated
+ */
 class Customers extends AbstractHelper
 {
     private const SEPARATE_STREET_NAME_AND_NUMBER_PATTERN = "/\A(.*?)\s+(\d+[a-zA-Z]{0,1}\s{0,1}[-]{1}\s{0,1}\d*[a-zA-Z]{0,1}|\d+[a-zA-Z-]{0,1}\d*[a-zA-Z]{0,1})/";
@@ -20,6 +24,7 @@ class Customers extends AbstractHelper
     private CustomerRepositoryInterface $customerRepositoryInterface;
     private Context $context;
     private LoggerInterface $logger;
+    private OrderApiClient $orderApiClient;
 
     /**
      * Constructor
@@ -29,18 +34,21 @@ class Customers extends AbstractHelper
      * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param Context $context
      * @param LoggerInterface $logger
+     * @param OrderApiClient $orderApiClient
      */
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
         CustomerRepositoryInterface $customerRepositoryInterface,
         Context $context,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        OrderApiClient $orderApiClient
     ) {
         $this->authHelper = $authHelper;
         $this->addressFactory = $addressFactory;
         $this->customerRepositoryInterface = $customerRepositoryInterface;
         $this->logger = $logger;
+        $this->orderApiClient = $orderApiClient;
 
         parent::__construct($context);
     }
@@ -57,7 +65,7 @@ class Customers extends AbstractHelper
         $id = false;
         if (!empty($email)) {
             try {
-                $customer = $this->authHelper->getModule('ShopModule', $storeId)->findShopCustomerBySubuserEmail([
+                $customer = $this->orderApiClient->getShopModule($storeId)->findShopCustomerBySubuserEmail([
                     'email' => $email
                 ]);
                 $id = (int)$customer['id'];
@@ -107,10 +115,7 @@ class Customers extends AbstractHelper
             ]
         ];
 
-        $relationDataId = $this->authHelper->getModule(
-            'ShopModule',
-            $customer->getStoreId()
-        )->newShopCustomer($data);
+        $relationDataId = $this->orderApiClient->getShopModule($customer->getStoreId())->newShopCustomer($data);
 
         return (int) $relationDataId;
     }
@@ -149,10 +154,7 @@ class Customers extends AbstractHelper
             ]
         ];
 
-        $relationDataId = $this->authHelper->getModule(
-            'ShopModule',
-            $order->getStoreId()
-        )->newShopCustomer($data);
+        $relationDataId = $this->orderApiClient->getShopModule($order->getStoreId())->newShopCustomer($data);
 
         return (int) $relationDataId;
     }

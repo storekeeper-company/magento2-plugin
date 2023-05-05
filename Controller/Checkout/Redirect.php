@@ -14,6 +14,7 @@ use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
 use StoreKeeper\ApiWrapper\ModuleApiWrapper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
 class Redirect extends Action
 {
@@ -23,6 +24,7 @@ class Redirect extends Action
     private OrderRepository $orderRepository;
     private Auth $authHelper;
     private OrdersHelper $ordersHelper;
+    private OrderApiClient $orderApiClient;
 
     /**
      * Redirect constructor
@@ -33,6 +35,7 @@ class Redirect extends Action
      * @param OrderRepository $orderRepository
      * @param Auth $authHelper
      * @param OrdersHelper $ordersHelper
+     * @param OrderApiClient $orderApiClient
      */
     public function __construct(
         Context $context,
@@ -40,13 +43,15 @@ class Redirect extends Action
         QuoteRepository $quoteRepository,
         OrderRepository $orderRepository,
         Auth $authHelper,
-        OrdersHelper $ordersHelper
+        OrdersHelper $ordersHelper,
+        OrderApiClient $orderApiClient
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteRepository = $quoteRepository;
         $this->orderRepository = $orderRepository;
         $this->authHelper = $authHelper;
         $this->ordersHelper = $ordersHelper;
+        $this->orderApiClient = $orderApiClient;
         parent::__construct($context);
     }
 
@@ -62,7 +67,7 @@ class Redirect extends Action
             $order = $this->checkoutSession->getLastRealOrder();
             $payload = $this->ordersHelper->prepareOrder($order, false);
             $redirect_url =  $this->_url->getUrl(self::FINISH_PAGE_ROUTE);
-            $shopModule = $this->authHelper->getModule('ShopModule', $order->getStoreid());
+            $shopModule = $this->orderApiClient->getShopModule($order->getStoreid());
             $products = $this->getPaymentProductFromOrderItems($payload['order_items']);
             $billingInfo = $this->applyAddressName($payload['billing_address'] ?? $payload['shipping_address']);
 
