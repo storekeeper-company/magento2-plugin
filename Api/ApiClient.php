@@ -20,6 +20,7 @@ class ApiClient
         ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
+        $this->auth = null;
     }
 
     /**

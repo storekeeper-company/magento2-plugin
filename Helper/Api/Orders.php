@@ -24,6 +24,7 @@ use Magento\Bundle\Model\Product\Type as Bundle;
 use Brick\Money\Money;
 use Brick\Math\RoundingMode;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Api\CustomerApiClient;
 
 class Orders extends AbstractHelper
 {
@@ -43,6 +44,7 @@ class Orders extends AbstractHelper
     private Bundle $bundle;
     private $taxClassesDiscounts;
     private OrderApiClient $orderApiClient;
+    private CustomerApiClient $customerApiClient;
 
     /**
      * Constructor
@@ -61,6 +63,7 @@ class Orders extends AbstractHelper
      * @param Json $jsonSerializer
      * @param Bundle $bundle
      * @param OrderApiClient $orderApiClient
+     * @param CustomerApiClient $customerApiClient
      */
     public function __construct(
         Auth $authHelper,
@@ -76,7 +79,8 @@ class Orders extends AbstractHelper
         LoggerInterface $logger,
         Json $jsonSerializer,
         Bundle $bundle,
-        OrderApiClient $orderApiClient
+        OrderApiClient $orderApiClient,
+        CustomerApiClient $customerApiClient
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -92,6 +96,7 @@ class Orders extends AbstractHelper
         $this->jsonSerializer = $jsonSerializer;
         $this->bundle = $bundle;
         $this->orderApiClient = $orderApiClient;
+        $this->customerApiClient = $customerApiClient;
         $this->taxClassesDiscounts = [];
     }
 
@@ -109,7 +114,7 @@ class Orders extends AbstractHelper
         $relationDataId = null;
         $orderItemsPayload = $this->prepareOrderItems($order);
 
-        $relationDataId = $this->customersHelper->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
+        $relationDataId = $this->customerApiClient->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
 
         if (!$relationDataId) {
             $relationDataId = $this->customersHelper->createStorekeeperCustomerByOrder($order);

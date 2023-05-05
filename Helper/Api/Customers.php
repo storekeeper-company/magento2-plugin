@@ -11,7 +11,6 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Address;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
-use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
 /**
  * @depracated
@@ -24,7 +23,6 @@ class Customers extends AbstractHelper
     private CustomerRepositoryInterface $customerRepositoryInterface;
     private Context $context;
     private LoggerInterface $logger;
-    private OrderApiClient $orderApiClient;
 
     /**
      * Constructor
@@ -34,21 +32,18 @@ class Customers extends AbstractHelper
      * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param Context $context
      * @param LoggerInterface $logger
-     * @param OrderApiClient $orderApiClient
      */
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
         CustomerRepositoryInterface $customerRepositoryInterface,
         Context $context,
-        LoggerInterface $logger,
-        OrderApiClient $orderApiClient
+        LoggerInterface $logger
     ) {
         $this->authHelper = $authHelper;
         $this->addressFactory = $addressFactory;
         $this->customerRepositoryInterface = $customerRepositoryInterface;
         $this->logger = $logger;
-        $this->orderApiClient = $orderApiClient;
 
         parent::__construct($context);
     }
@@ -65,7 +60,7 @@ class Customers extends AbstractHelper
         $id = false;
         if (!empty($email)) {
             try {
-                $customer = $this->orderApiClient->getShopModule($storeId)->findShopCustomerBySubuserEmail([
+                $customer = $this->authHelper->getModule('ShopModule', $storeId)->findShopCustomerBySubuserEmail([
                     'email' => $email
                 ]);
                 $id = (int)$customer['id'];
@@ -115,7 +110,10 @@ class Customers extends AbstractHelper
             ]
         ];
 
-        $relationDataId = $this->orderApiClient->getShopModule($customer->getStoreId())->newShopCustomer($data);
+        $relationDataId = $this->authHelper->getModule(
+            'ShopModule',
+            $customer->getStoreId()
+        )->newShopCustomer($data);
 
         return (int) $relationDataId;
     }
@@ -154,7 +152,10 @@ class Customers extends AbstractHelper
             ]
         ];
 
-        $relationDataId = $this->orderApiClient->getShopModule($order->getStoreId())->newShopCustomer($data);
+        $relationDataId = $this->authHelper->getModule(
+            'ShopModule',
+            $order->getStoreId()
+        )->newShopCustomer($data);
 
         return (int) $relationDataId;
     }
