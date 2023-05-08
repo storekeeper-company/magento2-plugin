@@ -5,12 +5,11 @@ namespace StoreKeeper\StoreKeeper\Model;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use PHPUnit\Exception;
-use StoreKeeper\StoreKeeper\Helper\Api\Auth;
-use StoreKeeper\ApiWrapper\ModuleApiWrapper;
 use StoreKeeper\ApiWrapper\Iterator\ListCallByIdPaginatedIterator;
 use Magento\Payment\Model\Config;
 use Magento\Theme\Block\Html\Header\Logo;
-use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
+use Magento\Store\Model\StoreManagerInterface;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -48,32 +47,32 @@ class ConfigProvider implements ConfigProviderInterface
         'storekeeper_payment'
     ];
     private $methods;
-    private Auth $authHelper;
     private PaymentHelper $paymentHelper;
     private Config $paymentConfig;
     private Logo $logo;
-    private OrderApiClient $orderApiClient;
+    private PaymentApiClient $paymentApiClient;
+    private StoreManagerInterface $storeManager;
 
     /**
      * ConfigProvider constructor.
-     * @param Auth $authHelper
      * @param PaymentHelper $paymentHelper
      * @param Config $paymentConfig
      * @param Logo $logo
-     * @param OrderApiClient $orderApiClient
+     * @param PaymentApiClient $paymentApiClient
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
-        Auth $authHelper,
         PaymentHelper $paymentHelper,
         Config $paymentConfig,
         Logo $logo,
-        OrderApiClient $orderApiClient
+        PaymentApiClient $paymentApiClient,
+        StoreManagerInterface $storeManager
     ) {
-        $this->authHelper = $authHelper;
         $this->paymentHelper = $paymentHelper;
         $this->paymentConfig = $paymentConfig;
         $this->logo = $logo;
-        $this->orderApiClient = $orderApiClient;
+        $this->paymentApiClient = $paymentApiClient;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -93,7 +92,7 @@ class ConfigProvider implements ConfigProviderInterface
      */
     private function getStoreKeeperPaymentMethods(): array
     {
-        $storeKeeperPaymentMethods =  $this->getShopModule()->listTranslatedPaymentMethodForHooks('0', 0, 10, null, []);
+        $storeKeeperPaymentMethods =  $this->paymentApiClient->getListTranslatedPaymentMethodForHooks($this->storeManager->getStore()->getId());
         foreach ($storeKeeperPaymentMethods['data'] as $storeKeeperPaymentMethod) {
             if ($storeKeeperPaymentMethod['eid'] != 'Web::PaymentModule') {
                 $paymentMethods[$storeKeeperPaymentMethod['id']] = [
@@ -106,22 +105,6 @@ class ConfigProvider implements ConfigProviderInterface
         }
 
         return $paymentMethods;
-    }
-
-    /**
-     * @return ModuleApiWrapper
-     */
-    private function getShopModule(): ModuleApiWrapper
-    {
-        return $this->orderApiClient->getShopModule($this->getStoreId());
-    }
-
-    /**
-     * @return string
-     */
-    private function getStoreId(): string
-    {
-        return $this->authHelper->storeManager->getStore()->getId();
     }
 
     /**

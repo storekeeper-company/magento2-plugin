@@ -118,11 +118,13 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getStoreInformation($storeId)
     {
+        //todo
         return $this->orderApiClient->getShopModule($storeId)->getShopSettingsForHooks();
     }
 
     public function getTaxRates($storeId, $countryId)
     {
+        //todo
         return $this->productApiClient->getProductModule($storeId)->listTaxRates(
             0,
             100,

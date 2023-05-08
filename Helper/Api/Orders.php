@@ -25,13 +25,13 @@ use Brick\Money\Money;
 use Brick\Math\RoundingMode;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Api\CustomerApiClient;
+use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 
 class Orders extends AbstractHelper
 {
     private const BUNDLE_TYPE = 'bundle';
     private const CONFIGURABLE_TYPE = 'configurable';
     private Auth $authHelper;
-    private Customers $customersHelper;
     private SearchCriteriaBuilder $searchCriteriaBuilder;
     private OrderRepositoryInterface $orderRepository;
     private ConvertOrder $convertOrder;
@@ -45,12 +45,12 @@ class Orders extends AbstractHelper
     private $taxClassesDiscounts;
     private OrderApiClient $orderApiClient;
     private CustomerApiClient $customerApiClient;
+    private PaymentApiClient $paymentApiClient;
 
     /**
      * Constructor
      *
      * @param Auth $authHelper
-     * @param Customers $customersHelper
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param OrderRepositoryInterface $orderRepository
      * @param ConvertOrder $convertOrder
@@ -64,10 +64,10 @@ class Orders extends AbstractHelper
      * @param Bundle $bundle
      * @param OrderApiClient $orderApiClient
      * @param CustomerApiClient $customerApiClient
+     * @param PaymentApiClient $paymentApiClient
      */
     public function __construct(
         Auth $authHelper,
-        Customers $customersHelper,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         OrderRepositoryInterface $orderRepository,
         ConvertOrder $convertOrder,
@@ -80,11 +80,11 @@ class Orders extends AbstractHelper
         Json $jsonSerializer,
         Bundle $bundle,
         OrderApiClient $orderApiClient,
-        CustomerApiClient $customerApiClient
+        CustomerApiClient $customerApiClient,
+        PaymentApiClient $paymentApiClient
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
-        $this->customersHelper = $customersHelper;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->orderRepository = $orderRepository;
         $this->convertOrder = $convertOrder;
@@ -97,6 +97,7 @@ class Orders extends AbstractHelper
         $this->bundle = $bundle;
         $this->orderApiClient = $orderApiClient;
         $this->customerApiClient = $customerApiClient;
+        $this->paymentApiClient = $paymentApiClient;
         $this->taxClassesDiscounts = [];
     }
 
@@ -117,7 +118,7 @@ class Orders extends AbstractHelper
         $relationDataId = $this->customerApiClient->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
 
         if (!$relationDataId) {
-            $relationDataId = $this->customersHelper->createStorekeeperCustomerByOrder($order);
+            $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($order);
         }
 
         $payload = [
@@ -142,8 +143,8 @@ class Orders extends AbstractHelper
                 'name' => $order->getBillingAddress()->getCompany() ?
                     $order->getBillingAddress()->getCompany() :
                     $order->getBillingAddress()->getName(),
-                'contact_address' => $this->customersHelper->mapAddress($order->getBillingAddress()),
-                'address_billing' => $this->customersHelper->mapAddress($order->getBillingAddress())
+                'contact_address' => $this->customerApiClient->mapAddress($order->getBillingAddress()),
+                'address_billing' => $this->customerApiClient->mapAddress($order->getBillingAddress())
             ]
         ];
 
@@ -166,7 +167,7 @@ class Orders extends AbstractHelper
                 'name' => $order->getShippingAddress()->getCompany() ?
                     $order->getShippingAddress()->getCompany() :
                     $order->getShippingAddress()->getName(),
-                'contact_address' => $this->customersHelper->mapAddress($order->getShippingAddress())
+                'contact_address' => $this->customerApiClient->mapAddress($order->getShippingAddress())
             ];
         }
 
@@ -206,16 +207,12 @@ class Orders extends AbstractHelper
      *
      * @param Order $order
      * @param string $storeKeeperId
-     * @param array $refund_payments
+     * @param array $refundPayments
      * @retrun void
      */
-    public function refundAllOrderItems(Order $order, string $storeKeeperId, array $refund_payments): void
+    public function refundAllOrderItems(Order $order, string $storeKeeperId, array $refundPayments): void
     {
-        $this->orderApiClient->getShopModule($order->getStoreId())
-            ->refundAllOrderItems([
-                'id' => $storeKeeperId,
-                'refund_payments' => $refund_payments
-            ]);
+        $this->orderApiClient->refundAllOrderItems($order->getStoreId(), $storeKeeperId, $refundPayments);
     }
 
     /**
@@ -230,7 +227,7 @@ class Orders extends AbstractHelper
 
         if ((float) $totalRefunded > 0) {
             $storekeeperId = $order->getStorekeeperId();
-            $storeKeeperOrder = $this->orderApiClient->getShopModule($order->getStoreId())->getOrder($storekeeperId);
+            $storeKeeperOrder = $this->orderApiClient->getStoreKeeperOrder($order->getStoreId(), $storekeeperId);
 
             // check if the difference between Magento 2 and StoreKeeper exists
             $diff = ((float)$totalRefunded) - $storeKeeperOrder['paid_back_value_wt'];
@@ -240,7 +237,7 @@ class Orders extends AbstractHelper
             // 90             - 70                 = 20
             // in this above example we'll have to refund 20
             if ($diff > 0) {
-                $storekeeperRefundId = $this->newWebPayment(
+                $storekeeperRefundId = $this->paymentApiClient->getNewWebPayment(
                     $order->getStoreId(),
                     [
                         'amount' => round(-abs($diff), 2),
@@ -248,7 +245,7 @@ class Orders extends AbstractHelper
                     ]
                 );
 
-                $this->attachPaymentIdsToOrder(
+                $this->paymentApiClient->attachPaymentIdsToOrder(
                     $order->getStoreId(),
                     $storekeeperId,
                     [
@@ -265,31 +262,6 @@ class Orders extends AbstractHelper
                 }
             }
         }
-    }
-
-    /**
-     * New SK WebPayment
-     *
-     * @param string $storeId
-     * @param array $parameters
-     * @return int
-     */
-    public function newWebPayment(string $storeId, array $parameters = []): int
-    {
-        return $this->orderApiClient->getPaymentModule($storeId)->newWebPayment($parameters);
-    }
-
-    /**
-     * Attach payment ids to order
-     *
-     * @param string $storeId
-     * @param string $storeKeeperId
-     * @param array $paymentIds
-     * @retrun void
-     */
-    public function attachPaymentIdsToOrder(string $storeId, string $storeKeeperId, array $paymentIds = []): void
-    {
-        $this->orderApiClient->getShopModule($storeId)->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
     }
 
     /**
@@ -388,7 +360,7 @@ class Orders extends AbstractHelper
     public function getStoreKeeperOrder(string $storeId, string $storeKeeperId): ?array
     {
         try {
-            $response = $this->orderApiClient->getShopModule($storeId)->getOrder($storeKeeperId);
+            $response = $this->orderApiClient->getStoreKeeperOrder($storeId, $storeKeeperId);
             if (is_array($response)) {
                 return $response;
             }
@@ -458,7 +430,7 @@ class Orders extends AbstractHelper
                 }
 
                 $track = $this->trackFactory->create();
-                $statusUrl = $this->orderApiClient->getShopModule($order->getStoreId())->getOrderStatusPageUrl($storeKeeperId);
+                $statusUrl = $statusUrl = $this->orderApiClient->getOrderStatusPageUrl($order->getStoreId(), $storeKeeperId);
                 $track->setNumber($storeKeeperId);
                 $track->setCarrierCode($storeKeeperOrder['shipping_name']);
                 $track->setTitle('StoreKeeper Shipment Tracking Number');
@@ -610,6 +582,7 @@ class Orders extends AbstractHelper
 
         try {
             if ($status = array_search($order->getStatus(), $statusMapping)) {
+                //todo
                 $this->orderApiClient->getShopModule($order->getStoreId())->updateOrderStatus([
                     'status' => $status
                 ], $storeKeeperId);
@@ -634,6 +607,7 @@ class Orders extends AbstractHelper
         $payload = $this->prepareOrder($order, true);
 
         try {
+            //todo
             $this->orderApiClient->getShopModule($order->getStoreId())->updateOrder($payload, $storeKeeperId);
         } catch (GeneralException $e) {
             throw new \Magento\Framework\Exception\LocalizedException(
@@ -651,11 +625,13 @@ class Orders extends AbstractHelper
      */
     public function onCreate(Order $order): void
     {
+        $storeId = $order->getStoreid();
         $payload = $this->prepareOrder($order, false);
         $this->logger->info(
             'Order #' . $order->getId() . ' payload: ' . $this->jsonSerializer->serialize($payload)
         );
-        $storeKeeperOrder = $this->orderApiClient->getShopModule($order->getStoreid())->newOrderWithReturn($payload);
+        //todo
+        $storeKeeperOrder = $this->orderApiClient->getShopModule($storeId)->newOrderWithReturn($payload);
         $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
         $order->setStorekeeperOrderLastSync(time());
@@ -676,7 +652,8 @@ class Orders extends AbstractHelper
 
             if ($paymentId) {
                 try {
-                    $this->orderApiClient->getShopModule($order->getStoreId())->attachPaymentIdsToOrder(['payment_ids' => [$paymentId]], $storeKeeperId);
+                    //todo
+                    $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, ['payment_ids' => [$paymentId]]);
                 } catch (GeneralException $e) {
                     throw new \Magento\Framework\Exception\LocalizedException(
                         __($e->getMessage())
