@@ -26,6 +26,7 @@ use Brick\Math\RoundingMode;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Api\CustomerApiClient;
 use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
+use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 
 class Orders extends AbstractHelper
 {
@@ -46,6 +47,7 @@ class Orders extends AbstractHelper
     private OrderApiClient $orderApiClient;
     private CustomerApiClient $customerApiClient;
     private PaymentApiClient $paymentApiClient;
+    private ProductApiClient $productApiClient;
 
     /**
      * Constructor
@@ -65,6 +67,7 @@ class Orders extends AbstractHelper
      * @param OrderApiClient $orderApiClient
      * @param CustomerApiClient $customerApiClient
      * @param PaymentApiClient $paymentApiClient
+     * @param ProductApiClient $productApiClient
      */
     public function __construct(
         Auth $authHelper,
@@ -81,7 +84,8 @@ class Orders extends AbstractHelper
         Bundle $bundle,
         OrderApiClient $orderApiClient,
         CustomerApiClient $customerApiClient,
-        PaymentApiClient $paymentApiClient
+        PaymentApiClient $paymentApiClient,
+        ProductApiClient $productApiClient
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -98,6 +102,7 @@ class Orders extends AbstractHelper
         $this->orderApiClient = $orderApiClient;
         $this->customerApiClient = $customerApiClient;
         $this->paymentApiClient = $paymentApiClient;
+        $this->productApiClient = $productApiClient;
         $this->taxClassesDiscounts = [];
     }
 
@@ -277,7 +282,7 @@ class Orders extends AbstractHelper
         $rates = [];
         $taxFreeId = null;
 
-        $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
+        $rates = $this->productApiClient->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
         foreach ($rates['data'] ?? [] as $rate) {
             if ($rate['alias'] == 'special_applicable_not_vat') {
                 $taxFreeId = $rate['id'];
@@ -286,7 +291,7 @@ class Orders extends AbstractHelper
         }
 
         if ($order->getTaxAmount() > 0) {
-            $rates = $this->authHelper->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
+            $rates = $this->productApiClient->getTaxRates($order->getStoreId(), $order->getBillingAddress()->getCountryId());
         }
 
         foreach ($order->getItems() as $item) {
@@ -582,10 +587,7 @@ class Orders extends AbstractHelper
 
         try {
             if ($status = array_search($order->getStatus(), $statusMapping)) {
-                //todo
-                $this->orderApiClient->getShopModule($order->getStoreId())->updateOrderStatus([
-                    'status' => $status
-                ], $storeKeeperId);
+                $this->orderApiClient->updateOrderStatus($order->getStoreId(), ['status' => $status], $storeKeeperId);
             }
         } catch (GeneralException $e) {
             throw new \Magento\Framework\Exception\LocalizedException(
@@ -607,8 +609,7 @@ class Orders extends AbstractHelper
         $payload = $this->prepareOrder($order, true);
 
         try {
-            //todo
-            $this->orderApiClient->getShopModule($order->getStoreId())->updateOrder($payload, $storeKeeperId);
+            $this->orderApiClient->updateOrder($order->getStoreId(), $payload, $storeKeeperId);
         } catch (GeneralException $e) {
             throw new \Magento\Framework\Exception\LocalizedException(
                 __($e->getMessage())
@@ -630,8 +631,7 @@ class Orders extends AbstractHelper
         $this->logger->info(
             'Order #' . $order->getId() . ' payload: ' . $this->jsonSerializer->serialize($payload)
         );
-        //todo
-        $storeKeeperOrder = $this->orderApiClient->getShopModule($storeId)->newOrderWithReturn($payload);
+        $storeKeeperOrder = $this->orderApiClient->getNewOrderWithReturn($storeId, $payload);
         $storeKeeperId = $storeKeeperOrder['id'];
         $order->setStorekeeperId($storeKeeperId);
         $order->setStorekeeperOrderLastSync(time());
@@ -652,7 +652,6 @@ class Orders extends AbstractHelper
 
             if ($paymentId) {
                 try {
-                    //todo
                     $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, ['payment_ids' => [$paymentId]]);
                 } catch (GeneralException $e) {
                     throw new \Magento\Framework\Exception\LocalizedException(

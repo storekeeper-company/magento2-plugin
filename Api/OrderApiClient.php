@@ -61,4 +61,46 @@ class OrderApiClient extends ApiClient
     {
         return $this->getShopModule($storeId)->getOrderStatusPageUrl($storeKeeperId);
     }
+
+    /**
+     * @param string $storeId
+     * @return mixed
+     */
+    public function getStoreInformation(string $storeId): mixed
+    {
+        return $this->getShopModule($storeId)->getShopSettingsForHooks();
+    }
+
+    /**
+     * @param string $storeId
+     * @param array $status
+     * @param string $storeKeeperId
+     * @throws \Exception
+     */
+    public function updateOrderStatus(string $storeId, array $status, string $storeKeeperId): void
+    {
+        $this->getShopModule($storeId)->updateOrderStatus(['status' => $status], $storeKeeperId);
+    }
+
+    /**
+     * @param string $storeId
+     * @param array $payload
+     * @param string $storeKeeperId
+     * @throws \Exception
+     */
+    public function updateOrder(string $storeId, array $payload, string $storeKeeperId): void
+    {
+        $this->getShopModule($storeId)->updateOrder($payload, $storeKeeperId);
+    }
+
+    /**
+     * @param string $storeId
+     * @param array $payload
+     * @return array
+     * @throws \Exception
+     */
+    public function getNewOrderWithReturn(string $storeId, array $payload): array
+    {
+        return $this->getShopModule($storeId)->newOrderWithReturn($payload);
+    }
 }

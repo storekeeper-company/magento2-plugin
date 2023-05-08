@@ -14,8 +14,29 @@ class ProductApiClient extends ApiClient
      * @return ModuleApiWrapperInterface
      * @throws \Exception
      */
-    public function getProductModule(string $storeId): ModuleApiWrapperInterface
+    private function getProductModule(string $storeId): ModuleApiWrapperInterface
     {
         return $this->getModule(self::STOREKEEPER_PRODUCTS_MODULE_NAME, $storeId);
+    }
+
+    /**
+     * @param string $storeId
+     * @param string $countryId
+     * @return array
+     * @throws \Exception
+     */
+    public function getTaxRates(string $storeId, string $countryId): array
+    {
+        return $this->getProductModule($storeId)->listTaxRates(
+            0,
+            100,
+            null,
+            [
+                [
+                    'name' => 'country_iso2__=',
+                    'val' => $countryId
+                ]
+            ]
+        );
     }
 }
