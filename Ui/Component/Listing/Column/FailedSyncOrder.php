@@ -14,7 +14,7 @@ class FailedSyncOrder extends Column
     {
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                $item['is_failed'] = !$item['is_failed'] ? 'No' : 'Yes';
+                $item['is_failed'] = !$item['is_failed'] ? __('No') : __('Yes');
             }
         }
 
