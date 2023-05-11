@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <listingToolbar name="listing_top">
+        <massaction name="listing_massaction">
+            <action name="resync_failed_orders">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">resync_failed_orders</item>
+                        <item name="label" xsi:type="string" translate="true">Resync Failed Orders</item>
+                        <item name="url" xsi:type="url" path="storekeeper/order/massResyncFailedOrders"/>
+                    </item>
+                </argument>
+            </action>
+        </massaction>
+    </listingToolbar>
+    <columns name="sales_order_columns">
+        <column name="is_failed" class="StoreKeeper\StoreKeeper\Ui\Component\Listing\Column\FailedSyncOrder">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="sortable" xsi:type="boolean">true</item>
+                    <item name="filter" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Storekeeper Failed Sync Order</item>
+                </item>
+            </argument>
+        </column>
+    </columns>
+</listing>
+
