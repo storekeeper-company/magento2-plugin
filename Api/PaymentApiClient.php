@@ -71,7 +71,7 @@ class PaymentApiClient extends ApiClient
      */
     public function getListTranslatedPaymentMethodForHooks(string $storeId): array
     {
-        return $this->getShopModule($storeId)->listTranslatedPaymentMethodForHooks('0', 0, 10, null, []);
+        return $this->getShopModule($storeId)->listTranslatedPaymentMethodForHooks('0', 0, 1000, null, []);
     }
 
     /**

@@ -49,31 +49,6 @@ class Customers extends AbstractHelper
     }
 
     /**
-     * Find customer relation dataId by email
-     *
-     * @param $email
-     * @param $storeId
-     * @return false|int
-     */
-    public function findCustomerRelationDataIdByEmail($email, $storeId)
-    {
-        $id = false;
-        if (!empty($email)) {
-            try {
-                $customer = $this->authHelper->getModule('ShopModule', $storeId)->findShopCustomerBySubuserEmail([
-                    'email' => $email
-                ]);
-                $id = (int)$customer['id'];
-            } catch (GeneralException $exception) {
-                // Customer not found in StoreKeeper
-                $this->logger->error($exception->getMessage());
-            }
-        }
-
-        return $id;
-    }
-
-    /**
      * Create StoreKeeper customer
      *
      * @param Customer $customer
