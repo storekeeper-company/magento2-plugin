@@ -1,7 +1,7 @@
 # Guide to installing Magento 2 for developers on Ubuntu localhost
 
 ### Step 1: Check the requirements for Magento 2
-See if you have all the nessecary version of the needed software, and their required extensions installed on your system.
+See if you have all the nessecary versions of the required software, and their required extensions installed on your system.
 You can find them here: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
 
 ### Step 2: Install Magento 2 via Composer
