@@ -49,5 +49,13 @@ In your project folder, run the following command:
 Now check your lcoalhost in your browser at your base url (for example: localhost/magento/pub/) to see if your setup was succesfull!
 
 
+### Step: Enable OpenSearch
+In your project folder, run the following command:
+
+        sudo php bin/magento module:enable {Magento_OpenSearch,Magento_Elasticsearch,Magento_InventoryElasticsearch,Magento_Elasticsearch7}
+
+
+
+
 
 
