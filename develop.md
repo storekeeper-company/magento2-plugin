@@ -24,7 +24,7 @@ Make sure that your database user which you will be using has the correct permis
 ### Step 5: Run your setup command
 In your project root folder (for example /var/www/html/magento/) run the following command:
 
-        sudo php bin/magento setup:install --base-url="http://localhost/<project_folder>/pub/" --db-host=localhost --db-name=magento --db-user=<db_username> --db-password=<db_password> --admin-firstname=<your_firstname> --admin-lastname=<your_lastname> --admin-email=<your_email> --admin-user=<your_username> --admin-password=<your_password> --language=en_US --currency=<your_currency> --timezone=<your_timezone> --use-rewrites=0
+        sudo php bin/magento setup:install --base-url="http://localhost/<project_folder>/pub/" --db-host=localhost --db-name=magento --db-user=<db_username> --db-password=<db_password> --admin-firstname=<your_firstname> --admin-lastname=<your_lastname> --admin-email=<your_email> --admin-user=<your_username> --admin-password=<your_password> --language=en_US --currency=<your_currency> --timezone=<your_timezone> --use-rewrites=1
         
 Fill out all the < ... > parts with your own information.
 
