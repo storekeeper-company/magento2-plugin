@@ -5,12 +5,12 @@ See if you have all the nessecary versions of the required software, and their r
 You can find them here: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
 
 ### Step 2: Install Magento 2 via Composer
-Open your terminal inside your localhost directory, and run this command:
+Open a terminal inside your localhost directory, and run this command:
 
         composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition <install-directory-name>
         
 ### Step 3: Disable OpenSearch and ElastiSearch modules
-In the current version of Magento 2.4, these 2 modules have certain issues seting up. Don't worry, we'll enable them later.
+In the current version of Magento 2.4, these 2 modules have certain issues setting up. Don't worry, we'll enable them later.
 In your project folder, run this command:
         
         sudo php bin/magento module:disable {Magento_OpenSearch,Magento_Elasticsearch,Magento_InventoryElasticsearch,Magento_Elasticsearch7}
