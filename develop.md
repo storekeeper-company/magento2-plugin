@@ -17,7 +17,7 @@ In your project folder, run this command:
         
 This will disable these modules, and allows to set up our configuration without worry.
 
-### Step 4: Create a MYSQL database
+### Step 4: Create a database
 Either using MYSQL CLI or other supported methods for Magento 2, Create a database with the name 'magento'
 Make sure that your database user which you will be using has the correct permissions as well.
 
