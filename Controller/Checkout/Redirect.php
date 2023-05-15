@@ -97,8 +97,8 @@ class Redirect extends Action
             $this->checkoutSession->replaceQuote($quote);
             $this->quoteRepository->save($quote);
 
-            $this->getResponse()->setNoCacheHeaders();
-            $this->getResponse()->setRedirect($payment['payment_url']);
+            $this->_response->setNoCacheHeaders();
+            $this->_response->setRedirect($payment['payment_url']);
 
         } catch (\Exception $e) {
             $this->_getCheckoutSession()->restoreQuote();
