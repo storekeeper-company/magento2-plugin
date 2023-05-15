@@ -5,12 +5,17 @@ See if you have all the nessecary versions of the required software, and their r
 You can find them here: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
 
 But the most important ones are:
-
+```
 -PHP 8.2
+
 -Apache 2.4
+
 -MySQL 8.0 
+
 -Composer 2.5.5
+
 -ElastiSearch 7 <- Requires Java
+```
 
 ### Step 2: Create an Adobe account and generate keys
 To install Magento, you will some authentication.
