@@ -3,7 +3,9 @@
 ### Step 1: Check the requirements for Magento 2.4.6
 See if you have all the nessecary versions of the required software, and their required extensions installed on your system.
 You can find them here: https://experienceleague.adobe.com/docs/commerce-operations/installation-guide/system-requirements.html
+
 But the most important ones are:
+
 -PHP 8.2
 -Apache 2.4
 -MySQL 8.0 
