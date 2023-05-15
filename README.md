@@ -108,12 +108,12 @@ If you're having any issues using the plugin, the first thing to do would be che
 ```
 cd dev/tests/integration
 
-../../../vendor/bin/phpunit ../../../app/code/Acme/Example/Test/Integration
+../../../vendor/bin/phpunit ../../../vendor/storekeeper/magento2-plugin/Test/Integration
 ```
 
 2. To run a single test class in Magento 2, use the following command:
 ```
 cd dev/tests/integration
 
-../../../vendor/bin/phpunit ../../../app/code/Acme/Example/Test/Integration/ExampleTest.php
+../../../vendor/bin/phpunit ../../../vendor/storekeeper/magento2-plugin/Test/Integration/OrderCreationTest.php
 ```
