@@ -49,7 +49,8 @@ This will disable these modules, and allows to set up our configuration without 
 
 ### Step 5: Create a database
 Either using MYSQL CLI or other supported methods for Magento 2, Create a database with the name 'magento'
-Make sure that your database user which you will be using has the correct permissions as well.
+Also make a new user for MySQL that you'll be using for this project.
+Afterwards grant all permission on our new database.
 
 ### Step 6: Run your setup command
 In your project root folder (for example /var/www/html/magento/) run the following command:
@@ -73,8 +74,9 @@ Magento 2 will not work properly without read/write permission. Make sure to giv
 This command will ensure you have the right permissions:
 
 ```
-sudo chown -R <your_root_name>:<your_root_name> <localhost_directory>
+sudo chown -R <linux_user>:<linux_user> <localhost_directory>
 ```
+You can find who is the current linux user by typing "woami" in any terminal.
 
 ### Step 9: Set Magento to Developer mode
 In your project folder, run the following command:
