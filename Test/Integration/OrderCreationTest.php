@@ -68,7 +68,7 @@ class OrderCreationTest extends TestCase
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/product_simple_without_custom_options.php
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/customer.php
      * @magentoConfigFixture current_store storekeeper_general/general/enabled 1
-     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"SE75vpzIky5Su6K0E5xQTuLBt2JoSYMd"}
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_mode 4
      */
     public function testOrderCreation()
