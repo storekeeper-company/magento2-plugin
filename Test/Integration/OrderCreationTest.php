@@ -12,6 +12,15 @@ use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Sales\Model\Order\Address;
+use Magento\Sales\Model\Order;
+use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
+use Magento\Tax\Model\ClassModel as TaxClassModel;
+use Magento\Tax\Model\Calculation\Rate as TaxRateCalculation;
+use Magento\Tax\Model\Calculation\Rule as TaxRuleCalculation;
+use Magento\Quote\Api\Data\CartItemInterface;
+use Magento\Checkout\Api\Data\TotalsInformationInterface;
+use Magento\Quote\Api\Data\PaymentInterface;
+use Magento\Checkout\Model\PaymentInformationManagement;
 
 class OrderCreationTest extends TestCase
 {
@@ -19,12 +28,33 @@ class OrderCreationTest extends TestCase
     const STORE_KEEPER_ORDER_ID = 55;
     const STORE_KEEPER_ORDER_NUMBER = 'S08-' . self::ORDER_INCREMENT_ID;
     const PRODUCT_SKU = 'simple-2';
+
     protected $customerApiClientMock;
     protected $productApiClientMock;
     protected $orderApiClientMock;
-    protected $ordersHelperMock;
+    protected $requestMock;
+    protected $paymentApiClientMock;
+
+    protected $searchCriteriaBuilder;
+    protected $orderRepository;
+    protected $customerSession;
+    protected $cartManagement;
+    protected $cartItemRepository;
+    protected $shippingAddressManagement;
+    protected $totalsInformationManagement;
+    protected $paymentMethodManagement;
+    protected $cartRepository;
+    protected $checkoutSession;
+    protected $persistentSessionHelper;
+    protected $url;
+    protected $quoteRepository;
+    protected $response;
+    protected $resultRedirectFactory;
+    protected $invoice;
     protected $apiOrders;
     protected $cronOrders;
+    protected $redirect;
+    protected $finish;
 
     protected function setUp(): void
     {
@@ -33,8 +63,25 @@ class OrderCreationTest extends TestCase
         $this->customerApiClientMock = $this->createMock(\StoreKeeper\StoreKeeper\Api\CustomerApiClient::class);
         $this->productApiClientMock = $this->createMock(\StoreKeeper\StoreKeeper\Api\ProductApiClient::class);
         $this->orderApiClientMock = $this->createMock(\StoreKeeper\StoreKeeper\Api\OrderApiClient::class);
+        $this->requestMock = $this->createMock(\Magento\TestFramework\Request::class);
+        $this->paymentApiClientMock = $this->createMock(\StoreKeeper\StoreKeeper\Api\PaymentApiClient::class);
+
         $this->searchCriteriaBuilder = Bootstrap::getObjectManager()->create(\Magento\Framework\Api\SearchCriteriaBuilder::class);
         $this->orderRepository = Bootstrap::getObjectManager()->create(\Magento\Sales\Api\OrderRepositoryInterface::class);
+        $this->customerSession = Bootstrap::getObjectManager()->create(\Magento\Customer\Model\Session::class);
+        $this->cartManagement = Bootstrap::getObjectManager()->create(\Magento\Quote\Api\CartManagementInterface::class);
+        $this->cartItemRepository = Bootstrap::getObjectManager()->create(\Magento\Quote\Api\CartItemRepositoryInterface::class);
+        $this->shippingAddressManagement = Bootstrap::getObjectManager()->create(\Magento\Quote\Model\ShippingAddressManagementInterface::class);
+        $this->totalsInformationManagement = Bootstrap::getObjectManager()->create(\Magento\Checkout\Api\TotalsInformationManagementInterface::class);
+        $this->paymentMethodManagement = Bootstrap::getObjectManager()->create(\Magento\Quote\Api\PaymentMethodManagementInterface::class);
+        $this->cartRepository = Bootstrap::getObjectManager()->create(\Magento\Quote\Api\CartRepositoryInterface::class);
+        $this->checkoutSession = Bootstrap::getObjectManager()->create(\Magento\Checkout\Model\Session::class);
+        $this->persistentSessionHelper = Bootstrap::getObjectManager()->create(\Magento\Persistent\Helper\Session::class);
+        $this->url = Bootstrap::getObjectManager()->create(\Magento\Framework\UrlInterface::class);
+        $this->quoteRepository = Bootstrap::getObjectManager()->create(\Magento\Quote\Model\QuoteRepository::class);
+        $this->response = Bootstrap::getObjectManager()->create(\Magento\Framework\App\ResponseInterface::class);
+        $this->resultRedirectFactory = Bootstrap::getObjectManager()->create(\Magento\Framework\Controller\Result\RedirectFactory::class);
+        $this->invoice = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Invoice::class);
 
         $this->customerApiClientMock->method('findCustomerRelationDataIdByEmail')
             ->willReturn(2);
@@ -42,6 +89,27 @@ class OrderCreationTest extends TestCase
             ->willReturn($this->getTaxRates());
         $this->orderApiClientMock->method('getNewOrderWithReturn')
             ->willReturn($this->getStoreKeeperOrder());
+        $this->requestMock->method('getParam')
+            ->willReturnCallback(
+                function ($key) {
+                    if ($key == 'storekeeper_payment_method_id') {
+                        return '1';
+                    }
+                }
+            );
+        $this->requestMock->method('getParams')
+            ->willReturn([
+                'orderID' => '1'
+            ]);
+        $this->paymentApiClientMock->method('getStoreKeeperPayment')
+            ->willReturn([
+                'id' => 1,
+                'payment_url' => 'https://storekeepercloud.com/'
+            ]);
+        $this->paymentApiClientMock->method('syncWebShopPaymentWithReturn')
+            ->willReturn([
+                'status' => 'paid'
+            ]);
 
         $this->apiOrders = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Helper\Api\Orders::class,
@@ -60,6 +128,29 @@ class OrderCreationTest extends TestCase
                 'configHelper' => Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Helper\Config::class),
                 'ordersHelper' => $this->apiOrders,
                 'storeKeeperFailedSyncOrder' => Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class)
+            ]
+        );
+        $this->redirect = $objectManager->getObject(
+            \StoreKeeper\StoreKeeper\Controller\Checkout\Redirect::class,
+            [
+                'request' => $this->requestMock,
+                'checkoutSession' => $this->checkoutSession,
+                'ordersHelper' => $this->apiOrders,
+                '_url' => $this->url,
+                'paymentApiClient' => $this->paymentApiClientMock,
+                'quoteRepository' => $this->quoteRepository,
+                '_response' => $this->response
+            ]
+        );
+        $this->finish = $objectManager->getObject(
+            \StoreKeeper\StoreKeeper\Controller\Checkout\Finish::class,
+            [
+                'resultRedirectFactory' => $this->resultRedirectFactory,
+                'request' => $this->requestMock,
+                'orderRepository' => $this->orderRepository,
+                'paymentApiClient' => $this->paymentApiClientMock,
+                'invoice' => $this->invoice,
+                'checkoutSession' => $this->checkoutSession,
             ]
         );
     }
@@ -133,6 +224,95 @@ class OrderCreationTest extends TestCase
         $this->assertEquals(\Magento\Sales\Model\Order::STATE_NEW, $order->getState());
 
         $this->cronOrders->execute();
+        $savedOrder = $this->orderRepository->get('1');
+
+        $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
+        $this->assertEquals(self::STORE_KEEPER_ORDER_NUMBER, $savedOrder->getStorekeeperOrderNumber());
+
+    }
+
+    /**
+     * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/product_simple_without_custom_options.php
+     * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/customer.php
+     * @magentoConfigFixture current_store payment/storekeeper_payment_ideal/active 1
+     */
+    public function testPayment()
+    {
+        //Retrieve customer
+        $customer = $this->getCustomer();
+        $this->customerSession->loginById($customer->getId());
+
+        //Retrieve product from repository
+        $product = $this->getProduct();
+        $product->setOptions(null);
+        $taxClassId = $this->getTaxClass()->getId();
+        $this->createTaxRule($this->getTaxRate(), $taxClassId);
+        $product->setTaxClassId($taxClassId);
+        $this->getProductRepository()->save($product);
+
+        //Add item to newly created customer cart
+        $cartId = $this->cartManagement->createEmptyCartForCustomer($customer->getId());
+        $quoteItem = Bootstrap::getObjectManager()->create(CartItemInterface::class);
+        $quoteItem->setQuoteId($cartId);
+        $quoteItem->setProduct($product);
+        $quoteItem->setQty(2);
+        $this->cartItemRepository->save($quoteItem);
+
+        //Fill out address data
+        $billingAddress = Bootstrap::getObjectManager()->create(
+            QuoteAddressInterface::class,
+            [
+                'data' => $this->getAddresData()
+            ]
+        );
+        $shippingAddress = clone $billingAddress;
+        $shippingAddress->setSameAsBilling(true);
+        $this->shippingAddressManagement->assign($cartId, $shippingAddress);
+        $shippingAddress = $this->shippingAddressManagement->get($cartId);
+
+        //Determine shipping options and collect totals
+        $totals = Bootstrap::getObjectManager()->create(TotalsInformationInterface::class);
+        $totals->setAddress($shippingAddress);
+        $totals->setShippingCarrierCode('flatrate');
+        $totals->setShippingMethodCode('flatrate');
+        $this->totalsInformationManagement->calculate($cartId, $totals);
+
+        //Select payment method
+        $payment = Bootstrap::getObjectManager()->create(PaymentInterface::class);
+        $payment->setMethod('storekeeper_payment_ideal');
+        $this->paymentMethodManagement->set($cartId, $payment);
+        $quote = $this->cartRepository->get($cartId);
+
+        //Verify checkout session contains correct quote data
+        $this->checkoutSession->clearQuote();
+        $this->checkoutSession->setQuoteId($quote->getId());
+
+        //Set up persistent session data and expire customer session
+        $this->persistentSessionHelper->getSession()->setCustomerId($customer->getId())
+            ->setPersistentCookie(10000, '');
+        $this->persistentSessionHelper->getSession()->removePersistentCookie()->setPersistentCookie(100000000, '');
+        $this->customerSession->setIsCustomerEmulated(true)->expireSessionCookie();
+
+        //Submit order as expired/emulated customer
+        //Grab created order data
+        $paymentManagement = Bootstrap::getObjectManager()->create(
+            PaymentInformationManagement::class
+        );
+        $orderId = $paymentManagement->savePaymentInformationAndPlaceOrder(
+            $this->checkoutSession->getQuote()->getId(),
+            $quote->getPayment(),
+            $billingAddress
+        );
+        $order = $this->orderRepository->get($orderId);
+
+        //Execute Redirect and Finish controllers
+        $this->redirect->execute();
+        $order = $this->orderRepository->get($orderId);
+        $this->finish->execute();
+
+        //Assert order state to 'processing' state
+        $order = $this->orderRepository->get($orderId);
+        $this->assertEquals($order->getState(), Order::STATE_PROCESSING);
     }
 
     /**
@@ -151,7 +331,7 @@ class OrderCreationTest extends TestCase
             'city' => 'Los Angeles',
             'email' => 'admin@example.com',
             'telephone' => '11111111',
-            'country_id' => 'US'
+            'country_id' => 'NL'
         ];
     }
 
@@ -239,5 +419,71 @@ class OrderCreationTest extends TestCase
         $billingAddress->setAddressType('billing');
 
         return $billingAddress;
+    }
+
+    /**
+     * @return QuoteAddressInterface
+     */
+    private function getQuoteBillingAddress(): QuoteAddressInterface
+    {
+        $quoteBillingAddress = Bootstrap::getObjectManager()->create(QuoteAddressInterface::class, ['data' => $this->getAddresData()]);
+        $quoteBillingAddress->setAddressType('billing');
+
+        return $quoteBillingAddress;
+    }
+
+    /**
+     * @return TaxClassModel
+     * @throws \Exception
+     */
+    private function getTaxClass(): TaxClassModel
+    {
+        $taxClassName = 'Test Tax Class';
+        $taxClassType = TaxClassModel::TAX_CLASS_TYPE_PRODUCT;
+        $taxClass = Bootstrap::getObjectManager()->create(TaxClassModel::class);
+        $taxClass->setClassName($taxClassName);
+        $taxClass->setClassType($taxClassType);
+        $taxClass->save();
+
+        return $taxClass;
+    }
+
+    /**
+     * @return TaxRateCalculation
+     * @throws \Exception
+     */
+    private function getTaxRate(): TaxRateCalculation
+    {
+        $taxRateData = [
+            'tax_country_id' => 'NL',
+            'tax_region_id' => '0',
+            'tax_postcode' => '*',
+            'code' => 'Test Tax Rate',
+            'rate' => '21.0000',
+        ];
+        $taxRate = Bootstrap::getObjectManager()->create(TaxRateCalculation::class);
+        $taxRate->setData($taxRateData);
+        $taxRate->save();
+
+        return $taxRate;
+    }
+
+    /**
+     * @param TaxRateCalculation $taxRate
+     * @param string $taxClassId
+     * @throws \Exception
+     */
+    private function createTaxRule(TaxRateCalculation $taxRate, string $taxClassId): void
+    {
+        $taxRuleData = [
+            'code' => 'Test Tax Rule',
+            'tax_rate_ids' => [$taxRate->getId()],
+            'customer_tax_class_ids' => [3], // Customer tax class IDs if needed
+            'product_tax_class_ids' => [$taxClassId], // Product tax class IDs if needed
+            'priority' => 0
+        ];
+        $taxRule = Bootstrap::getObjectManager()->create(TaxRuleCalculation::class);
+        $taxRule->setData($taxRuleData);
+        $taxRule->save();
     }
 }
