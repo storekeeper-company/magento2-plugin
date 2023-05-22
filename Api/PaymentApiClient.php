@@ -84,20 +84,13 @@ class PaymentApiClient extends ApiClient
 
     /**
      * @param string $storeId
-     * @param string|null $storekeeperPaymentId
+     * @param int $storekeeperPaymentId
      * @return array
      * @throws \Exception
      */
-    public function syncWebShopPaymentWithReturn(string $storeId, ?string $storekeeperPaymentId): array
+    public function syncWebShopPaymentWithReturn(string $storeId, int $storekeeperPaymentId): array
     {
-        try {
-            return $this->getShopModule($storeId)->syncWebShopPaymentWithReturn($storekeeperPaymentId);
-        } catch (GeneralException $exception) {
-            $message = $exception->getMessage();
-            $this->logger->error($message);
-            throw new \Exception($message);
-        }
-        
+        return $this->getShopModule($storeId)->syncWebShopPaymentWithReturn($storekeeperPaymentId);
     }
 
     /**
