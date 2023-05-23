@@ -7,21 +7,27 @@ use StoreKeeper\ApiWrapper\ModuleApiWrapper;
 use StoreKeeper\StoreKeeper\Api\ApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
+use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use Psr\Log\LoggerInterface;
 
 class PaymentApiClient extends ApiClient
 {
     private const STOREKEEPER_PAYMENT_MODULE_NAME = 'PaymentModule';
 
     private OrderApiClient $orderApiClient;
+    private LoggerInterface $logger;
 
     /**
      * PaymentApiClient constructor.
      * @param OrderApiClient $orderApiClient
+     * @param LoggerInterface $logger
      */
     public function __construct(
-        OrderApiClient $orderApiClient
+        OrderApiClient $orderApiClient,
+        LoggerInterface $logger
     ) {
         $this->orderApiClient = $orderApiClient;
+        $this->logger = $logger;
     }
 
     /**
@@ -78,11 +84,11 @@ class PaymentApiClient extends ApiClient
 
     /**
      * @param string $storeId
-     * @param string $storekeeperPaymentId
+     * @param int $storekeeperPaymentId
      * @return array
-     * @throws \Exception+
+     * @throws \Exception
      */
-    public function syncWebShopPaymentWithReturn(string $storeId, string $storekeeperPaymentId): array
+    public function syncWebShopPaymentWithReturn(string $storeId, int $storekeeperPaymentId): array
     {
         return $this->getShopModule($storeId)->syncWebShopPaymentWithReturn($storekeeperPaymentId);
     }
