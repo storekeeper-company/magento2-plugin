@@ -54,7 +54,9 @@ class CustomerApiClient
                 $id = (int)$customer['id'];
             } catch (GeneralException $exception) {
                 // Customer not found in StoreKeeper
-                $this->logger->error($exception->getMessage());
+                $message = $exception->getMessage();
+                $this->logger->error($message);
+                throw new \Exception($message);
             }
         }
 
@@ -75,10 +77,11 @@ class CustomerApiClient
     /**
      * Create StoreKeeper customer by order
      *
+     * @param string $email
      * @param Order $order
      * @return int
      */
-    public function createStorekeeperCustomerByOrder(Order $order): int
+    public function createStorekeeperCustomerByOrder(string $email, Order $order): int
     {
         if (!$order->getCustomerIsGuest()) {
             $customer = $this->customerRepository->getById($order->getCustomerId());
@@ -100,8 +103,8 @@ class CustomerApiClient
                 'contact_address' => $this->mapAddress($shippingAddress),
                 'address_billing' => $this->mapAddress($billingAddress),
                 'subuser' => [
-                    'login' => $order->getCustomerEmail(),
-                    'email' => $order->getCustomerEmail()
+                    'login' => $email,
+                    'email' => $email
                 ]
             ]
         ];

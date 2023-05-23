@@ -120,11 +120,7 @@ class Orders extends AbstractHelper
         $relationDataId = null;
         $orderItemsPayload = $this->prepareOrderItems($order);
 
-        $relationDataId = $this->customerApiClient->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
-
-        if (!$relationDataId) {
-            $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($order);
-        }
+        $relationDataId = $this->getRelationDataId($email, $order);
 
         $payload = [
             'billing_address__merge' => 'false',
@@ -1165,5 +1161,29 @@ class Orders extends AbstractHelper
         }
 
         return $payload;
+    }
+
+    /**
+     * @param string $email
+     * @param Order $order
+     * @return int
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getRelationDataId(string $email, Order $order): int
+    {
+        $storeId = $order->getStoreId();
+        try {
+            $relationDataId = $this->customerApiClient->findCustomerRelationDataIdByEmail($email, $storeId);
+        } catch (\Throwable $e) {
+            $storeBaseUrl = parse_url($this->authHelper->getStoreBaseUrl())['host'];
+            if (!$order->getCustomerIsGuest()) {
+                $email = 'nomail+' . $order->getCustomerId() . '@' . $storeBaseUrl;
+            } else {
+                $email = 'nomail+' . crc32($email) . '@' . $storeBaseUrl;
+            }
+            $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($email, $order);
+        }
+
+        return $relationDataId;
     }
 }
