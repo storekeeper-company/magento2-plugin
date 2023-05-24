@@ -53,11 +53,11 @@ class PaymentApiClient extends ApiClient
 
     /**
      * @param string $storeId
-     * @param string $storeKeeperId
+     * @param int $storeKeeperId
      * @param array $paymentIds
      * @retrun void
      */
-    public function attachPaymentIdsToOrder(string $storeId, string $storeKeeperId, array $paymentIds = []): void
+    public function attachPaymentIdsToOrder(string $storeId, int $storeKeeperId, array $paymentIds = []): void
     {
         $this->getShopModule($storeId)->attachPaymentIdsToOrder(['payment_ids' => $paymentIds], $storeKeeperId);
     }

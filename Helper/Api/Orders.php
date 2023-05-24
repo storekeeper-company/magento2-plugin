@@ -648,7 +648,7 @@ class Orders extends AbstractHelper
 
             if ($paymentId) {
                 try {
-                    $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, ['payment_ids' => [$paymentId]]);
+                    $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, [$paymentId]);
                 } catch (GeneralException $e) {
                     throw new \Magento\Framework\Exception\LocalizedException(
                         __($e->getMessage())

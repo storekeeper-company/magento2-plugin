@@ -42,11 +42,11 @@ class OrderApiClient extends ApiClient
 
     /**
      * @param string $storeId
-     * @param string $storekeeperId
+     * @param mixed $storekeeperId
      * @return array
      * @throws \Exception
      */
-    public function getStoreKeeperOrder(string $storeId, string $storekeeperId): array
+    public function getStoreKeeperOrder(string $storeId, mixed $storekeeperId): array
     {
         return $this->getShopModule($storeId)->getOrder($storekeeperId);
     }
