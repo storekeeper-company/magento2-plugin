@@ -27,6 +27,7 @@ use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Api\CustomerApiClient;
 use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
+use StoreKeeper\StoreKeeper\Exception\EmailIsAdminUserException;
 
 class Orders extends AbstractHelper
 {
@@ -1173,17 +1174,45 @@ class Orders extends AbstractHelper
     {
         $storeId = $order->getStoreId();
         try {
-            $relationDataId = $this->customerApiClient->findCustomerRelationDataIdByEmail($email, $storeId);
-        } catch (\Throwable $e) {
+            $relationDataId = $this->findCustomerRelationDataIdByEmail($email, $storeId);
+        } catch (EmailIsAdminUserException $e) {
             $storeBaseUrl = parse_url($this->authHelper->getStoreBaseUrl())['host'];
             if (!$order->getCustomerIsGuest()) {
                 $email = 'nomail+' . $order->getCustomerId() . '@' . $storeBaseUrl;
             } else {
                 $email = 'nomail+' . crc32($email) . '@' . $storeBaseUrl;
             }
+
+        }
+        if( empty($relationDataId)){
             $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($email, $order);
         }
 
         return $relationDataId;
+    }
+
+    /**
+     * Find customer relation dataId by email
+     *
+     * @param string $email
+     * @param string $storeId
+     * @return false|int
+     */
+    protected function findCustomerRelationDataIdByEmail(string $email, string $storeId): ?int
+    {
+        $id = false;
+        if (!empty($email)) {
+            try {
+                $customer = $this->customerApiClient->findShopCustomerBySubuserEmail($storeId, $email);
+                $id = (int)$customer['id'];
+            } catch (GeneralException $exception) {
+                if( $exception->getApiExceptionClass() == 'ShopModule::EmailIsAdminUser' ){
+                    throw new EmailIsAdminUserException($exception->getMessage(), 0, $exception);
+                }
+                throw $exception;
+            }
+        }
+
+        return $id;
     }
 }
