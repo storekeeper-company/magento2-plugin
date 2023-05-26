@@ -9,18 +9,43 @@ use Magento\Framework\Math\Random;
 use Magento\Framework\Module\ModuleList;
 use Magento\Store\Model\StoreManagerInterface;
 use Ramsey\Uuid\Generator\PeclUuidRandomGenerator;
-use StoreKeeper\ApiWrapper\ApiWrapper;
-use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 
 class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    private $auth = null;
     private $storeShopIds = null;
+    private $websiteShopIds = null;
     private const MODULE_NAME = 'StoreKeeper_StoreKeeper';
     private const MODULE_VENDOR = 'StoreKeeper';
     private const PLATFORM_NAME = 'Magento2';
     private const SOFTWARE_NAME = 'magento2-plugin';
     private const INTEGRATIONS_INITIALIZE_URL = "https://integrations.storekeeper.software/sk_connect/sales_channel/init_plugin_connect";
+    private StoreManagerInterface $storeManager;
+    private WriterInterface $configWriter;
+    private TypeListInterface $cache;
+    private Random $random;
+    private PeclUuidRandomGenerator $uuidRandomGenerator;
+    private ProductMetadataInterface $productMetadata;
+    private ModuleList $moduleList;
+    private OrderApiClient $orderApiClient;
+    private ProductApiClient $productApiClient;
 
+    /**
+     * Constructor
+     *
+     * @param ScopeConfigInterface $scopeConfig
+     * @param StoreManagerInterface $storeManager
+     * @param WriterInterface $configWriter
+     * @param TypeListInterface $cache
+     * @param Random $random
+     * @param PeclUuidRandomGenerator $uuidRandomGenerator
+     * @param ProductMetadataInterface $productMetadata
+     * @param ModuleList $moduleList
+     * @param OrderApiClient $orderApiClient
+     * @param ProductApiClient $productApiClient
+     */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
@@ -29,7 +54,9 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         Random $random,
         PeclUuidRandomGenerator $uuidRandomGenerator,
         ProductMetadataInterface $productMetadata,
-        ModuleList $moduleList
+        ModuleList $moduleList,
+        OrderApiClient $orderApiClient,
+        ProductApiClient $productApiClient
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
@@ -39,8 +66,17 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->uuidRandomGenerator = $uuidRandomGenerator;
         $this->productMetadata = $productMetadata;
         $this->moduleList = $moduleList;
+        $this->orderApiClient = $orderApiClient;
+        $this->productApiClient = $productApiClient;
     }
 
+    /**
+     * Set Auth data for website
+     *
+     * @param $storeId
+     * @param $authData
+     * @return void
+     */
     public function setAuthDataForWebsite($storeId, $authData)
     {
         $this->configWriter->save(
@@ -74,26 +110,13 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->cache->cleanType('config');
     }
 
-    public function getStoreInformation($storeId)
-    {
-        return $this->getModule('ShopModule', $storeId)->getShopSettingsForHooks();
-    }
-
-    public function getTaxRates($storeId, $countryId)
-    {
-        return $this->getModule('ProductsModule', $storeId)->listTaxRates(
-            0,
-            100,
-            null,
-            [
-                [
-                    'name' => 'country_iso2__=',
-                    'val' => $countryId
-                ]
-            ]
-        );
-    }
-
+    /**
+     * Set Store information
+     *
+     * @param $storeId
+     * @param array $data
+     * @return true
+     */
     public function setStoreInformation($storeId, array $data)
     {
         $this->configWriter->save(
@@ -106,6 +129,13 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return true;
     }
 
+    /**
+     * Auth check
+     *
+     * @param $storeId
+     * @return string|void
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function authCheck($storeId)
     {
         $token = $this->getSecurityToken($storeId);
@@ -129,7 +159,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $json = json_encode(
             [
                 'token' => $token, // Needs to the same over the applications lifespan.
-                'webhook_url' => "{$this->getStoreBaseUrl()}/rest/V1/storekeeper/webhook?storeId={$storeId}", // Endpoint
+                'webhook_url' => "{$this->getStoreBaseUrl()}/rest/V1/storekeeper/webhook?storeId={$storeId}",
             ]
         );
 
@@ -139,6 +169,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Security token
+     *
      * @param $storeId
      * @return mixed
      */
@@ -148,6 +180,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Info token
+     *
      * @param $storeId
      * @return mixed
      */
@@ -157,6 +191,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Store BaseUrl
+     *
      * @return string
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
@@ -166,6 +202,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get ShopName config value
+     *
      * @param $storeId
      * @return mixed
      */
@@ -175,6 +213,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Shop uuid config value
+     *
      * @param string $storeId
      * @return mixed
      */
@@ -184,6 +224,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get module Vendor config value
+     *
      * @return string
      */
     public function getVendor(): string
@@ -192,6 +234,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Platform name config value
+     *
      * @return string
      */
     public function getPlatformName(): string
@@ -200,6 +244,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Software name config value
+     *
      * @return string
      */
     public function getSoftwareName(): string
@@ -208,6 +254,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get SK integration url
+     *
      * @return string
      */
     public function getIntegrationsInitializeUrl(): string
@@ -215,20 +263,31 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return self::INTEGRATIONS_INITIALIZE_URL;
     }
 
+    /**
+     * Get Store shop ids config value
+     *
+     * @return array|null
+     */
     public function getStoreShopIds()
     {
         if (is_null($this->storeShopIds)) {
             $this->storeShopIds = [];
             foreach ($this->storeManager->getStores() as $store) {
-                $value = $this->getScopeConfigValue('storekeeper_general/general/storekeeper_shop_id', $store->getId());
+                $value = $this->getScopeConfigValue(
+                    'storekeeper_general/general/storekeeper_shop_id',
+                    $store->getId()
+                );
                 $this->storeShopIds[$value] = $store->getId();
             }
         }
         return $this->storeShopIds;
     }
 
-    private $websiteShopIds = null;
-
+    /**
+     * Get website ids config value
+     *
+     * @return array|null
+     */
     public function getWebsiteShopIds()
     {
         if (is_null($this->websiteShopIds)) {
@@ -245,45 +304,12 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->websiteShopIds;
     }
 
-    public function getAdapter($storeId)
-    {
-        $syncAuth = $this->getSyncAuth($storeId);
-        $apiUrl = null;
-        if (!empty($syncAuth) && isset($syncAuth['account'])) {
-            $apiUrl = "https://api-{$syncAuth['account']}.storekeepercloud.com/";
-        } else {
-            throw new \Exception("An error occurred: Store #{$storeId} is not connected to StoreKeeper");
-        }
-
-        $adapter = new FullJsonAdapter($apiUrl);
-        return $adapter;
-    }
-
-    public function getModule(string $module, $storeId)
-    {
-        $api = new ApiWrapper($this->getAdapter($storeId), $this->getAuthWrapper($storeId));
-        return $api->getModule($module);
-    }
-
-    private $auth = null;
-
-    public function getAuthWrapper($storeId)
-    {
-        if (is_null($this->auth)) {
-            $sync_auth = $this->getSyncAuth($storeId);
-            if (empty($sync_auth)) {
-                throw new \Exception("Unable to authenticate with StoreKeeper. Did you add your API key to your store?");
-            }
-
-            $this->auth = new \StoreKeeper\ApiWrapper\Auth();
-            $this->auth->setSubuser($sync_auth['subaccount'], $sync_auth['user']);
-            $this->auth->setApiKey($sync_auth['apikey']);
-            $this->auth->setAccount($sync_auth['account']);
-        }
-
-        return $this->auth;
-    }
-
+    /**
+     * Is SK module enabled
+     *
+     * @param $storeId
+     * @return mixed
+     */
     public function isEnabled($storeId)
     {
         return $this->getScopeConfigValue(
@@ -293,6 +319,12 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    /**
+     * Get SK sync auth config value
+     *
+     * @param $storeId
+     * @return mixed|null
+     */
     private function getSyncAuth($storeId)
     {
         $sync_auth = $this->getScopeConfigValue(
@@ -307,11 +339,23 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return null;
     }
 
+    /**
+     * Is Magento connected to SK
+     *
+     * @param $storeId
+     * @return bool
+     */
     public function isConnected($storeId)
     {
         return $this->isEnabled($storeId) && !empty($this->getSyncAuth($storeId));
     }
 
+    /**
+     * Disconnect Magento store from SK
+     *
+     * @param $storeId
+     * @return void
+     */
     public function disconnectStore($storeId)
     {
         $this->configWriter->save(
@@ -352,6 +396,12 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->cache->cleanType('config');
     }
 
+    /**
+     * Get language for Store
+     *
+     * @param $storeId
+     * @return mixed|string
+     */
     public function getLanguageForStore($storeId)
     {
         $lang = $this->getScopeConfigValue(
@@ -366,7 +416,19 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $lang;
     }
 
-    private function getScopeConfigValue(string $key, $id = 0, $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE)
+    /**
+     * Get Scope config value
+     *
+     * @param string $key
+     * @param $id
+     * @param $scope
+     * @return mixed
+     */
+    private function getScopeConfigValue(
+        string $key,
+        $id = 0,
+        $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+    )
     {
         return $this->scopeConfig->getValue(
             $key,
@@ -375,12 +437,22 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
+    /**
+     * Get Magento connect infohook url
+     *
+     * @param string $storeId
+     * @param string $token
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
     public function getInfoHookUrl(string $storeId, string $token): string
     {
         return "{$this->getStoreBaseUrl()}rest/V1/storekeeper/connectinfo?storeId={$storeId}&token=$token";
     }
 
     /**
+     * Generate InfoHook Data
+     *
      * @param string $storeId
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -411,6 +483,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get SK Connection Initialize Url link
+     *
      * @param string $storeId
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -431,6 +505,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Generate Security token
+     *
      * @param $storeId
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -450,6 +526,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Generate ShopUuid
+     *
      * @param $storeId
      * @return string
      */
@@ -467,6 +545,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Shop Name
+     *
      * @param string $storeId
      * @return string
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -484,6 +564,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
+     * Get Shop info
+     *
      * @param string $storeId
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException

@@ -19,17 +19,16 @@ use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as St
 class Orders extends Command
 {
     const STORES = 'stores';
-
     private State $state;
-
     private OrdersHelper $ordersHelper;
-
+    private Config $configHelper;
+    private LoggerInterface $logger;
     private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
-
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
 
     /**
-     * Orders constructor.
+     * Orders constructor
+     *
      * @param State $state
      * @param OrdersHelper $ordersHelper
      * @param Config $configHelper
@@ -58,7 +57,7 @@ class Orders extends Command
     }
 
     /**
-     * @return void
+     * @inheritDoc
      */
     protected function configure(): void
     {
@@ -77,6 +76,8 @@ class Orders extends Command
     }
 
     /**
+     * Sync orders with StoreKeeper
+     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int|void
@@ -137,6 +138,8 @@ class Orders extends Command
     }
 
     /**
+     * Get failed sync orders
+     *
      * @param string $orderId
      * @return StoreKeeperFailedSyncOrder
      */

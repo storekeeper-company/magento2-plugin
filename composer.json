@@ -2,16 +2,17 @@
     "name": "storekeeper/magento2-plugin",
     "description": "Storekeeper plugin",
     "require": {
-        "php": "^7.4|^8.1",
+        "php": "^7.4|^8.1|^8.2",
+        "symfony/polyfill-uuid": "*",
         "magento/product-community-edition": "^2.4.5",
-        "brick/money": "0.5",
+        "brick/money": "0.5.*|0.6.*|0.7.*",
         "storekeeper/api-wrapper": "v5.2",
         "erusev/parsedown": "v1.7.4"
     },
     "suggest": {
     },
     "type": "magento2-module",
-    "version": "1.2.5",
+    "version": "1.3.2",
     "license": [
         "LGPL-3.0-only"
     ],

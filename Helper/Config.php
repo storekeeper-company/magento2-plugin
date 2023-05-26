@@ -1,6 +1,7 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Helper;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
 
 class Config extends \Magento\Framework\App\Helper\AbstractHelper
@@ -9,17 +10,18 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
     public const SYNC_PRODUCTS = 2;
     public const SYNC_ORDERS = 4;
     public const SYNC_ALL = 8;
-
     const STOREKEEPER_PAYMENT_METHODS_ACTIVE = 'storekeeper_payment_methods/payment_methods/enabled	';
-
     const STOREKEEPER_SYNC_MODE = 'storekeeper_general/general/storekeeper_sync_mode';
-
     const STOREKEEPER_TOKEN = 'storekeeper_general/general/storekeeper_token';
-
     const IS_DEBUG_LOGS = 'storekeeper_general/general/debug_logs';
 
+    /**
+     * Constructor
+     *
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig
     ) {
         $this->scopeConfig = $scopeConfig;
     }

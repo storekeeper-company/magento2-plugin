@@ -7,17 +7,14 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class Connectinfo implements InfoWebhookInterface
 {
-
-    /**
-     * @var PageFactory
-     */
-    private $resultFactory;
+    private Auth $authHelper;
+    private Http $request;
+    private Data $jsonHelper;
 
     /**
      * @param Auth $authHelper
      * @param Http $request
      * @param Data $jsonHelper
-     * @param PageFactory $resultFactory
      */
     public function __construct(
         Auth $authHelper,

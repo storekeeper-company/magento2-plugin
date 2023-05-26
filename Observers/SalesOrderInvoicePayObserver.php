@@ -1,17 +1,33 @@
 <?php
 namespace StoreKeeper\StoreKeeper\Observers;
 
-class SalesOrderInvoicePayObserver implements \Magento\Framework\Event\ObserverInterface
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+
+class SalesOrderInvoicePayObserver implements ObserverInterface
 {
+    private Auth $authHelper;
+
+    /**
+     * Constructor
+     *
+     * @param Auth $authHelper
+     */
     public function __construct(
-        \StoreKeeper\StoreKeeper\Helper\Api\Auth $authHelper
+        Auth $authHelper
     ) {
         $this->authHelper = $authHelper;
     }
 
-    public function execute(
-        \Magento\Framework\Event\Observer $observer
-    ) {
+    /**
+     * Set order as pending for sync
+     *
+     * @param Observer $observer
+     * @return void
+     */
+    public function execute(Observer $observer)
+    {
         $invoice = $observer->getEvent()->getInvoice();
         $order = $invoice->getOrder();
 

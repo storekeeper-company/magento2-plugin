@@ -2,17 +2,22 @@
 
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field;
 
+use Magento\Backend\Model\Url;
+use Magento\Framework\App\Request\Http;
+use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\Data\Form\Element\CollectionFactory;
 use Magento\Framework\Data\Form\Element\Factory;
 use Magento\Framework\Escaper;
-
 use Magento\Framework\Math\Random;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
-
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
-class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
+class RefreshStore extends AbstractElement
 {
+    private Auth $authHelper;
+    private Http $request;
+    private Url $backendUrlManager;
+
     public function __construct(
         Factory $factoryElement,
         CollectionFactory $factoryCollection,
@@ -20,8 +25,8 @@ class RefreshStore extends \Magento\Framework\Data\Form\Element\AbstractElement
         ?SecureHtmlRenderer $secureRenderer,
         ?Random $random,
         Auth $authHelper,
-        \Magento\Framework\App\Request\Http $request,
-        \Magento\Backend\Model\Url $backendUrlManager,
+        Http $request,
+        Url $backendUrlManager,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
