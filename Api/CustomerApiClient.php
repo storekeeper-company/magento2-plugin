@@ -39,37 +39,12 @@ class CustomerApiClient
     }
 
     /**
-     * Find customer relation dataId by email
-     *
-     * @param string $email
-     * @param string $storeId
-     * @return false|int
-     */
-    public function findCustomerRelationDataIdByEmail(string $email, string $storeId): ?int
-    {
-        $id = false;
-        if (!empty($email)) {
-            try {
-                $customer = $this->findShopCustomerBySubuserEmail($storeId, $email);
-                $id = (int)$customer['id'];
-            } catch (GeneralException $exception) {
-                // Customer not found in StoreKeeper
-                $message = $exception->getMessage();
-                $this->logger->error($message);
-                throw new \Exception($message);
-            }
-        }
-
-        return $id;
-    }
-
-    /**
      * @param string $storeId
      * @param string $email
      * @return array|null
      * @throws \Exception
      */
-    private function findShopCustomerBySubuserEmail(string $storeId, string $email): ?array
+    public function findShopCustomerBySubuserEmail(string $storeId, string $email): ?array
     {
         return $this->orderApiClient->getShopModule($storeId)->findShopCustomerBySubuserEmail(['email' => $email]);
     }
@@ -290,6 +265,4 @@ class CustomerApiClient
             'name' => $order->getCustomerName()
         ];
     }
-
-
 }
