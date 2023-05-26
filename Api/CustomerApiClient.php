@@ -39,35 +39,12 @@ class CustomerApiClient
     }
 
     /**
-     * Find customer relation dataId by email
-     *
-     * @param string $email
-     * @param string $storeId
-     * @return false|int
-     */
-    public function findCustomerRelationDataIdByEmail(string $email, string $storeId): ?int
-    {
-        $id = false;
-        if (!empty($email)) {
-            try {
-                $customer = $this->findShopCustomerBySubuserEmail($storeId, $email);
-                $id = (int)$customer['id'];
-            } catch (GeneralException $exception) {
-                // Customer not found in StoreKeeper
-                $this->logger->error($exception->getMessage());
-            }
-        }
-
-        return $id;
-    }
-
-    /**
      * @param string $storeId
      * @param string $email
      * @return array|null
      * @throws \Exception
      */
-    private function findShopCustomerBySubuserEmail(string $storeId, string $email): ?array
+    public function findShopCustomerBySubuserEmail(string $storeId, string $email): ?array
     {
         return $this->orderApiClient->getShopModule($storeId)->findShopCustomerBySubuserEmail(['email' => $email]);
     }
@@ -75,10 +52,11 @@ class CustomerApiClient
     /**
      * Create StoreKeeper customer by order
      *
+     * @param string $email
      * @param Order $order
      * @return int
      */
-    public function createStorekeeperCustomerByOrder(Order $order): int
+    public function createStorekeeperCustomerByOrder(string $email, Order $order): int
     {
         if (!$order->getCustomerIsGuest()) {
             $customer = $this->customerRepository->getById($order->getCustomerId());
@@ -100,8 +78,8 @@ class CustomerApiClient
                 'contact_address' => $this->mapAddress($shippingAddress),
                 'address_billing' => $this->mapAddress($billingAddress),
                 'subuser' => [
-                    'login' => $order->getCustomerEmail(),
-                    'email' => $order->getCustomerEmail()
+                    'login' => $email,
+                    'email' => $email
                 ]
             ]
         ];
@@ -287,6 +265,4 @@ class CustomerApiClient
             'name' => $order->getCustomerName()
         ];
     }
-
-
 }

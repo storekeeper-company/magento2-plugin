@@ -32,7 +32,5 @@ class AbstractGuestTest extends AbstractTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->customerApiClientMock->method('findCustomerRelationDataIdByEmail')
-            ->willThrowException(new \Exception('The customer was not found by email'));
     }
 }

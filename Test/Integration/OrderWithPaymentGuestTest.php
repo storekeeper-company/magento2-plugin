@@ -22,4 +22,3 @@ class OrderWithPaymentGuestTest extends AbstractGuestTest
         $this->executeOrderWithPayment(true);
     }
 }
-

@@ -27,6 +27,7 @@ use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Api\CustomerApiClient;
 use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
+use StoreKeeper\StoreKeeper\Exception\EmailIsAdminUserException;
 
 class Orders extends AbstractHelper
 {
@@ -120,11 +121,7 @@ class Orders extends AbstractHelper
         $relationDataId = null;
         $orderItemsPayload = $this->prepareOrderItems($order);
 
-        $relationDataId = $this->customerApiClient->findCustomerRelationDataIdByEmail($email, $order->getStoreId());
-
-        if (!$relationDataId) {
-            $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($order);
-        }
+        $relationDataId = $this->getRelationDataId($email, $order);
 
         $payload = [
             'billing_address__merge' => 'false',
@@ -652,7 +649,7 @@ class Orders extends AbstractHelper
 
             if ($paymentId) {
                 try {
-                    $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, ['payment_ids' => [$paymentId]]);
+                    $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, [$paymentId]);
                 } catch (GeneralException $e) {
                     throw new \Magento\Framework\Exception\LocalizedException(
                         __($e->getMessage())
@@ -1165,5 +1162,57 @@ class Orders extends AbstractHelper
         }
 
         return $payload;
+    }
+
+    /**
+     * @param string $email
+     * @param Order $order
+     * @return int
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getRelationDataId(string $email, Order $order): int
+    {
+        $storeId = $order->getStoreId();
+        try {
+            $relationDataId = $this->findCustomerRelationDataIdByEmail($email, $storeId);
+        } catch (EmailIsAdminUserException $e) {
+            $storeBaseUrl = parse_url($this->authHelper->getStoreBaseUrl())['host'];
+            if (!$order->getCustomerIsGuest()) {
+                $email = 'nomail+' . $order->getCustomerId() . '@' . $storeBaseUrl;
+            } else {
+                $email = 'nomail+' . crc32($email) . '@' . $storeBaseUrl;
+            }
+
+        }
+        if( empty($relationDataId)){
+            $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($email, $order);
+        }
+
+        return $relationDataId;
+    }
+
+    /**
+     * Find customer relation dataId by email
+     *
+     * @param string $email
+     * @param string $storeId
+     * @return false|int
+     */
+    protected function findCustomerRelationDataIdByEmail(string $email, string $storeId): ?int
+    {
+        $id = null;
+        if (!empty($email)) {
+            try {
+                $customer = $this->customerApiClient->findShopCustomerBySubuserEmail($storeId, $email);
+                $id = (int)$customer['id'];
+            } catch (GeneralException $exception) {
+                if( $exception->getApiExceptionClass() == 'ShopModule::EmailIsAdminUser' ){
+                    throw new EmailIsAdminUserException($exception->getMessage(), 0, $exception);
+                }
+                throw $exception;
+            }
+        }
+
+        return $id;
     }
 }
