@@ -1200,7 +1200,7 @@ class Orders extends AbstractHelper
      */
     protected function findCustomerRelationDataIdByEmail(string $email, string $storeId): ?int
     {
-        $id = false;
+        $id = null;
         if (!empty($email)) {
             try {
                 $customer = $this->customerApiClient->findShopCustomerBySubuserEmail($storeId, $email);
