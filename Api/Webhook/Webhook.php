@@ -165,6 +165,7 @@ class Webhook
                     $success = false;
                     $skipPublish = false;
                     $message = [];
+                    $isRefund = false;
                     foreach ($eventNames as $eventName) {
                         if ($eventName == "stock_change" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $skipPublish = $this->getIsOwnOrderStockChange($bodyParams);
@@ -178,6 +179,10 @@ class Webhook
                         } elseif ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                             $messages[] = "Processing entity \"Category\"";
                         } elseif ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
+                            foreach ($payload['events'] as $event) {
+                                $isRefund = $this->isRefund($event);
+                                break;
+                            }
                             $messages[] = "Processing entity \"Order\"";
                         } else {
                             $messages[] = "Skipping {$entity}::{$eventName}: mode not allowed";
@@ -192,7 +197,8 @@ class Webhook
                                 "storeId" => $storeId,
                                 "module" => $module,
                                 "key" => $key,
-                                "value" => $value
+                                "value" => $value,
+                                "refund" => $isRefund
                             ];
 
                             $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
@@ -344,5 +350,23 @@ class Webhook
     private function getAmountOfFailedTasks(): int
     {
         return count($this->getIdsWithFailedTasks());
+    }
+
+    /**
+     * @param array $event
+     * @return bool
+     */
+    private function isRefund(array $event): bool
+    {
+        $eventName = $event['event'];
+        if ($eventName !== 'updated') {
+            return false;
+        }
+        $orderData = $event['details']['order'];
+        $paidValueWt = $orderData['paid_value_wt'];
+        $paidBackValueWt = $orderData['paid_back_value_wt'];
+        if ($paidBackValueWt && $paidValueWt - $paidBackValueWt == 0) {
+            return true;
+        }
     }
 }
