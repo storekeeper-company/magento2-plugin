@@ -49,6 +49,7 @@ class Consumer
             $key = $data['key'];
             $value = $data['value'];
             $type = $data['type'];
+            $refund = $data['refund'] ?? false;
 
             if (is_null($storeId)) {
                 throw new \Exception("Missing store ID");
@@ -61,7 +62,7 @@ class Consumer
                 } elseif ($entity == 'Category') {
                     $this->categoriesHelper->updateById($storeId, $value);
                 } elseif ($entity == "Order") {
-                    $this->ordersHelper->updateById($storeId, $value);
+                    $this->ordersHelper->updateById($storeId, $value, $refund);
                 }
             } elseif ($type == "deactivated") {
                 if ($entity == "ShopProduct") {

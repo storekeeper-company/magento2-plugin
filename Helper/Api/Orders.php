@@ -28,6 +28,9 @@ use StoreKeeper\StoreKeeper\Api\CustomerApiClient;
 use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Exception\EmailIsAdminUserException;
+use Magento\Sales\Model\Order\CreditmemoFactory;
+use Magento\Sales\Model\Service\CreditmemoService;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 
 class Orders extends AbstractHelper
 {
@@ -49,6 +52,9 @@ class Orders extends AbstractHelper
     private CustomerApiClient $customerApiClient;
     private PaymentApiClient $paymentApiClient;
     private ProductApiClient $productApiClient;
+    private CreditmemoFactory $creditmemoFactory;
+    private CreditmemoService $creditmemoService;
+    private OrderCollectionFactory $orderCollectionFactory;
 
     /**
      * Constructor
@@ -69,6 +75,9 @@ class Orders extends AbstractHelper
      * @param CustomerApiClient $customerApiClient
      * @param PaymentApiClient $paymentApiClient
      * @param ProductApiClient $productApiClient
+     * @param CreditmemoFactory $creditmemoFactory
+     * @param CreditmemoService $creditmemoService
+     * @param OrderCollectionFactory $orderCollectionFactory
      */
     public function __construct(
         Auth $authHelper,
@@ -86,7 +95,10 @@ class Orders extends AbstractHelper
         OrderApiClient $orderApiClient,
         CustomerApiClient $customerApiClient,
         PaymentApiClient $paymentApiClient,
-        ProductApiClient $productApiClient
+        ProductApiClient $productApiClient,
+        CreditmemoFactory $creditmemoFactory,
+        CreditmemoService $creditmemoService,
+        OrderCollectionFactory $orderCollectionFactory
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -104,6 +116,9 @@ class Orders extends AbstractHelper
         $this->customerApiClient = $customerApiClient;
         $this->paymentApiClient = $paymentApiClient;
         $this->productApiClient = $productApiClient;
+        $this->creditmemoFactory = $creditmemoFactory;
+        $this->creditmemoService = $creditmemoService;
+        $this->orderCollectionFactory = $orderCollectionFactory;
         $this->taxClassesDiscounts = [];
     }
 
@@ -377,10 +392,11 @@ class Orders extends AbstractHelper
      *
      * @param string $storeId
      * @param string $storeKeeperId
+     * @param bool $refund
      * @throws LocalizedException
      * @retrun void
      */
-    public function updateById(string $storeId, string $storeKeeperId): void
+    public function updateById(string $storeId, string $storeKeeperId, bool $refund): void
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($storeId, $storeKeeperId);
 
@@ -393,6 +409,10 @@ class Orders extends AbstractHelper
 
         if ($order && $order->getStatus() !== 'canceled') {
             $this->createShipment($order, $storeKeeperId);
+        }
+
+        if ($refund && $order->getStatus() !== 'closed') {
+            $this->createRefund($storeKeeperId);
         }
     }
 
@@ -1214,5 +1234,25 @@ class Orders extends AbstractHelper
         }
 
         return $id;
+    }
+
+    /**
+     * Create refund
+     *
+     * @param $storeKeeperId
+     * @throws LocalizedException
+     */
+    private function createRefund($storeKeeperId): void
+    {
+        $order = $this->orderCollectionFactory->create()
+            ->addAttributeToSelect('*')
+            ->addAttributeToFilter('storekeeper_id', $storeKeeperId)
+            ->getFirstItem();
+        $invoices = $order->getInvoiceCollection();
+        foreach ($invoices as $invoice) {
+            $creditmemo = $this->creditmemoFactory->createByOrder($order);
+            $creditmemo->setInvoice($invoice);
+            $this->creditmemoService->refund($creditmemo);
+        }
     }
 }
