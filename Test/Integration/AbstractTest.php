@@ -62,6 +62,10 @@ class AbstractTest extends TestCase
     protected $finish;
     protected $guestCartManagement;
     protected $authHelper;
+    protected $configHelper;
+    protected $orderCollectionFactory;
+    protected $creditmemoFactory;
+    protected $creditmemoService;
 
     protected function setUp(): void
     {
@@ -92,9 +96,17 @@ class AbstractTest extends TestCase
         $this->guestCartManagement = Bootstrap::getObjectManager()->create(\Magento\Quote\Model\GuestCart\GuestCartManagement::class);
         $this->maskedQuoteIdToQuoteId = Bootstrap::getObjectManager()->create(\Magento\Quote\Model\MaskedQuoteIdToQuoteId::class);
         $this->authHelper = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Helper\Api\Auth::class);
+        $this->configHelper = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Helper\Config::class);
+        $this->orderCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\ResourceModel\Order\CollectionFactory::class);
+        $this->creditmemoFactory = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order\CreditmemoFactory::class);
+        $this->creditmemoService = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Service\CreditmemoService::class);
 
-        $this->customerApiClientMock->method('findCustomerRelationDataIdByEmail')
-            ->willReturn(69);
+        $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
+            ->willReturn(
+                [
+                    'id' => '69'
+                ]
+            );
         $this->customerApiClientMock->method('createStorekeeperCustomerByOrder')
             ->willReturn(99);
         $this->productApiClientMock->method('getTaxRates')
@@ -140,14 +152,17 @@ class AbstractTest extends TestCase
                 'searchCriteriaBuilder' => $this->searchCriteriaBuilder,
                 'orderRepository' => $this->orderRepository,
                 'paymentApiClient' => $this->paymentApiClientMock,
-                'authHelper' => $this->authHelper
+                'authHelper' => $this->authHelper,
+                'orderCollectionFactory' => $this->orderCollectionFactory,
+                'creditmemoFactory' => $this->creditmemoFactory,
+                'creditmemoService' => $this->creditmemoService
             ]
         );
         $this->cronOrders = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Cron\Orders::class,
             [
                 'storeManager' => Bootstrap::getObjectManager()->create(\Magento\TestFramework\Store\StoreManager::class),
-                'configHelper' => Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Helper\Config::class),
+                'configHelper' => $this->configHelper,
                 'ordersHelper' => $this->apiOrders,
                 'storeKeeperFailedSyncOrder' => Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class)
             ]
