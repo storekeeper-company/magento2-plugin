@@ -116,7 +116,9 @@ class AbstractTest extends TestCase
         $this->orderApiClientMock->method('getStoreKeeperOrder')
             ->willReturn(
                 [
-                    'paid_back_value_wt' => 50
+                    'paid_back_value_wt' => 50,
+                    'status' => 'refunded',
+                    'number' => 223
                 ]
             );
         $this->requestMock->method('getParam')

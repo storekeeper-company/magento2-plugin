@@ -3,6 +3,7 @@
 namespace StoreKeeper\StoreKeeper\Test\Integration;
 
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Serialize\Serializer\Json;
@@ -69,6 +70,10 @@ class WebhookTest extends AbstractTest
                 'orderCollectionFactory' => $this->orderCollectionFactory
             ]
         );
+
+        $ex = new GeneralException('The new refund has not to be created', 0);
+        $ex->setApiExceptionClass('ShopModule::GeneralException');
+        $this->paymentApiClientMock->method('getNewWebPayment')->willThrowException($ex);
     }
 
     /**
@@ -95,6 +100,9 @@ class WebhookTest extends AbstractTest
         $order = $this->orderRepository->get($orderId);
         $creditmemo = $order->getCreditmemosCollection()->getFirstItem();
         $this->assertEquals(Creditmemo::STATE_REFUNDED, $creditmemo->getState());
+
+        $this->consumer->process(self::QUEUE_MESSAGE);
+        $this->apiOrders->update($order, $order->getStorekeeperId());
     }
 
     /**
