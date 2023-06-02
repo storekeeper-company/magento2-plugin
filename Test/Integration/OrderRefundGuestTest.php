@@ -21,6 +21,8 @@ class OrderRefundGuestTest extends AbstractGuestTest
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_mode 4
      * @magentoConfigFixture current_store payment/storekeeper_payment_ideal/active 1
+     
+     *just under 'parent::setUp();' it creates a mock API client to use for testing, so it's not really an API connection, but it creates a fake one.
      */
     public function testGuestRefund()
     {
