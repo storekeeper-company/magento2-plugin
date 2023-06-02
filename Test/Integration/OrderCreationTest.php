@@ -28,6 +28,10 @@ class OrderCreationTest extends AbstractTest
      *The function 'testOrderCreation()', uses certain fixtures to get a basic customer, product, and order with respecting data for testing, it pulls it from the '$this' variable.
      *afterwards, the variable '$order' is filled with the 'createOrder()' function, which uses data from the '$orderdata' variable
      *then it runs the actual test function called 'assertOrderCreation($order)'
+     
+     
+     *ABOUT 'AbstractTest.php'
+     *'Abstracttest.php' is basically a place where we define variables and function to use in our test files, like this one right here. it also contains mocks and certain hardcoded test data.
     */
     
     public function testOrderCreation()
