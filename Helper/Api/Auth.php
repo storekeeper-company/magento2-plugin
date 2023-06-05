@@ -10,7 +10,6 @@ use Magento\Framework\Module\ModuleList;
 use Magento\Store\Model\StoreManagerInterface;
 use Ramsey\Uuid\Generator\PeclUuidRandomGenerator;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
-use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 
 class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -30,7 +29,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     private ProductMetadataInterface $productMetadata;
     private ModuleList $moduleList;
     private OrderApiClient $orderApiClient;
-    private ProductApiClient $productApiClient;
 
     /**
      * Constructor
@@ -44,7 +42,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
      * @param ProductMetadataInterface $productMetadata
      * @param ModuleList $moduleList
      * @param OrderApiClient $orderApiClient
-     * @param ProductApiClient $productApiClient
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
@@ -55,8 +52,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         PeclUuidRandomGenerator $uuidRandomGenerator,
         ProductMetadataInterface $productMetadata,
         ModuleList $moduleList,
-        OrderApiClient $orderApiClient,
-        ProductApiClient $productApiClient
+        OrderApiClient $orderApiClient
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
@@ -67,7 +63,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productMetadata = $productMetadata;
         $this->moduleList = $moduleList;
         $this->orderApiClient = $orderApiClient;
-        $this->productApiClient = $productApiClient;
     }
 
     /**
