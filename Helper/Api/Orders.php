@@ -1226,10 +1226,9 @@ class Orders extends AbstractHelper
                 $customer = $this->customerApiClient->findShopCustomerBySubuserEmail($storeId, $email);
                 $id = (int)$customer['id'];
             } catch (GeneralException $exception) {
-                if( $exception->getApiExceptionClass() == 'ShopModule::EmailIsAdminUser' ){
+                if ($exception->getApiExceptionClass() == 'ShopModule::EmailIsAdminUser') {
                     throw new EmailIsAdminUserException($exception->getMessage(), 0, $exception);
                 }
-                throw $exception;
             }
         }
 
