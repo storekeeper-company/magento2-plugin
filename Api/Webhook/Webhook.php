@@ -204,7 +204,9 @@ class Webhook
                     } elseif ($entity == "Order" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL)) {
                         foreach ($payload['events'] as $event) {
                             $isRefund = $this->isRefund($event);
-                            break;
+                            if ($isRefund) {
+                                break;
+                            }
                         }
                         $messages[] = "Processing entity \"Order\"";
                     } else {
@@ -388,5 +390,6 @@ class Webhook
         if ($paidBackValueWt && $paidValueWt - $paidBackValueWt == 0) {
             return true;
         }
+        return false;
     }
 }
