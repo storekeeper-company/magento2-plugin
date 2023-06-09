@@ -125,6 +125,13 @@
                 </field>
 
             </group>
+            <group id="export_data" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Export Data</label>
+                <field id="link" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Export Data</label>
+                    <frontend_model>StoreKeeper\StoreKeeper\Block\Adminhtml\Render\SettingsButton</frontend_model>
+                </field>
+            </group>
         </section>
 
         <section id="payment">
