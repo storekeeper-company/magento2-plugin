@@ -8,26 +8,21 @@ use StoreKeeper\StoreKeeper\Api\ApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
-use Psr\Log\LoggerInterface;
 
 class PaymentApiClient extends ApiClient
 {
     private const STOREKEEPER_PAYMENT_MODULE_NAME = 'PaymentModule';
 
     private OrderApiClient $orderApiClient;
-    private LoggerInterface $logger;
 
     /**
      * PaymentApiClient constructor.
      * @param OrderApiClient $orderApiClient
-     * @param LoggerInterface $logger
      */
     public function __construct(
         OrderApiClient $orderApiClient,
-        LoggerInterface $logger
     ) {
         $this->orderApiClient = $orderApiClient;
-        $this->logger = $logger;
     }
 
     /**

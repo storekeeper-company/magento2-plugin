@@ -250,19 +250,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
 
-        $results = $this->orderApiClient->getShopModule($storeId)->naturalSearchShopFlatProductForHooks(
-            ' ',
-            $language,
-            0,
-            1,
-            [],
-            [
-                [
-                    'name' => 'flat_product/product_id__=',
-                    'val' => $storeKeeperId
-                ]
-            ]
-        );
+        $results = $this->orderApiClient->getNaturalSearchShopFlatProductForHooks($language, $storeId, $storeKeeperId);
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];

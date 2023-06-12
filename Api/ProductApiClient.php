@@ -80,8 +80,9 @@ class ProductApiClient extends ApiClient
      * @param string $status
      * @param array $exceptionData
      * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @return bool
      */
-    public function setShopProductObjectSyncStatusForHook(string $storeId, string $storeKeeperProductId, ?ProductInterface $product, string $status, array $exceptionData): void
+    public function setShopProductObjectSyncStatusForHook(string $storeId, string $storeKeeperProductId, ?ProductInterface $product, string $status, array $exceptionData): bool
     {
         $shopInfo = $this->authHelper->getShopInfo($storeId);
         $pluginVersion = implode(', ', [
@@ -127,6 +128,14 @@ class ProductApiClient extends ApiClient
             }
         }
 
-        $this->orderApiClient->getShopModule($storeId)->setShopProductObjectSyncStatusForHook($data);
+        $result = true;
+        try {
+            $this->orderApiClient->getShopModule($storeId)->setShopProductObjectSyncStatusForHook($data);
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $result = false;
+        }
+
+        return $result;
     }
 }
