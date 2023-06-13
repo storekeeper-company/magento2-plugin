@@ -103,4 +103,28 @@ class OrderApiClient extends ApiClient
     {
         return $this->getShopModule($storeId)->newOrderWithReturn($payload);
     }
+
+    /**
+     * @param string $language
+     * @param string $storeId
+     * @param string $storeKeeperId
+     * @return array
+     * @throws \Exception
+     */
+    public function getNaturalSearchShopFlatProductForHooks(string $language, string $storeId, string $storeKeeperId): array
+    {
+        return $this->getShopModule($storeId)->naturalSearchShopFlatProductForHooks(
+            ' ',
+            $language,
+            0,
+            1,
+            [],
+            [
+                [
+                    'name' => 'flat_product/product_id__=',
+                    'val' => $storeKeeperId
+                ]
+            ]
+        );
+    }
 }

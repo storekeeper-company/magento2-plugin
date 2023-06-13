@@ -33,6 +33,7 @@ class AbstractTest extends TestCase
     const PRODUCT_SKU = 'simple-2';
     const STORE_KEEPER_ORDER_NUMBER = 'S08-' . self::ORDER_INCREMENT_ID;
     const STORE_KEEPER_ORDER_ID = 55;
+    const UPDATED_STOCK_ITEM_VALUE = 284;
 
     protected $customerApiClientMock;
     protected $productApiClientMock;
@@ -66,6 +67,8 @@ class AbstractTest extends TestCase
     protected $orderCollectionFactory;
     protected $creditmemoFactory;
     protected $creditmemoService;
+    protected $productCollectionFactory;
+    protected $stockRegistry;
 
     protected function setUp(): void
     {
@@ -100,6 +103,8 @@ class AbstractTest extends TestCase
         $this->orderCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\ResourceModel\Order\CollectionFactory::class);
         $this->creditmemoFactory = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order\CreditmemoFactory::class);
         $this->creditmemoService = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Service\CreditmemoService::class);
+        $this->productCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
+        $this->stockRegistry = Bootstrap::getObjectManager()->create(\Magento\CatalogInventory\Api\StockRegistryInterface::class);
 
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
@@ -119,6 +124,24 @@ class AbstractTest extends TestCase
                     'paid_back_value_wt' => 50,
                     'status' => 'refunded',
                     'number' => 223
+                ]
+            );
+        $this->orderApiClientMock->method('getNaturalSearchShopFlatProductForHooks')
+            ->willReturn(
+                [
+                    'data' => [
+                        0 => [
+                            'flat_product' => [
+                                'product' => [
+                                    'product_stock' => [
+                                        'value' => self::UPDATED_STOCK_ITEM_VALUE
+                                    ],
+                                    'sku' => 'simple-2'
+                                ]
+                            ],
+                            'product_id' => 7
+                        ]
+                    ]
                 ]
             );
         $this->requestMock->method('getParam')
