@@ -1,6 +1,6 @@
 <?php
 
-namespace StoreKeeper\StoreKeeper\Model;
+namespace StoreKeeper\StoreKeeper\Model\Export;
 
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\Filesystem;
@@ -23,9 +23,8 @@ use Magento\Catalog\Helper\Data as ProductHelper;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
-use Magento\Framework\Stdlib\DateTime\DateTime;
 
-class ProductExporter
+class ProductExportManager
 {
     const HEADERS_PATHS = [
         'path://product.type',
@@ -44,7 +43,6 @@ class ProductExporter
         'path://shop_products.main.backorder_enabled',
         'path://product.product_price.tax',
         'path://product.product_price.tax_rate.country_iso2',
-        'path://product.product_price.tax_rate.alias',
         'path://product.product_price.currency_iso3',
         'path://product.product_price.ppu',
         'path://product.product_price.ppu_wt',
@@ -84,7 +82,16 @@ class ProductExporter
         'path://content_vars.encoded__ct5y8cb54vtvu6.value_label',
         'path://content_vars.encoded__24f8h2tfaabxsqxx.value',
         'path://content_vars.encoded__24f8h2tfaabxsqxx.value_label',
-        'path://product.product_images.0.download_url'
+        'path://product.product_images.0.download_url',
+        'path://product.product_images.1.download_url',
+        'path://product.product_images.2.download_url',
+        'path://product.product_images.3.download_url',
+        'path://product.product_images.4.download_url',
+        'path://product.product_images.5.download_url',
+        'path://product.product_images.6.download_url',
+        'path://product.product_images.7.download_url',
+        'path://product.product_images.8.download_url',
+        'path://product.product_images.9.download_url'
     ];
     const HEADERS_LABELS = [
         'Type',
@@ -103,7 +110,6 @@ class ProductExporter
         'Backorder enabled',
         'VAT Rate',
         'VAT Rate Country code (iso2)',
-        'VAT Rate alias',
         'Currency',
         'Price',
         'Price with VAT',
@@ -143,9 +149,17 @@ class ProductExporter
         'Vulpennen (label)',
         'Barcode (raw)',
         'Barcode (label)',
-        'Image 1'
+        'Image 1',
+        'Image 2',
+        'Image 3',
+        'Image 4',
+        'Image 5',
+        'Image 6',
+        'Image 7',
+        'Image 8',
+        'Image 9',
+        'Image 10'
     ];
-    const VAR_EXPORT_STOREKEEPER = 'var_export_storekeeper';
 
     private CollectionFactory $productCollectionFactory;
     private Csv $csv;
@@ -165,8 +179,28 @@ class ProductExporter
     private CategoryRepositoryInterface $categoryRepository;
     private SetFactory $attributeSetFactory;
     private ImageFactory $imageFactory;
-    private DateTime $dateTime;
 
+    /**
+     * ExportManager constructor.
+     * @param CollectionFactory $productCollectionFactory
+     * @param Csv $csv
+     * @param Filesystem $filesystem
+     * @param DirectoryList $directoryList
+     * @param File $file
+     * @param StoreManagerInterface $storeManager
+     * @param StockRegistryInterface $stockRegistry
+     * @param TaxCalculationInterface $taxCalculation
+     * @param Calculation $calculation
+     * @param TaxClassRepositoryInterface $taxClassRepository
+     * @param RateCollectionFactory $rateCollectionFactory
+     * @param ResourceCalculation $resourceCalculation
+     * @param TaxCalculationCollectionFactory $taxCalculationCollectionFactory
+     * @param TaxRateRepositoryInterface $taxRateRepository
+     * @param ProductHelper $productHelper
+     * @param CategoryRepositoryInterface $categoryRepository
+     * @param SetFactory $attributeSetFactory
+     * @param ImageFactory $imageFactory
+     */
     public function __construct(
         CollectionFactory $productCollectionFactory,
         Csv $csv,
@@ -185,8 +219,7 @@ class ProductExporter
         ProductHelper $productHelper,
         CategoryRepositoryInterface $categoryRepository,
         SetFactory $attributeSetFactory,
-        ImageFactory $imageFactory,
-        DateTime $dateTime
+        ImageFactory $imageFactory
     ) {
         $this->productCollectionFactory = $productCollectionFactory;
         $this->csv = $csv;
@@ -206,26 +239,11 @@ class ProductExporter
         $this->categoryRepository = $categoryRepository;
         $this->attributeSetFactory = $attributeSetFactory;
         $this->imageFactory = $imageFactory;
-        $this->dateTime = $dateTime;
     }
 
-    /**
-     * @throws \Magento\Framework\Exception\FileSystemException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @return void
-     */
-    public function exportProductToCsv(): void
+    public function getProductExportData(array $products): array
     {
-        $filePath = $this->directoryList->getPath(DirectoryList::VAR_EXPORT) . $this->getFileName();
-
-        $products = $this->productCollectionFactory->create();
-        $products->addAttributeToSelect('*');
-
-        $data = [
-            self::HEADERS_PATHS,
-            self::HEADERS_LABELS
-        ];
-
+        $result = [];
         foreach ($products as $product) {
             /** @var ProductInterface $product */
             $productPrice = $product->getPrice();
@@ -237,8 +255,8 @@ class ProductExporter
             $taxData = $this->getTaxData($product);
             $categoryData = $this->getCategoryData($product);
 
-            $data[] = [
-                $product->getTypeId(),
+            $data = [
+                $productData['product_type'],
                 $product->getSku(),
                 $product->getName(),
                 $product->getShortDescription(),
@@ -254,7 +272,6 @@ class ProductExporter
                 $stockData['is_backorder_enabled'],
                 $taxData['vat_rate'] ?? null,
                 $taxData['vat_iso2'] ?? null,
-                $taxData['vat_rate_alias'] ?? null,
                 $this->storeManager->getStore()->getCurrentCurrencyCode(),
                 $this->productHelper->getTaxPrice($product, $productPrice, false), // price excl. tax
                 $this->productHelper->getTaxPrice($product, $productPrice, true), // price incl. tax
@@ -293,24 +310,13 @@ class ProductExporter
                 null,
                 null,
                 null,
-                null,
-                $productData['image_url']
+                null
             ];
+            $data = $this->addProductImageUrlData($data, $product);
+            $result[] = array_combine(self::HEADERS_PATHS, $data);
         }
 
-        $this->csv->saveData($filePath, $data);
-    }
-
-    /**
-     * @return string
-     */
-    private function getFileName(): string
-    {
-        $timestamp = $this->dateTime->gmtTimestamp();
-        $dateTimeFormatted = $this->dateTime->date('Ymd_His', $timestamp);
-        $fileName = '/storekeeper_catalog_product_' . $dateTimeFormatted . '.csv';
-
-        return $fileName;
+        return $result;
     }
 
     /**
@@ -319,17 +325,47 @@ class ProductExporter
      */
     private function getProductData(ProductInterface $product): array
     {
+        $productType = $this->getProductType($product);
         $attributeSetName = $this->attributeSetFactory->create()->load($product->getAttributeSetId())->getAttributeSetName();
         $isActive = ($product->getStatus() == 1) ? 'yes' : 'no';
         $isSalable = $product->isSalable() ? 'yes' : 'no';
-        $imageUrl = $this->imageFactory->create()->init($product, 'product_page_image_large')->getUrl();
 
         return [
+            'product_type' => $productType,
             'is_active' => $isActive,
             'attribute_set_name' => $attributeSetName,
-            'is_salable' => $isSalable,
-            'image_url' => $imageUrl
+            'is_salable' => $isSalable
         ];
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return string
+     */
+    private function getProductType(ProductInterface $product): string
+    {
+        $validProductTypes = ['bundle', 'configurable', 'simple'];
+        $productType = $product->getTypeId();
+
+        if (!in_array($productType, $validProductTypes)) {
+            $productType = 'simple';
+        }
+
+        return $productType;
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getProductImageUrlData(ProductInterface $product): array
+    {
+        $data = [];
+        foreach ($product->getMediaGalleryImages() as $productImage) {
+            $data[] = $productImage->getUrl();
+        }
+
+        return $data;
     }
 
     /**
@@ -373,8 +409,7 @@ class ProductExporter
             $taxRate = $this->taxRateRepository->get($taxRateId);
             $data = [
                 'vat_rate' => (float)$taxRate->getRate(),
-                'vat_iso2' => $taxRate->getTaxCountryId(),
-                'vat_rate_alias' => $taxRate->getCode()
+                'vat_iso2' => $taxRate->getTaxCountryId()
             ];
         }
 
@@ -395,6 +430,33 @@ class ProductExporter
                 'category_name' => $category->getName(),
                 'category_url' => $category->getUrlKey()
             ];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMappedHeadersLabels(): array
+    {
+        return array_combine(self::HEADERS_PATHS, self::HEADERS_LABELS);
+    }
+
+    /**
+     * @param array $data
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function addProductImageUrlData(array $data, ProductInterface $product): array
+    {
+        $imageUrlData = $this->getProductImageUrlData($product);
+        for ($i = 0; $i < 10; $i++) {
+            if (isset($imageUrlData[$i])) {
+                $data[] = $imageUrlData[$i];
+            } else {
+                $data[] = null;
+            }
         }
 
         return $data;

@@ -32,10 +32,11 @@ class Generate extends Template
     }
 
     /**
+     * @param string $exportEntity
      * @return string
      */
-    public function getGenerateUrl(): string
+    public function getGenerateUrl(string $exportEntity): string
     {
-        return $this->backendUrlManager->getUrl('storekeeper/generate/products');
+        return $this->backendUrlManager->getUrl('storekeeper/generate/index', ['export_entity' => $exportEntity]);
     }
 }

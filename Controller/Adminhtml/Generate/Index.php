@@ -9,25 +9,30 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
+use Psr\Log\LoggerInterface;
 
-class Products extends Action implements HttpGetActionInterface
+class Index extends Action implements HttpGetActionInterface
 {
     private PublisherInterface $messagePublisher;
+    private LoggerInterface $logger;
 
     /**
      * Products constructor.
      * @param Context $context
      * @param ManagerInterface $messageManager
      * @param PublisherInterface $messagePublisher
+     * @param LoggerInterface $logger
      */
     public function __construct(
         Context $context,
         ManagerInterface $messageManager,
-        PublisherInterface $messagePublisher
+        PublisherInterface $messagePublisher,
+        LoggerInterface $logger
     ) {
         parent::__construct($context);
         $this->messageManager = $messageManager;
         $this->messagePublisher = $messagePublisher;
+        $this->logger = $logger;
     }
 
     /**
@@ -36,9 +41,10 @@ class Products extends Action implements HttpGetActionInterface
     public function execute(): ResultInterface
     {
         try {
+            $exportEntity = $this->_request->getParam('export_entity');
             $this->messagePublisher->publish(
                 'storekeeper.data.export',
-                '{"entity":"catalog_product"}'
+                '{"entity":"' . $exportEntity . '"}'
             );
             $this->messageManager->addSuccessMessage(
                 __(
@@ -47,7 +53,7 @@ class Products extends Action implements HttpGetActionInterface
                 )
             );
         } catch (\Exception $e) {
-            $this->_objectManager->get(\Psr\Log\LoggerInterface::class)->critical($e);
+            $this->logger->critical($e->getMessage());
             $this->messageManager->addErrorMessage(__('Please correct the data sent value.'));
         }
 
