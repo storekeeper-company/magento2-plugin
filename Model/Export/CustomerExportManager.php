@@ -2,26 +2,22 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
+use Magento\Framework\Math\Random;
+use Magento\Framework\Locale\Resolver;
+
 class CustomerExportManager
 {
     const HEADERS_PATHS = [
-        'path://id',
         'path://shortname',
         'path://language_iso2',
         'path://business_data.name',
-        'path://business_data.coc_number',
         'path://business_data.country_iso2',
         'path://business_data.vat_number',
         'path://contact_person.firstname',
-        'path://contact_person.familyname_prefix',
         'path://contact_person.familyname',
         'path://contact_set.email',
         'path://contact_set.phone',
         'path://contact_set.fax',
-        'path://contact_set.www',
-        'path://contact_set.allow_general_communication',
-        'path://contact_set.allow_offer_communication',
-        'path://contact_set.allow_special_communication',
         'path://contact_address.name',
         'path://contact_address.state',
         'path://contact_address.city',
@@ -40,23 +36,16 @@ class CustomerExportManager
         'path://address_billing.country_iso2'
     ];
     const HEADERS_LABELS = [
-        'Relation number',
         'GUID',
         'Language (iso2)',
         'Company',
-        'Company number',
         'Company country',
         'Company vat',
         'First name',
-        'Family name prefix',
         'Family name',
         'Email',
         'Phone',
         'Fax',
-        'Website',
-        'Communication: general',
-        'Communication: sales',
-        'Communication: special',
         'Address name',
         'State',
         'City',
@@ -75,6 +64,17 @@ class CustomerExportManager
         'Country iso2'
     ];
 
+    private Random $random;
+    private Resolver $localeResolver;
+
+    public function __construct(
+        Random $random,
+        Resolver $localeResolver
+    ) {
+        $this->random = $random;
+        $this->localeResolver = $localeResolver;
+    }
+
     /**
      * @param array $customers
      * @return array
@@ -85,23 +85,16 @@ class CustomerExportManager
         foreach ($customers as $customer) {
             $billingAddress = $customer->getDefaultBillingAddress();
             $data = [
-                null, // 'path://id' - 'Relation number' - probably SK customer id or what?
-                null, // 'path://shortname' - 'GUID'
-                null, // 'path://language_iso2' - 'Language (iso2)'
+                $this->random->getUniqueHash(), // 'path://shortname' - 'GUID'
+                $this->getCurrentLocale(), // 'path://language_iso2' - 'Language (iso2)'
                 $billingAddress->getCompany(), // 'path://business_data.name'
-                null, // 'path://business_data.coc_number',
                 $billingAddress->getCountryId(), // 'path://business_data.country_iso2'
                 $billingAddress->getVatId(), // 'path://business_data.vat_number'
                 $billingAddress->getFirstname(), // 'path://contact_person.firstname'
-                null, // 'path://contact_person.familyname_prefix'
                 $billingAddress->getLastname(), // 'path://contact_person.familyname'
                 $customer->getEmail(), // 'path://contact_set.email'
                 $billingAddress->getTelephone(), // 'path://contact_set.phone'
                 null, // 'path://contact_set.fax'
-                null, // 'path://contact_set.www'
-                null, // 'path://contact_set.allow_general_communication'
-                null, // 'path://contact_set.allow_offer_communication'
-                null, // 'path://contact_set.allow_special_communication'
                 $billingAddress->getName(), // 'path://contact_address.name'
                 $billingAddress->getRegion(), // 'path://contact_address.state'
                 $billingAddress->getCity(), // 'path://contact_address.city'
@@ -131,5 +124,16 @@ class CustomerExportManager
     public function getMappedHeadersLabels(): array
     {
         return array_combine(self::HEADERS_PATHS, self::HEADERS_LABELS);
+    }
+
+    /**
+     * @return string
+     */
+    private function getCurrentLocale(): string
+    {
+        $currentLocaleCode = $this->localeResolver->getLocale();
+        $languageCode = strstr($currentLocaleCode, '_', true);
+
+        return $languageCode;
     }
 }
