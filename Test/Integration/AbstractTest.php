@@ -69,6 +69,7 @@ class AbstractTest extends TestCase
     protected $creditmemoService;
     protected $productCollectionFactory;
     protected $stockRegistry;
+    protected $jsonSerializer;
 
     protected function setUp(): void
     {
@@ -105,6 +106,7 @@ class AbstractTest extends TestCase
         $this->creditmemoService = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Service\CreditmemoService::class);
         $this->productCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
         $this->stockRegistry = Bootstrap::getObjectManager()->create(\Magento\CatalogInventory\Api\StockRegistryInterface::class);
+        $this->jsonSerializer = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\SerializerInterface::class);
 
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
@@ -180,7 +182,8 @@ class AbstractTest extends TestCase
                 'authHelper' => $this->authHelper,
                 'orderCollectionFactory' => $this->orderCollectionFactory,
                 'creditmemoFactory' => $this->creditmemoFactory,
-                'creditmemoService' => $this->creditmemoService
+                'creditmemoService' => $this->creditmemoService,
+                'jsonSerializer' => $this->jsonSerializer
             ]
         );
         $this->cronOrders = $objectManager->getObject(

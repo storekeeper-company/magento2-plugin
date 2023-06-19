@@ -1174,8 +1174,9 @@ class Orders extends AbstractHelper
         } else {
             $priceWithTax = $bundleItem->getPriceInclTax();
             $bundleItemPriceWithTax = $priceWithTax ? $this->getPriceValueForPayload($bundleItem->getPriceInclTax(), $order) : 0.0;
+            $bundleItemOriginalPriceWithTax = $this->getOriginalPriceIncludingTax($bundleItem);
             $payload = [
-                'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : $bundleItemPriceWithTax,
+                'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : $bundleItemOriginalPriceWithTax,
                 'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $bundleItemPriceWithTax
             ];
 
