@@ -30,7 +30,7 @@ use Magento\Quote\Model\MaskedQuoteIdToQuoteId;
 class AbstractTest extends TestCase
 {
     const ORDER_INCREMENT_ID = '100001007';
-    const PRODUCT_SKU = 'simple-2';
+    const SIMPLE_PRODUCT_SKU = 'simple-2';
     const STORE_KEEPER_ORDER_NUMBER = 'S08-' . self::ORDER_INCREMENT_ID;
     const STORE_KEEPER_ORDER_ID = 55;
     const UPDATED_STOCK_ITEM_VALUE = 284;
@@ -305,12 +305,13 @@ class AbstractTest extends TestCase
     }
 
     /**
+     * @param string $productSku
      * @return ProductInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    protected function getProduct(): ProductInterface
+    protected function getProduct(string $productSku): ProductInterface
     {
-        return $this->getProductRepository()->get(self::PRODUCT_SKU);
+        return $this->getProductRepository()->get($productSku);
     }
 
     /**
@@ -629,15 +630,16 @@ class AbstractTest extends TestCase
     }
 
     /**
+     * @param string $productSku
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    protected function getOrderData(): array
+    protected function getOrderData(string $productSku): array
     {
         $billingAddress = $this->getBillingAddress();
         $shippingAddress = clone $billingAddress;
         $shippingAddress->setId(null)->setAddressType('shipping');
-        $product = $this->getProduct();
+        $product = $this->getProduct($productSku);
         $payment = $this->createPayment('checkmo');
         $orderItem = $this->createOrderItem($product);
 

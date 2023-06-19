@@ -869,7 +869,7 @@ class Orders extends AbstractHelper
         }
         if (((float)$item->getTaxAmount()) > 0) {
             $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax(), $order);
-            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice(), $order);
+            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($this->getOriginalPriceIncludingTax($item), $order);
         } else {
             $itemPrice = $this->getItemPrice($item);
             $itemOriginalPrice = $this->getPriceValueForPayload($item->getOriginalPrice(), $order);
@@ -1253,5 +1253,19 @@ class Orders extends AbstractHelper
             $creditmemo->setInvoice($invoice);
             $this->creditmemoService->refund($creditmemo);
         }
+    }
+
+    /**
+     * @param Item $item
+     * @return float
+     */
+    private function getOriginalPriceIncludingTax(Item $item): float
+    {
+        $originalPrice = $item->getOriginalPrice();
+        $taxPercent = $item->getTaxPercent();
+        $taxAmount = $originalPrice * ($taxPercent / 100);
+        $priceIncludingTax = $originalPrice + $taxAmount;
+
+        return $priceIncludingTax;
     }
 }
