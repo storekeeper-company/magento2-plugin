@@ -30,7 +30,7 @@ use Magento\Quote\Model\MaskedQuoteIdToQuoteId;
 class AbstractTest extends TestCase
 {
     const ORDER_INCREMENT_ID = '100001007';
-    const PRODUCT_SKU = 'simple-2';
+    const SIMPLE_PRODUCT_SKU = 'simple-2';
     const STORE_KEEPER_ORDER_NUMBER = 'S08-' . self::ORDER_INCREMENT_ID;
     const STORE_KEEPER_ORDER_ID = 55;
     const UPDATED_STOCK_ITEM_VALUE = 284;
@@ -69,6 +69,7 @@ class AbstractTest extends TestCase
     protected $creditmemoService;
     protected $productCollectionFactory;
     protected $stockRegistry;
+    protected $jsonSerializer;
 
     protected function setUp(): void
     {
@@ -105,6 +106,7 @@ class AbstractTest extends TestCase
         $this->creditmemoService = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Service\CreditmemoService::class);
         $this->productCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
         $this->stockRegistry = Bootstrap::getObjectManager()->create(\Magento\CatalogInventory\Api\StockRegistryInterface::class);
+        $this->jsonSerializer = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\SerializerInterface::class);
 
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
@@ -180,7 +182,8 @@ class AbstractTest extends TestCase
                 'authHelper' => $this->authHelper,
                 'orderCollectionFactory' => $this->orderCollectionFactory,
                 'creditmemoFactory' => $this->creditmemoFactory,
-                'creditmemoService' => $this->creditmemoService
+                'creditmemoService' => $this->creditmemoService,
+                'jsonSerializer' => $this->jsonSerializer
             ]
         );
         $this->cronOrders = $objectManager->getObject(
@@ -305,12 +308,13 @@ class AbstractTest extends TestCase
     }
 
     /**
+     * @param string $productSku
      * @return ProductInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    protected function getProduct(): ProductInterface
+    protected function getProduct(string $productSku): ProductInterface
     {
-        return $this->getProductRepository()->get(self::PRODUCT_SKU);
+        return $this->getProductRepository()->get($productSku);
     }
 
     /**
@@ -629,15 +633,16 @@ class AbstractTest extends TestCase
     }
 
     /**
+     * @param string $productSku
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    protected function getOrderData(): array
+    protected function getOrderData(string $productSku): array
     {
         $billingAddress = $this->getBillingAddress();
         $shippingAddress = clone $billingAddress;
         $shippingAddress->setId(null)->setAddressType('shipping');
-        $product = $this->getProduct();
+        $product = $this->getProduct($productSku);
         $payment = $this->createPayment('checkmo');
         $orderItem = $this->createOrderItem($product);
 

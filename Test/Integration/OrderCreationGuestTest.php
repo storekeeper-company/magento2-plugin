@@ -27,7 +27,7 @@ class OrderCreationGuestTest extends AbstractGuestTest
      */
     public function testGuestOrderCreation()
     {
-        $orderData = $this->getOrderData();
+        $orderData = $this->getOrderData(self::SIMPLE_PRODUCT_SKU);
         $order = $this->createOrder(
             $orderData['billingAddress'],
             $orderData['shippingAddress'],
