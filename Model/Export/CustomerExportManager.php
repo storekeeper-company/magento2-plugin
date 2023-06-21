@@ -2,10 +2,11 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use Magento\Framework\Math\Random;
 use Magento\Framework\Locale\Resolver;
+use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
+use Magento\Framework\Math\Random;
 
-class CustomerExportManager
+class CustomerExportManager extends AbstractExportManager
 {
     const HEADERS_PATHS = [
         'path://shortname',
@@ -65,14 +66,13 @@ class CustomerExportManager
     ];
 
     private Random $random;
-    private Resolver $localeResolver;
 
     public function __construct(
-        Random $random,
-        Resolver $localeResolver
+        Resolver $localeResolver,
+        Random $random
     ) {
+        parent::__construct($localeResolver);
         $this->random = $random;
-        $this->localeResolver = $localeResolver;
     }
 
     /**
@@ -116,24 +116,5 @@ class CustomerExportManager
         }
 
         return $result;
-    }
-
-    /**
-     * @return array
-     */
-    public function getMappedHeadersLabels(): array
-    {
-        return array_combine(self::HEADERS_PATHS, self::HEADERS_LABELS);
-    }
-
-    /**
-     * @return string
-     */
-    private function getCurrentLocale(): string
-    {
-        $currentLocaleCode = $this->localeResolver->getLocale();
-        $languageCode = strstr($currentLocaleCode, '_', true);
-
-        return $languageCode;
     }
 }

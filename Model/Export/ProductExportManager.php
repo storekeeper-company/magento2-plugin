@@ -2,6 +2,8 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
+use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
+use Magento\Framework\Locale\Resolver;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -24,7 +26,7 @@ use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
 
-class ProductExportManager
+class ProductExportManager extends AbstractExportManager
 {
     const HEADERS_PATHS = [
         'path://product.type',
@@ -202,6 +204,7 @@ class ProductExportManager
      * @param ImageFactory $imageFactory
      */
     public function __construct(
+        Resolver $localeResolver,
         CollectionFactory $productCollectionFactory,
         Csv $csv,
         Filesystem $filesystem,
@@ -221,6 +224,7 @@ class ProductExportManager
         SetFactory $attributeSetFactory,
         ImageFactory $imageFactory
     ) {
+        parent::__construct($localeResolver);
         $this->productCollectionFactory = $productCollectionFactory;
         $this->csv = $csv;
         $this->filesystem = $filesystem;
@@ -433,14 +437,6 @@ class ProductExportManager
         }
 
         return $data;
-    }
-
-    /**
-     * @return array
-     */
-    public function getMappedHeadersLabels(): array
-    {
-        return array_combine(self::HEADERS_PATHS, self::HEADERS_LABELS);
     }
 
     /**

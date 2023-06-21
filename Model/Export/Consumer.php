@@ -30,16 +30,9 @@ class Consumer
     public function process($request): void
     {
         try {
-            $exportEntity = '';
             $data = json_decode($request, true);
-            if ($data['entity'] == CsvFileContent::CATALOG_PRODUCT_ENTITY) {
-                $contents = $this->csvFileContent->getFileContents(CsvFileContent::CATALOG_PRODUCT_ENTITY);
-                $exportEntity = CsvFileContent::CATALOG_PRODUCT_ENTITY;
-            }
-            if ($data['entity'] == CsvFileContent::CUSTOMER_ENTITY) {
-                $contents = $this->csvFileContent->getFileContents(CsvFileContent::CUSTOMER_ENTITY);
-                $exportEntity = CsvFileContent::CUSTOMER_ENTITY;
-            }
+            $exportEntity = $data['entity'];
+            $contents = $this->csvFileContent->getFileContents($exportEntity);
             $directory = $this->filesystem->getDirectoryWrite(DirectoryList::VAR_IMPORT_EXPORT);
             $directory->writeFile('export/' . $this->csvFileContent->getFileName($exportEntity), $contents);
         } catch (\Exception $e) {
