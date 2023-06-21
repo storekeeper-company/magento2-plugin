@@ -46,9 +46,8 @@ class CategoryExportManager extends AbstractExportManager
         'Protected'
     ];
 
-    private StoreManagerInterface $storeManager;
     private CategoryRepositoryInterface $categoryRepository;
-    private StoreConfigManagerInterface $storeConfigManager;
+    private StoreManagerInterface $storeManager;
 
     public function __construct(
         Resolver $localeResolver,
@@ -56,10 +55,9 @@ class CategoryExportManager extends AbstractExportManager
         CategoryRepositoryInterface $categoryRepository,
         StoreConfigManagerInterface $storeConfigManager
     ) {
-        parent::__construct($localeResolver);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
         $this->storeManager = $storeManager;
         $this->categoryRepository = $categoryRepository;
-        $this->storeConfigManager = $storeConfigManager;
     }
 
     /**
@@ -128,33 +126,6 @@ class CategoryExportManager extends AbstractExportManager
 
         if (!empty($categoryParentId)) {
             $result = $this->categoryRepository->get($categoryParentId)->getUrl();
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return string
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     */
-    private function getCurrentStoreLanguageCode(): string
-    {
-        $storeConfigs = $this->storeConfigManager->getStoreConfigs([$this->storeManager->getStore()->getCode()]);
-        foreach ($storeConfigs as $config) {
-            $languageCode = strstr($config->getCode(), '_', true);
-        }
-
-        return $languageCode;
-    }
-
-    /**
-     * @return string
-     */
-    private function isMainLanguage(): string
-    {
-        $result = 'yes';
-        if ($this->getCurrentLocale() != $this->getCurrentStoreLanguageCode()) {
-            $result = 'no';
         }
 
         return $result;

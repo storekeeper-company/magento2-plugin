@@ -11,6 +11,7 @@ use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\File\Csv;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Api\StoreConfigManagerInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
@@ -211,6 +212,7 @@ class ProductExportManager extends AbstractExportManager
         DirectoryList $directoryList,
         File $file,
         StoreManagerInterface $storeManager,
+        StoreConfigManagerInterface $storeConfigManager,
         StockRegistryInterface $stockRegistry,
         TaxCalculationInterface $taxCalculation,
         Calculation $calculation,
@@ -224,7 +226,7 @@ class ProductExportManager extends AbstractExportManager
         SetFactory $attributeSetFactory,
         ImageFactory $imageFactory
     ) {
-        parent::__construct($localeResolver);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
         $this->productCollectionFactory = $productCollectionFactory;
         $this->csv = $csv;
         $this->filesystem = $filesystem;

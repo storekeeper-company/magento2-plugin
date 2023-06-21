@@ -5,6 +5,8 @@ namespace StoreKeeper\StoreKeeper\Model\Export;
 use Magento\Framework\Locale\Resolver;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Math\Random;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Api\StoreConfigManagerInterface;
 
 class CustomerExportManager extends AbstractExportManager
 {
@@ -69,9 +71,11 @@ class CustomerExportManager extends AbstractExportManager
 
     public function __construct(
         Resolver $localeResolver,
-        Random $random
+        Random $random,
+        StoreManagerInterface $storeManager,
+        StoreConfigManagerInterface $storeConfigManager
     ) {
-        parent::__construct($localeResolver);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
         $this->random = $random;
     }
 
