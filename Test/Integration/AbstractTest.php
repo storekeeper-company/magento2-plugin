@@ -70,6 +70,8 @@ class AbstractTest extends TestCase
     protected $productCollectionFactory;
     protected $stockRegistry;
     protected $jsonSerializer;
+    protected ?array $expectedOrderPayload = null;
+    protected int $expectedOrderCall = 0;
 
     protected function setUp(): void
     {
@@ -119,7 +121,15 @@ class AbstractTest extends TestCase
         $this->productApiClientMock->method('getTaxRates')
             ->willReturn($this->getTaxRates());
         $this->orderApiClientMock->method('getNewOrderWithReturn')
-            ->willReturn($this->getStoreKeeperOrder());
+            ->andReturnUsing(
+                function ($storeId, $payload) {
+                    if( !is_null($this->expectedOrderPayload) ){
+                        $this->assertEquals($this->expectedOrderPayload, $payload, 'getNewOrderWithReturn payload');
+                    }
+                    $this->expectedOrderCall++;
+                    return $this->getStoreKeeperOrder($payload);
+                }
+            );
         $this->orderApiClientMock->method('getStoreKeeperOrder')
             ->willReturn(
                 [
@@ -279,7 +289,7 @@ class AbstractTest extends TestCase
     /**
      * @return array
      */
-    protected function getStoreKeeperOrder(): array
+    protected function getStoreKeeperOrder($payload): array
     {
         return [
             'id' => self::STORE_KEEPER_ORDER_ID,
@@ -287,6 +297,15 @@ class AbstractTest extends TestCase
         ];
     }
 
+    protected function setExpectedOrderPayload(array $payload): void
+    {
+        $this->expectedOrderPayload = $payload;
+        $this->expectedOrderCall = 0;
+    }
+    protected function assertExpectedOrderCall(int $times = 1): void
+    {
+        $this->assertEquals($this->expectedOrderCall, $times, 'Order was created');
+    }
     /**
      * @return Customer
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -619,17 +638,19 @@ class AbstractTest extends TestCase
      * @param Order $order
      * @return void
      */
-    protected function assertOrderCreation(Order $order): void
+    protected function assertOrderCreation(Order $order, array $payload): void
     {
         $this->orderRepository->save($order);
         $this->assertEquals(1, $order->getStorekeeperOrderPendingSync());
         $this->assertEquals(Order::STATE_NEW, $order->getState());
 
+        $this->setExpectedOrderPayload($payload);
         $this->cronOrders->execute();
         $savedOrder = $this->orderRepository->get('1');
 
         $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
         $this->assertEquals(self::STORE_KEEPER_ORDER_NUMBER, $savedOrder->getStorekeeperOrderNumber());
+        $this->assertExpectedOrderCall();
     }
 
     /**

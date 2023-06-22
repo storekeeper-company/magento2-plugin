@@ -36,7 +36,9 @@ class OrderCreationTest extends AbstractTest
             $orderData['payment'],
             $orderData['orderItem']
         );
-        $this->assertOrderCreation($order);
+        $payload = ['order_number' => '213213']; // todo
+
+        $this->assertOrderCreation($order, $payload);
     }
 
     /**
