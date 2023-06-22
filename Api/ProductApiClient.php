@@ -11,6 +11,7 @@ use Magento\Catalog\Model\Product\Url as ProductUrl;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth as AuthHelper;
+use Psr\Log\LoggerInterface;
 
 class ProductApiClient extends ApiClient
 {
@@ -32,9 +33,10 @@ class ProductApiClient extends ApiClient
         ProductUrl $productUrl,
         BackendUrl $backendUrl,
         DateTime $dateTime,
-        AuthHelper $authHelper
+        AuthHelper $authHelper,
+        LoggerInterface $logger
     ) {
-        parent::__construct($scopeConfig);
+        parent::__construct($scopeConfig, $logger);
         $this->orderApiClient = $orderApiClient;
         $this->productUrl = $productUrl;
         $this->backendUrl = $backendUrl;
