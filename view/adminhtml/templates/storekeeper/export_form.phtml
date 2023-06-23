@@ -1,25 +1,31 @@
 <fieldset class="admin__fieldset" id="export_filter_container" style="margin-left: 100px">
     <div style="margin-top: 30px; display: flex; align-items: center;">
-        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 150px;"><?= $block->escapeHtml(__('Export Products')) ?></span>
+        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Products')) ?></span>
         <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('catalog_product')) ?>'">
             <span><?= $block->escapeHtml(__('Generate')) ?></span>
         </button>
     </div>
     <div style="margin-top: 30px; display: flex; align-items: center;">
-        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 150px;"><?= $block->escapeHtml(__('Export Customers')) ?></span>
+        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Customers')) ?></span>
         <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('customer')) ?>'">
             <span><?= $block->escapeHtml(__('Generate')) ?></span>
         </button>
     </div>
     <div style="margin-top: 30px; display: flex; align-items: center;">
-        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 150px;"><?= $block->escapeHtml(__('Export Categories')) ?></span>
+        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Categories')) ?></span>
         <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('category')) ?>'">
             <span><?= $block->escapeHtml(__('Generate')) ?></span>
         </button>
     </div>
     <div style="margin-top: 30px; display: flex; align-items: center;">
-        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 150px;"><?= $block->escapeHtml(__('Export Attributes')) ?></span>
+        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Attributes')) ?></span>
         <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('attribute')) ?>'">
+            <span><?= $block->escapeHtml(__('Generate')) ?></span>
+        </button>
+    </div>
+    <div style="margin-top: 30px; display: flex; align-items: center;">
+        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Attributes Options')) ?></span>
+        <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('attribute_option')) ?>'">
             <span><?= $block->escapeHtml(__('Generate')) ?></span>
         </button>
     </div>

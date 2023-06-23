@@ -6,7 +6,6 @@ use Magento\Catalog\Api\Data\CategoryInterface;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
 
 class AttributeExportManager extends AbstractExportManager
@@ -36,17 +35,12 @@ class AttributeExportManager extends AbstractExportManager
         'Default'
     ];
 
-    private CategoryHelper $categoryHelper;
-    private CategoryRepositoryInterface $categoryRepository;
-
     public function __construct(
         Resolver $localeResolver,
         StoreManagerInterface $storeManager,
-        CategoryRepositoryInterface $categoryRepository,
         StoreConfigManagerInterface $storeConfigManager
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager);
-        $this->categoryRepository = $categoryRepository;
     }
 
     /**

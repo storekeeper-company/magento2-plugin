@@ -7,12 +7,14 @@ use StoreKeeper\StoreKeeper\Model\Export\ProductExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\CustomerExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
+use StoreKeeper\StoreKeeper\Model\Export\AttributeOptionExportManager;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\ImportExport\Model\Export\Adapter\Csv;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory as AttributeOptionCollectionFactory;
 use Magento\Eav\Model\Entity\Collection\AbstractCollection;
 use Magento\Framework\Data\Collection\AbstractDb;
 
@@ -22,41 +24,48 @@ class CsvFileContent
     const CUSTOMER_ENTITY = 'customer';
     const CATEGORY_ENTITY = 'category';
     const ATTRIBUTE_ENTITY = 'attribute';
+    const ATTRIBUTE_OPTION_ENTITY = 'attribute_option';
     const PAGE_SIZE = 500;
 
     private ProductExportManager $productExportManager;
     private CustomerExportManager $customerExportManager;
     private CategoryExportManager $categoryExportManager;
     private AttributeExportManager $attributeExportManager;
+    private AttributeOptionExportManager $attributeOptionExportManager;
     private DateTime $dateTime;
     private Csv $writer;
     private ProductCollectionFactory $productCollectionFactory;
     private CustomerCollectionFactory $customerCollectionFactory;
     private CategoryCollectionFactory $categoryCollectionFactory;
     private AttributeFactory $attributeFactory;
+    private AttributeOptionCollectionFactory $attributeOptionCollectionFactory;
 
     public function __construct(
         ProductExportManager $productExportManager,
         CustomerExportManager $customerExportManager,
         CategoryExportManager $categoryExportManager,
         AttributeExportManager $attributeExportManager,
+        AttributeOptionExportManager $attributeOptionExportManager,
         DateTime $dateTime,
         Csv $writer,
         ProductCollectionFactory $productCollectionFactory,
         CustomerCollectionFactory $customerCollectionFactory,
         CategoryCollectionFactory $categoryCollectionFactory,
-        AttributeFactory $attributeFactory
+        AttributeFactory $attributeFactory,
+        AttributeOptionCollectionFactory $attributeOptionCollectionFactory
     ) {
         $this->productExportManager = $productExportManager;
         $this->customerExportManager = $customerExportManager;
         $this->categoryExportManager = $categoryExportManager;
         $this->attributeExportManager = $attributeExportManager;
+        $this->attributeOptionExportManager = $attributeOptionExportManager;
         $this->dateTime = $dateTime;
         $this->writer = $writer;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->attributeFactory = $attributeFactory;
+        $this->attributeOptionCollectionFactory = $attributeOptionCollectionFactory;
     }
 
     /**
@@ -128,10 +137,13 @@ class CsvFileContent
             $entityCollection->addFieldToSelect('*');
             $entityCollection->setOrder('entity_id', 'asc');
         }
-
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $entityCollection = $this->attributeFactory->create()->getCollection();
             $entityCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, 4);
+            $entityCollection->addFieldToSelect('*');
+        }
+        if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
+            $entityCollection = $this->attributeOptionCollectionFactory->create();
             $entityCollection->addFieldToSelect('*');
         }
 
@@ -156,6 +168,9 @@ class CsvFileContent
         }
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $exportData = $this->attributeExportManager->getAttributeExportData($items);
+        }
+        if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
+            $exportData = $this->attributeOptionExportManager->getAttributeOptionExportData($items);
         }
 
         return $exportData;
@@ -182,6 +197,10 @@ class CsvFileContent
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $headerCols = AttributeExportManager::HEADERS_PATHS;
             $headerColsLabels = $this->attributeExportManager->getMappedHeadersLabels(AttributeExportManager::HEADERS_PATHS, AttributeExportManager::HEADERS_LABELS);
+        }
+        if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
+            $headerCols = AttributeOptionExportManager::HEADERS_PATHS;
+            $headerColsLabels = $this->attributeOptionExportManager->getMappedHeadersLabels(AttributeOptionExportManager::HEADERS_PATHS, AttributeOptionExportManager::HEADERS_LABELS);
         }
         $headerColsData = [
             'cols' => $headerCols,

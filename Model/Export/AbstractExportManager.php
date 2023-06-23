@@ -52,7 +52,7 @@ abstract class AbstractExportManager
     {
         $storeConfigs = $this->storeConfigManager->getStoreConfigs([$this->storeManager->getStore()->getCode()]);
         foreach ($storeConfigs as $config) {
-            $languageCode = strstr($config->getCode(), '_', true);
+            $languageCode = strstr($config->getLocale(), '_', true);
         }
 
         return $languageCode;
