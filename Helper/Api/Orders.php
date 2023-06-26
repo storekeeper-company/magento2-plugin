@@ -1046,7 +1046,7 @@ class Orders extends AbstractHelper
      */
     private function getBrickMoneyPrice($price, Order $order): Money
     {
-        return Money::of($price, $order->getStoreCurrencyCode());
+        return Money::of($price, $order->getStoreCurrencyCode(), null, \Brick\Math\RoundingMode::HALF_UP);
     }
 
     /**
