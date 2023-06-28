@@ -152,12 +152,14 @@ class ExportFileDataProvider extends DataProvider
         if (empty($files)) {
             return [];
         }
+        $i = 1; // fix for Full Export event as in this case all the export files have the same fileModificationTime
         foreach ($files as $filePath) {
             $filePath = $this->directory->getAbsolutePath($filePath);
             if ($this->directory->isFile($filePath)) {
                 $fileModificationTime = $this->directory->stat($filePath)['mtime'];
-                $sortedFiles[$fileModificationTime] = $filePath;
+                $sortedFiles[$fileModificationTime + $i] = $filePath;
             }
+            $i++;
         }
         //sort array elements using key value
         krsort($sortedFiles);

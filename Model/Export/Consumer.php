@@ -32,11 +32,25 @@ class Consumer
         try {
             $data = json_decode($request, true);
             $exportEntity = $data['entity'];
-            $contents = $this->csvFileContent->getFileContents($exportEntity);
-            $directory = $this->filesystem->getDirectoryWrite(DirectoryList::VAR_IMPORT_EXPORT);
-            $directory->writeFile('export/' . $this->csvFileContent->getFileName($exportEntity), $contents);
+            if ($exportEntity == CsvFileContent::FULL_EXPORT) {
+                foreach ($this->csvFileContent->getAllExportEntityTypes() as $exportEntityType) {
+                    $this->exportEntityToCsv($exportEntityType);
+                }
+            } else {
+                $this->exportEntityToCsv($exportEntity);
+            }
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
+    }
+
+    /**
+     * @param string $exportEntity
+     */
+    private function exportEntityToCsv(string $exportEntity): void
+    {
+        $contents = $this->csvFileContent->getFileContents($exportEntity);
+        $directory = $this->filesystem->getDirectoryWrite(DirectoryList::VAR_IMPORT_EXPORT);
+        $directory->writeFile('export/' . $this->csvFileContent->getFileName($exportEntity), $contents);
     }
 }

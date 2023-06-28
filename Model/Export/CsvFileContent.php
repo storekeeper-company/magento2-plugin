@@ -9,7 +9,7 @@ use StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeOptionExportManager;
 use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\ImportExport\Model\Export\Adapter\Csv;
+use Magento\ImportExport\Model\Export\Adapter\CsvFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
@@ -25,6 +25,7 @@ class CsvFileContent
     const CATEGORY_ENTITY = 'category';
     const ATTRIBUTE_ENTITY = 'attribute';
     const ATTRIBUTE_OPTION_ENTITY = 'attribute_option';
+    const FULL_EXPORT = 'full_export';
     const PAGE_SIZE = 500;
 
     private ProductExportManager $productExportManager;
@@ -33,7 +34,7 @@ class CsvFileContent
     private AttributeExportManager $attributeExportManager;
     private AttributeOptionExportManager $attributeOptionExportManager;
     private DateTime $dateTime;
-    private Csv $writer;
+    private CsvFactory $csvFactory;
     private ProductCollectionFactory $productCollectionFactory;
     private CustomerCollectionFactory $customerCollectionFactory;
     private CategoryCollectionFactory $categoryCollectionFactory;
@@ -47,7 +48,7 @@ class CsvFileContent
         AttributeExportManager $attributeExportManager,
         AttributeOptionExportManager $attributeOptionExportManager,
         DateTime $dateTime,
-        Csv $writer,
+        CsvFactory $csvFactory,
         ProductCollectionFactory $productCollectionFactory,
         CustomerCollectionFactory $customerCollectionFactory,
         CategoryCollectionFactory $categoryCollectionFactory,
@@ -60,7 +61,7 @@ class CsvFileContent
         $this->attributeExportManager = $attributeExportManager;
         $this->attributeOptionExportManager = $attributeOptionExportManager;
         $this->dateTime = $dateTime;
-        $this->writer = $writer;
+        $this->csvFactory = $csvFactory;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
@@ -88,6 +89,7 @@ class CsvFileContent
      */
     public function getFileContents(string $entityType): string
     {
+        $writer = $this->csvFactory->create();
         $entityCollection = $this->getEntityCollection($entityType);
         set_time_limit(0);
         $page = 0;
@@ -101,18 +103,18 @@ class CsvFileContent
             $exportData = $this->getExportData($entityType, $items);
             if ($page == 1) {
                 $headerColsData = $this->getHeaderColsData($entityType);
-                $this->writer->setHeaderCols($headerColsData['cols']);
-                $this->writer->writeRow($headerColsData['labels']);
+                $writer->setHeaderCols($headerColsData['cols']);
+                $writer->writeRow($headerColsData['labels']);
             }
             foreach ($exportData as $dataRow) {
-                $this->writer->writeRow($dataRow);
+                $writer->writeRow($dataRow);
             }
             if ($entityCollection->getCurPage() >= $entityCollection->getLastPageNumber()) {
                 break;
             }
         }
 
-        return $this->writer->getContents();
+        return $writer->getContents();
     }
 
     /**
@@ -208,5 +210,19 @@ class CsvFileContent
         ];
 
         return $headerColsData;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllExportEntityTypes(): array
+    {
+        return [
+            self::CATALOG_PRODUCT_ENTITY,
+            self::CUSTOMER_ENTITY,
+            self::CATEGORY_ENTITY,
+            self::ATTRIBUTE_ENTITY,
+            self::ATTRIBUTE_OPTION_ENTITY
+        ];
     }
 }
