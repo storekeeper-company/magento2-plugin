@@ -8,6 +8,7 @@ use StoreKeeper\StoreKeeper\Model\Export\CustomerExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeOptionExportManager;
+use StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\ImportExport\Model\Export\Adapter\CsvFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
@@ -17,6 +18,8 @@ use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory as AttributeOptionCollectionFactory;
 use Magento\Eav\Model\Entity\Collection\AbstractCollection;
 use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 class CsvFileContent
 {
@@ -25,6 +28,7 @@ class CsvFileContent
     const CATEGORY_ENTITY = 'category';
     const ATTRIBUTE_ENTITY = 'attribute';
     const ATTRIBUTE_OPTION_ENTITY = 'attribute_option';
+    const BLUEPRINT_ENTITY = 'blueprint';
     const FULL_EXPORT = 'full_export';
     const PAGE_SIZE = 500;
 
@@ -33,6 +37,7 @@ class CsvFileContent
     private CategoryExportManager $categoryExportManager;
     private AttributeExportManager $attributeExportManager;
     private AttributeOptionExportManager $attributeOptionExportManager;
+    private BlueprintExportManager $blueprintExportManager;
     private DateTime $dateTime;
     private CsvFactory $csvFactory;
     private ProductCollectionFactory $productCollectionFactory;
@@ -47,6 +52,7 @@ class CsvFileContent
         CategoryExportManager $categoryExportManager,
         AttributeExportManager $attributeExportManager,
         AttributeOptionExportManager $attributeOptionExportManager,
+        BlueprintExportManager $blueprintExportManager,
         DateTime $dateTime,
         CsvFactory $csvFactory,
         ProductCollectionFactory $productCollectionFactory,
@@ -60,6 +66,7 @@ class CsvFileContent
         $this->categoryExportManager = $categoryExportManager;
         $this->attributeExportManager = $attributeExportManager;
         $this->attributeOptionExportManager = $attributeOptionExportManager;
+        $this->blueprintExportManager = $blueprintExportManager;
         $this->dateTime = $dateTime;
         $this->csvFactory = $csvFactory;
         $this->productCollectionFactory = $productCollectionFactory;
@@ -130,6 +137,13 @@ class CsvFileContent
             $entityCollection->addMediaGalleryData();
             $entityCollection->setOrder('entity_id', 'asc');
         }
+        if ($entityType == self::BLUEPRINT_ENTITY) {
+            $entityCollection = $this->productCollectionFactory->create();
+            $entityCollection->addFieldToFilter(ProductInterface::TYPE_ID, Configurable::TYPE_CODE);
+            $entityCollection->addFieldToSelect('*');
+            $entityCollection->setStoreId(Store::DEFAULT_STORE_ID);
+            $entityCollection->setOrder('entity_id', 'asc');
+        }
         if ($entityType == self::CUSTOMER_ENTITY) {
             $entityCollection = $this->customerCollectionFactory->create();
             $entityCollection->setOrder('entity_id', 'asc');
@@ -174,6 +188,9 @@ class CsvFileContent
         if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
             $exportData = $this->attributeOptionExportManager->getAttributeOptionExportData($items);
         }
+        if ($entityType == self::BLUEPRINT_ENTITY) {
+            $exportData = $this->blueprintExportManager->getBlueprintExportData($items);
+        }
 
         return $exportData;
     }
@@ -204,6 +221,10 @@ class CsvFileContent
             $headerCols = AttributeOptionExportManager::HEADERS_PATHS;
             $headerColsLabels = $this->attributeOptionExportManager->getMappedHeadersLabels(AttributeOptionExportManager::HEADERS_PATHS, AttributeOptionExportManager::HEADERS_LABELS);
         }
+        if ($entityType == self::BLUEPRINT_ENTITY) {
+            $headerCols = BlueprintExportManager::HEADERS_PATHS;
+            $headerColsLabels = $this->blueprintExportManager->getMappedHeadersLabels(BlueprintExportManager::HEADERS_PATHS, BlueprintExportManager::HEADERS_LABELS);
+        }
         $headerColsData = [
             'cols' => $headerCols,
             'labels' => $headerColsLabels
@@ -222,7 +243,8 @@ class CsvFileContent
             self::CUSTOMER_ENTITY,
             self::CATEGORY_ENTITY,
             self::ATTRIBUTE_ENTITY,
-            self::ATTRIBUTE_OPTION_ENTITY
+            self::ATTRIBUTE_OPTION_ENTITY,
+            self::BLUEPRINT_ENTITY
         ];
     }
 }
