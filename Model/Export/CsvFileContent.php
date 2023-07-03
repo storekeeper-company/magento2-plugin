@@ -109,11 +109,14 @@ class CsvFileContent
             $items = $entityCollection->getItems();
             $exportData = $this->getExportData($entityType, $items);
             if ($page == 1) {
-                $headerColsData = $this->getHeaderColsData($entityType);
+                $headerColsData = $this->getHeaderColsData($entityType, $exportData);
                 $writer->setHeaderCols($headerColsData['cols']);
                 $writer->writeRow($headerColsData['labels']);
             }
             foreach ($exportData as $dataRow) {
+                if ($entityType == self::BLUEPRINT_ENTITY) {
+                    $dataRow = $this->getBlueprintRow($headerColsData['labels'], $dataRow);
+                }
                 $writer->writeRow($dataRow);
             }
             if ($entityCollection->getCurPage() >= $entityCollection->getLastPageNumber()) {
@@ -197,9 +200,10 @@ class CsvFileContent
 
     /**
      * @param string $entityType
+     * @param array $exportData
      * @return array
      */
-    private function getHeaderColsData(string $entityType): array
+    private function getHeaderColsData(string $entityType, array $exportData): array
     {
         if ($entityType == self::CATALOG_PRODUCT_ENTITY) {
             $headerCols = ProductExportManager::HEADERS_PATHS;
@@ -222,8 +226,9 @@ class CsvFileContent
             $headerColsLabels = $this->attributeOptionExportManager->getMappedHeadersLabels(AttributeOptionExportManager::HEADERS_PATHS, AttributeOptionExportManager::HEADERS_LABELS);
         }
         if ($entityType == self::BLUEPRINT_ENTITY) {
-            $headerCols = BlueprintExportManager::HEADERS_PATHS;
-            $headerColsLabels = $this->blueprintExportManager->getMappedHeadersLabels(BlueprintExportManager::HEADERS_PATHS, BlueprintExportManager::HEADERS_LABELS);
+            $headerData = $this->blueprintExportManager->getHeaderCols($exportData);
+            $headerCols = $headerData['paths'];
+            $headerColsLabels = $this->blueprintExportManager->getMappedHeadersLabels($headerData['paths'], $headerData['labels']);
         }
         $headerColsData = [
             'cols' => $headerCols,
@@ -246,5 +251,41 @@ class CsvFileContent
             self::ATTRIBUTE_OPTION_ENTITY,
             self::BLUEPRINT_ENTITY
         ];
+    }
+
+    /**
+     * @param array $labels
+     * @param array $dataRow
+     * @return array
+     */
+    private function getBlueprintRow(array $labels, array $dataRow): array
+    {
+        $diff = array_diff_key($labels, $dataRow);
+        foreach ($diff as $key => $value) {
+            if (mb_substr_count($dataRow['path://sku_pattern'], 'content_vars') > 1) {
+                $compoundLabelData = explode(' ', $dataRow['path://name']);
+                foreach ($compoundLabelData as $compoundLabelItem) {
+                    $dataRow[$key] = $this->isLabelItemMatchHeader($compoundLabelItem, $value) ? 'yes' : 'no';
+                    if ($dataRow[$key] =='yes') {
+                        break;
+                    }
+                }
+            } else{
+                $dataRow[$key] = $this->isLabelItemMatchHeader($dataRow['path://name'], $value ) ? 'yes' : 'no';
+            }
+
+        }
+
+        return $dataRow;
+    }
+
+    /**
+     * @param string $labelItem
+     * @param string $headerLabel
+     * @return bool
+     */
+    private function isLabelItemMatchHeader(string $labelItem, string $headerLabel): bool
+    {
+        return str_starts_with($headerLabel, $labelItem) && !str_contains($headerLabel, 'Synchronized');
     }
 }
