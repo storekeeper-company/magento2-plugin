@@ -11,6 +11,7 @@ use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory;
 use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrder;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
+use Magento\Sales\Api\OrderRepositoryInterface;
 
 class Orders
 {
@@ -20,6 +21,7 @@ class Orders
     private LoggerInterface $logger;
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
     private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
+    private OrderRepositoryInterface $orderRepository;
 
 
     /**
@@ -31,6 +33,7 @@ class Orders
      * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
      * @param StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder
      * @param string|null $name
+     * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         OrdersHelper $ordersHelper,
@@ -38,7 +41,8 @@ class Orders
         LoggerInterface $logger,
         StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
         StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->ordersHelper = $ordersHelper;
         $this->configHelper = $configHelper;
@@ -46,6 +50,7 @@ class Orders
         $this->storeKeeperFailedSyncOrderResource = $storeKeeperFailedSyncOrderResource;
         $this->storeKeeperFailedSyncOrder = $storeKeeperFailedSyncOrder;
         $this->storeManager = $storeManager;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -55,7 +60,7 @@ class Orders
     {
         try {
             $stores = $this->storeManager->getStores();
-            
+
             foreach ($stores as $store) {
                 $storeId = $store->getId();
 
@@ -90,6 +95,10 @@ class Orders
                             if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
                                 $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
                                 $storeKeeperFailedSyncOrder->setIsFailed(1);
+                                $order->setStorekeeperOrderLastSync(time());
+                                $order->setStorekeeperOrderPendingSync(0);
+                                $order->setStorekeeperOrderPendingSyncSkip(true);
+                                $this->orderRepository->save($order);
                             } else {
                                 $storeKeeperFailedSyncOrder->setUpdatedAt(time());
                             }
