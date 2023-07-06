@@ -12,6 +12,7 @@ use Magento\Sales\Model\Order\Creditmemo;
 class WebhookTest extends AbstractTest
 {
     const QUEUE_MESSAGE = '{"type":"updated","entity":"Order","storeId":"1","module":"ShopModule","key":"id","value":"55","refund":true}';
+    const QUEUE_MESSAGE_STOCK_CHANGE = '{"type":"stock_change","entity":"Product","storeId":"1","module":"ShopModule","key":"id","value":"55"}';
     const SUCCESS_JSON_RESPONSE_MESSAGE = '{"success":true,"message":"Processing entity \u0022Order\u0022"}';
 
     protected $webhook;
@@ -20,6 +21,7 @@ class WebhookTest extends AbstractTest
     protected $publisher;
     protected $consumer;
     protected $jsonResponse;
+    protected $productsHelper;
 
     protected function setUp(): void
     {
@@ -51,6 +53,8 @@ class WebhookTest extends AbstractTest
                     'action' => 'events'
                 ]
             );
+        $this->productApiClientMock->method('setShopProductObjectSyncStatusForHook')
+            ->willReturn(true);
         $this->webhook = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Api\Webhook\Webhook::class,
             [
@@ -62,12 +66,23 @@ class WebhookTest extends AbstractTest
                 'jsonResponse' => $this->jsonResponse
             ]
         );
+        $this->productsHelper = $objectManager->getObject(
+            \StoreKeeper\StoreKeeper\Helper\Api\Products::class,
+            [
+                'orderApiClient' => $this->orderApiClientMock,
+                'authHelper' => $this->authHelper,
+                'productCollectionFactory' => $this->productCollectionFactory,
+                'stockRegistry' => $this->stockRegistry,
+                'productApiClient' => $this->productApiClientMock
+            ]
+        );
         $this->consumer = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Model\Consumer::class,
             [
                 'ordersHelper' => $this->apiOrders,
                 'orderApiClient' => $this->orderApiClientMock,
-                'orderCollectionFactory' => $this->orderCollectionFactory
+                'orderCollectionFactory' => $this->orderCollectionFactory,
+                'productsHelper' => $this->productsHelper
             ]
         );
 
@@ -103,6 +118,19 @@ class WebhookTest extends AbstractTest
 
         $this->consumer->process(self::QUEUE_MESSAGE);
         $this->apiOrders->update($order, $order->getStorekeeperId());
+    }
+
+    /**
+     * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/product_simple_without_custom_options.php
+     * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/customer.php
+     * @magentoConfigFixture current_store storekeeper_general/general/enabled 1
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
+     */
+    public function testSendProductInformation()
+    {
+        $this->consumer->process(self::QUEUE_MESSAGE_STOCK_CHANGE);
+        $product = $this->getProductRepository()->getById('22');
+        $this->assertEquals($product->getExtensionAttributes()->getStockItem()->getQty(), self::UPDATED_STOCK_ITEM_VALUE);
     }
 
     /**

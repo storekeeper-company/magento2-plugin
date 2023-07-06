@@ -42,6 +42,7 @@ $secondProduct->setTypeId(\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE)
     ->setMetaDescription('meta description 2')
     ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
     ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+    ->setData('storekeeper_product_id', 7)
     ->setStockData(
         [
             'use_config_manage_stock'   => 1,

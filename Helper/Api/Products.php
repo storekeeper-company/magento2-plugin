@@ -25,6 +25,8 @@ use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Parsedown;
 use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Api\ProductApiClient;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
 /**
  * @depracated
@@ -51,6 +53,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private ProductLinkInterfaceFactory $productLinkFactory;
     private StockRegistryInterface $stockRegistry;
     private LoggerInterface $logger;
+    private ProductApiClient $productApiClient;
+    private OrderApiClient $orderApiClient;
 
     /**
      * Constructor
@@ -73,6 +77,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param ProductLinkInterfaceFactory $productLinkFactory
      * @param StockRegistryInterface $stockRegistry
      * @param LoggerInterface $logger
+     * @param ProductApiClient $productApiClient
+     * @param OrderApiClient $orderApiClient
      */
     public function __construct(
         Auth $authHelper,
@@ -92,7 +98,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         SourceItemInterfaceFactory $sourceItemFactory,
         ProductLinkInterfaceFactory $productLinkFactory,
         StockRegistryInterface $stockRegistry,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ProductApiClient $productApiClient,
+        OrderApiClient $orderApiClient
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -111,6 +119,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productLinkFactory = $productLinkFactory;
         $this->stockRegistry = $stockRegistry;
         $this->logger = $logger;
+        $this->productApiClient = $productApiClient;
+        $this->orderApiClient = $orderApiClient;
     }
 
     /**
@@ -240,27 +250,30 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
 
-        $results = $this->authHelper->getModule('ShopModule', $storeId)->naturalSearchShopFlatProductForHooks(
-            ' ',
-            $language,
-            0,
-            1,
-            [],
-            [
-                [
-                    'name' => 'flat_product/product_id__=',
-                    'val' => $storeKeeperId
-                ]
-            ]
-        );
+        $results = $this->orderApiClient->getNaturalSearchShopFlatProductForHooks($language, $storeId, $storeKeeperId);
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
             $product_stock = $result['flat_product']['product']['product_stock'];
 
-            if ($product = $this->exists($storeId, $result)) {
-                $this->updateProductStock($storeId, $product, $product_stock);
+            $status = '';
+            $exceptionData = [];
+            try {
+                if ($product = $this->exists($storeId, $result)) {
+                    $this->updateProductStock($storeId, $product, $product_stock);
+                    $status = ProductApiClient::PRODUCT_UPDATE_STATUS_SUCCESS;
+                } else {
+                    throw new \Exception("Product with StoreKeerep ID: {$storeKeeperId} does not exist in Magento");
+                }
+            } catch (\Exception $e) {
+                $exceptionData = [
+                    'last_error_message' => $e->getMessage(),
+                    'last_error_details' => $e->getTraceAsString()
+                ];
+                $product = !$product ? null : $product;
+                $status = ProductApiClient::PRODUCT_UPDATE_STATUS_ERROR;
             }
+            $this->productApiClient->setShopProductObjectSyncStatusForHook($storeId, $storeKeeperId, $product, $status, $exceptionData);
         } else {
             throw new \Exception("Product {$storeKeeperId} does not exist in StoreKeeper");
         }
