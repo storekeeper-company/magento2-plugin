@@ -1204,6 +1204,7 @@ class Orders extends AbstractHelper
                 $email = 'nomail+' . crc32($email) . '@' . $storeBaseUrl;
             }
 
+            $relationDataId = $this->findCustomerRelationDataIdByEmail($email, $storeId);
         }
         if( empty($relationDataId)){
             $relationDataId = $this->customerApiClient->createStorekeeperCustomerByOrder($email, $order);
