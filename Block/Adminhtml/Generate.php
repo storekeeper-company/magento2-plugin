@@ -22,10 +22,10 @@ class Generate extends Template
      */
     public function __construct(
         Context $context,
+        Url $backendUrlManager,
         array $data = [],
         ?JsonHelper $jsonHelper = null,
         ?DirectoryHelper $directoryHelper = null,
-        Url $backendUrlManager
     ) {
         parent::__construct($context, $data, $jsonHelper, $directoryHelper);
         $this->backendUrlManager = $backendUrlManager;

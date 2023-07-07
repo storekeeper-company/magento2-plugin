@@ -115,7 +115,10 @@ class CsvFileContent
             }
             foreach ($exportData as $dataRow) {
                 if ($entityType == self::BLUEPRINT_ENTITY) {
-                    $dataRow = $this->getBlueprintRow($headerColsData['labels'], $dataRow);
+                    $dataRow = $this->blueprintExportManager->getBlueprintRow($headerColsData['labels'], $dataRow);
+                }
+                if ($entityType == self::ATTRIBUTE_ENTITY) {
+                    $dataRow = $this->attributeExportManager->getAttributeRow($headerColsData['labels'], $dataRow);
                 }
                 $writer->writeRow($dataRow);
             }
@@ -218,8 +221,9 @@ class CsvFileContent
             $headerColsLabels = $this->categoryExportManager->getMappedHeadersLabels(CategoryExportManager::HEADERS_PATHS, CategoryExportManager::HEADERS_LABELS);
         }
         if ($entityType == self::ATTRIBUTE_ENTITY) {
-            $headerCols = AttributeExportManager::HEADERS_PATHS;
-            $headerColsLabels = $this->attributeExportManager->getMappedHeadersLabels(AttributeExportManager::HEADERS_PATHS, AttributeExportManager::HEADERS_LABELS);
+            $headerData = $this->attributeExportManager->getHeaderCols($exportData);
+            $headerCols = $headerData['paths'];
+            $headerColsLabels = $this->attributeExportManager->getMappedHeadersLabels($headerData['paths'], $headerData['labels']);
         }
         if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
             $headerCols = AttributeOptionExportManager::HEADERS_PATHS;
@@ -251,41 +255,5 @@ class CsvFileContent
             self::ATTRIBUTE_OPTION_ENTITY,
             self::BLUEPRINT_ENTITY
         ];
-    }
-
-    /**
-     * @param array $labels
-     * @param array $dataRow
-     * @return array
-     */
-    private function getBlueprintRow(array $labels, array $dataRow): array
-    {
-        $diff = array_diff_key($labels, $dataRow);
-        foreach ($diff as $key => $value) {
-            if (mb_substr_count($dataRow['path://sku_pattern'], 'content_vars') > 1) {
-                $compoundLabelData = explode(' ', $dataRow['path://name']);
-                foreach ($compoundLabelData as $compoundLabelItem) {
-                    $dataRow[$key] = $this->isLabelItemMatchHeader($compoundLabelItem, $value) ? 'yes' : 'no';
-                    if ($dataRow[$key] =='yes') {
-                        break;
-                    }
-                }
-            } else{
-                $dataRow[$key] = $this->isLabelItemMatchHeader($dataRow['path://name'], $value ) ? 'yes' : 'no';
-            }
-
-        }
-
-        return $dataRow;
-    }
-
-    /**
-     * @param string $labelItem
-     * @param string $headerLabel
-     * @return bool
-     */
-    private function isLabelItemMatchHeader(string $labelItem, string $headerLabel): bool
-    {
-        return str_starts_with($headerLabel, $labelItem) && !str_contains($headerLabel, 'Synchronized');
     }
 }

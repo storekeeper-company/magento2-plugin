@@ -136,8 +136,8 @@ class BlueprintExportManager extends AbstractExportManager
         $encodedName =$this->base36Coder->encode($key);
 
         return [
-            "attribute.encoded__$encodedName.is_configurable",
-            "attribute.encoded__$encodedName.is_synchronized"
+            "path://attribute.encoded__$encodedName.is_configurable",
+            "path://attribute.encoded__$encodedName.is_synchronized"
         ];
     }
 
@@ -151,5 +151,41 @@ class BlueprintExportManager extends AbstractExportManager
                     "$label (Configurable)",
                     "$label (Synchronized)"
                 ];
+    }
+
+    /**
+     * @param array $labels
+     * @param array $dataRow
+     * @return array
+     */
+    public function getBlueprintRow(array $labels, array $dataRow): array
+    {
+        $diff = array_diff_key($labels, $dataRow);
+        foreach ($diff as $key => $value) {
+            if (mb_substr_count($dataRow['path://sku_pattern'], 'content_vars') > 1) {
+                $compoundLabelData = explode(' ', $dataRow['path://name']);
+                foreach ($compoundLabelData as $compoundLabelItem) {
+                    $dataRow[$key] = $this->isLabelItemMatchHeader($compoundLabelItem, $value) ? 'yes' : 'no';
+                    if ($dataRow[$key] =='yes') {
+                        break;
+                    }
+                }
+            } else{
+                $dataRow[$key] = $this->isLabelItemMatchHeader($dataRow['path://name'], $value ) ? 'yes' : 'no';
+            }
+
+        }
+
+        return $dataRow;
+    }
+
+    /**
+     * @param string $labelItem
+     * @param string $headerLabel
+     * @return bool
+     */
+    private function isLabelItemMatchHeader(string $labelItem, string $headerLabel): bool
+    {
+        return str_starts_with($headerLabel, $labelItem) && !str_contains($headerLabel, 'Synchronized');
     }
 }
