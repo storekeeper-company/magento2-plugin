@@ -22,9 +22,7 @@ class AttributeOptionExportManager extends AbstractExportManager
         'path://is_default',
         'path://image_url',
         'path://attribute.name',
-        'path://attribute.label',
-        'path://date_created',
-        'path://date_updated'
+        'path://attribute.label'
     ];
     const HEADERS_LABELS = [
         'Name',
@@ -34,9 +32,7 @@ class AttributeOptionExportManager extends AbstractExportManager
         'Is default',
         'Image URL',
         'Attribute name',
-        'Attribute label',
-        'Date created',
-        'Date updated'
+        'Attribute label'
     ];
 
     private Attribute $attribute;
@@ -72,9 +68,7 @@ class AttributeOptionExportManager extends AbstractExportManager
                 $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
                 null, //'path://image_url'
                 $attribute->getAttributeCode(), //'path://attribute.name'
-                $attribute->getFrontendLabel(), //'path://attribute.label'
-                null, //'path://date_created'
-                null, //'path://date_updated'
+                $attribute->getFrontendLabel() //'path://attribute.label'
             ];
             $result[] = array_combine(self::HEADERS_PATHS, $data);
         }
