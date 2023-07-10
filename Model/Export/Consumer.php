@@ -41,6 +41,7 @@ class Consumer
             }
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+            $this->logger->error($e->getTraceAsString());
         }
     }
 

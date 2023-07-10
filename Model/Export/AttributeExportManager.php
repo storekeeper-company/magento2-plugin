@@ -15,6 +15,7 @@ use Magento\Eav\Model\ResourceModel\Entity\Attribute\CollectionFactory as Attrib
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory as AttributeSetCollectionFactory;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class AttributeExportManager extends AbstractExportManager
 {
@@ -47,6 +48,7 @@ class AttributeExportManager extends AbstractExportManager
     private AttributeRepositoryInterface $attributeRepository;
     private Base36Coder $base36Coder;
     private AttributeSetCollectionFactory $attributeSetCollectionFactory;
+    private Auth $authHelper;
 
     public function __construct(
         Resolver $localeResolver,
@@ -57,9 +59,10 @@ class AttributeExportManager extends AbstractExportManager
         AttributeCollectionFactory $attributeCollectionFactory,
         AttributeRepositoryInterface $attributeRepository,
         Base36Coder $base36Coder,
-        AttributeSetCollectionFactory $attributeSetCollectionFactory
+        AttributeSetCollectionFactory $attributeSetCollectionFactory,
+    Auth $authHelper
     ) {
-        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->attributeSetRepository = $attributeSetRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->attributeCollectionFactory = $attributeCollectionFactory;
@@ -75,7 +78,6 @@ class AttributeExportManager extends AbstractExportManager
     public function getAttributeExportData(array $attributes): array
     {
         $result = [];
-        $currentLocale = $this->getCurrentLocale();
         foreach ($attributes as $attribute) {
             $hasOption = $attribute->usesSource();
             $data = [
@@ -86,7 +88,7 @@ class AttributeExportManager extends AbstractExportManager
                 $hasOption ? 'yes' : 'no', //'path://is_options'
                 $hasOption ? 'string' : null, //'path://type'
                 $attribute->getIsRequired() ? 'yes' : 'no', //'path://required'
-                null, //'path://published'
+                'true', //'path://published'
                 $attribute->getIsUnique() ? 'yes' : 'no' //'path://unique'
             ];
             $result[] = array_combine(self::HEADERS_PATHS, $data);
@@ -132,12 +134,9 @@ class AttributeExportManager extends AbstractExportManager
     private function getAttributeSetList(): array
     {
         $attributeSetList = null;
-        try {
-            $searchCriteria = $this->searchCriteriaBuilder->create();
-            $attributeSet = $this->attributeSetRepository->getList($searchCriteria);
-        } catch (Exception $exception) {
-            throw new Exception($exception->getMessage());
-        }
+
+        $searchCriteria = $this->searchCriteriaBuilder->create();
+        $attributeSet = $this->attributeSetRepository->getList($searchCriteria);
 
         if ($attributeSet->getTotalCount()) {
             $attributeSetList = $attributeSet;

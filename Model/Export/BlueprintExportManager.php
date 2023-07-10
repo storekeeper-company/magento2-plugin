@@ -7,11 +7,10 @@ use Magento\Store\Api\StoreConfigManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class BlueprintExportManager extends AbstractExportManager
 {
-    private Base36Coder $base36Coder;
-
     const HEADERS_PATHS = [
         'path://name',
         'path://alias',
@@ -26,13 +25,17 @@ class BlueprintExportManager extends AbstractExportManager
     ];
     const ADD_HEADER_FLAG = 'add_header_';
 
+    private Base36Coder $base36Coder;
+    private Auth $authHelper;
+
     public function __construct(
         Resolver $localeResolver,
         StoreManagerInterface $storeManager,
         StoreConfigManagerInterface $storeConfigManager,
-        Base36Coder $base36Coder
+        Base36Coder $base36Coder,
+        Auth $authHelper
     ) {
-        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->base36Coder = $base36Coder;
     }
 

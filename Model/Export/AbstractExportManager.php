@@ -5,21 +5,25 @@ namespace StoreKeeper\StoreKeeper\Model\Export;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 abstract class AbstractExportManager
 {
     private Resolver $localeResolver;
     private StoreManagerInterface $storeManager;
     private StoreConfigManagerInterface $storeConfigManager;
+    private Auth $authHelper;
 
     public function __construct(
         Resolver $localeResolver,
         StoreManagerInterface $storeManager,
-        StoreConfigManagerInterface $storeConfigManager
+        StoreConfigManagerInterface $storeConfigManager,
+        Auth $authHelper
     ) {
         $this->localeResolver = $localeResolver;
         $this->storeManager = $storeManager;
         $this->storeConfigManager = $storeConfigManager;
+        $this->authHelper = $authHelper;
     }
 
     /**
@@ -37,10 +41,9 @@ abstract class AbstractExportManager
      */
     public function getCurrentLocale(): string
     {
-        $currentLocaleCode = $this->localeResolver->getLocale();
-        $languageCode = strstr($currentLocaleCode, '_', true);
-
-        return $languageCode;
+        $storeId = $this->storeManager->getStore()->getId();
+        
+        return $this->authHelper->getLanguageForStore($storeId);
     }
 
 

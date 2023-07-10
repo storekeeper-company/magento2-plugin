@@ -26,6 +26,7 @@ use Magento\Catalog\Helper\Data as ProductHelper;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class ProductExportManager extends AbstractExportManager
 {
@@ -67,24 +68,6 @@ class ProductExportManager extends AbstractExportManager
         'path://attribute_set_alias',
         'path://shop_products.main.active',
         'path://shop_products.main.relation_limited',
-        'path://content_vars.encoded__5e8rjy3o.value',
-        'path://content_vars.encoded__5e8rjy3o.value_label',
-        'path://content_vars.encoded__1r5za44t98cqa.value',
-        'path://content_vars.encoded__1r5za44t98cqa.value_label',
-        'path://content_vars.encoded__89q4gkptawe.value',
-        'path://content_vars.encoded__89q4gkptawe.value_label',
-        'path://content_vars.encoded__5zteq3ce.value',
-        'path://content_vars.encoded__5zteq3ce.value_label',
-        'path://content_vars.encoded__zqn44pkyg5ts7vgh1cfqvh9jj99niuu9dvridjs1.value',
-        'path://content_vars.encoded__zqn44pkyg5ts7vgh1cfqvh9jj99niuu9dvridjs1.value_label',
-        'path://content_vars.encoded__2jp8v81fs0e4ywoumqi64me8hyhmldgtd.value',
-        'path://content_vars.encoded__2jp8v81fs0e4ywoumqi64me8hyhmldgtd.value_label',
-        'path://content_vars.encoded__2gq6lfenxwgcd5kk.value',
-        'path://content_vars.encoded__2gq6lfenxwgcd5kk.value_label',
-        'path://content_vars.encoded__ct5y8cb54vtvu6.value',
-        'path://content_vars.encoded__ct5y8cb54vtvu6.value_label',
-        'path://content_vars.encoded__24f8h2tfaabxsqxx.value',
-        'path://content_vars.encoded__24f8h2tfaabxsqxx.value_label',
         'path://product.product_images.0.download_url',
         'path://product.product_images.1.download_url',
         'path://product.product_images.2.download_url',
@@ -134,24 +117,6 @@ class ProductExportManager extends AbstractExportManager
         'Attribute set alias',
         'Sales active',
         'Sales relation limited',
-        'Merk (raw)',
-        'Merk (label)',
-        'Color (raw)',
-        'Color (label)',
-        'Kleuren (raw)',
-        'Kleuren (label)',
-        'Maten (raw)',
-        'Maten (label)',
-        'Beschrijving nodig op kassa (raw)',
-        'Beschrijving nodig op kassa (label)',
-        'Heeft gewicht nodig op kassa (raw)',
-        'Heeft gewicht nodig op kassa (label)',
-        'Verkoopeenheid (raw)',
-        'Verkoopeenheid (label)',
-        'Vulpennen (raw)',
-        'Vulpennen (label)',
-        'Barcode (raw)',
-        'Barcode (label)',
         'Image 1',
         'Image 2',
         'Image 3',
@@ -182,6 +147,7 @@ class ProductExportManager extends AbstractExportManager
     private CategoryRepositoryInterface $categoryRepository;
     private SetFactory $attributeSetFactory;
     private ImageFactory $imageFactory;
+    private Auth $authHelper;
 
     /**
      * ExportManager constructor.
@@ -203,6 +169,7 @@ class ProductExportManager extends AbstractExportManager
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SetFactory $attributeSetFactory
      * @param ImageFactory $imageFactory
+     * @param Auth$authHelper
      */
     public function __construct(
         Resolver $localeResolver,
@@ -224,9 +191,10 @@ class ProductExportManager extends AbstractExportManager
         ProductHelper $productHelper,
         CategoryRepositoryInterface $categoryRepository,
         SetFactory $attributeSetFactory,
-        ImageFactory $imageFactory
+        ImageFactory $imageFactory,
+        Auth $authHelper
     ) {
-        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
         $this->csv = $csv;
         $this->filesystem = $filesystem;
@@ -298,25 +266,7 @@ class ProductExportManager extends AbstractExportManager
                 $productData['attribute_set_name'],
                 null, // attribute_set_alias - Attribute set alias
                 $productData['is_salable'],
-                null, // shop_products.main.relation_limited - Sales relation limited
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
+                null // shop_products.main.relation_limited - Sales relation limited
             ];
             $data = $this->addProductImageUrlData($data, $product);
             $result[] = array_combine(self::HEADERS_PATHS, $data);
@@ -350,7 +300,7 @@ class ProductExportManager extends AbstractExportManager
      */
     private function getProductType(ProductInterface $product): string
     {
-        $validProductTypes = ['bundle', 'configurable', 'simple'];
+        $validProductTypes = ['configurable', 'simple'];
         $productType = $product->getTypeId();
 
         if (!in_array($productType, $validProductTypes)) {

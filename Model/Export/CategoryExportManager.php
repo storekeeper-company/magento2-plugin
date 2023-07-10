@@ -8,6 +8,7 @@ use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class CategoryExportManager extends AbstractExportManager
 {
@@ -48,14 +49,16 @@ class CategoryExportManager extends AbstractExportManager
 
     private CategoryRepositoryInterface $categoryRepository;
     private StoreManagerInterface $storeManager;
+    private Auth $authHelper;
 
     public function __construct(
         Resolver $localeResolver,
         StoreManagerInterface $storeManager,
         CategoryRepositoryInterface $categoryRepository,
-        StoreConfigManagerInterface $storeConfigManager
+        StoreConfigManagerInterface $storeConfigManager,
+        Auth $authHelper
     ) {
-        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->storeManager = $storeManager;
         $this->categoryRepository = $categoryRepository;
     }

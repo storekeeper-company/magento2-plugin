@@ -11,6 +11,10 @@ use Magento\Eav\Api\AttributeRepositoryInterface;
 use StoreKeeper\StoreKeeper\Model\Export\CsvFileContent;
 use Magento\Eav\Model\Attribute;
 use Magento\Eav\Api\Data\AttributeOptionInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+use Magento\Swatches\Model\Swatch;
+use Magento\Swatches\Helper\Media as SwatchHelper;
+use Magento\Swatches\Model\ResourceModel\Swatch\CollectionFactory as SwatchCollectionFactory;
 
 class AttributeOptionExportManager extends AbstractExportManager
 {
@@ -36,15 +40,23 @@ class AttributeOptionExportManager extends AbstractExportManager
     ];
 
     private Attribute $attribute;
+    private Auth $authHelper;
+    private SwatchHelper $swatchHelper;
+    private SwatchCollectionFactory $swatchCollectionFactory;
 
     public function __construct(
         Resolver $localeResolver,
         StoreManagerInterface $storeManager,
         StoreConfigManagerInterface $storeConfigManager,
-        Attribute $attribute
+        Attribute $attribute,
+        Auth $authHelper,
+        SwatchHelper $swatchHelper,
+        SwatchCollectionFactory $swatchCollectionFactory
     ) {
-        parent::__construct($localeResolver, $storeManager, $storeConfigManager);
+        parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->attribute = $attribute;
+        $this->swatchHelper = $swatchHelper;
+        $this->swatchCollectionFactory = $swatchCollectionFactory;
     }
 
     /**
@@ -54,7 +66,6 @@ class AttributeOptionExportManager extends AbstractExportManager
     public function getAttributeOptionExportData(array $attributeOptions): array
     {
         $result = [];
-        $currentLocale = $this->getCurrentLocale();
         foreach ($attributeOptions as $attributeOption) {
             $attribute = $this->getAttribute($attributeOption);
             $attributeData = $this->getAttributeData($attribute);
@@ -66,7 +77,7 @@ class AttributeOptionExportManager extends AbstractExportManager
                 $this->getCurrentLocale(), //'path://translatable.lang'
                 $this->isMainLanguage(), //'path://is_main_lang'
                 $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
-                null, //'path://image_url'
+                $this->getSwatchImage($attributeOptionId), //'path://image_url'
                 $attribute->getAttributeCode(), //'path://attribute.name'
                 $attribute->getFrontendLabel() //'path://attribute.label'
             ];
@@ -112,5 +123,22 @@ class AttributeOptionExportManager extends AbstractExportManager
         ];
 
         return $data;
+    }
+
+    /**
+     * @param string $attributeOptionId
+     * @return string|null
+     */
+    private function getSwatchImage(string $attributeOptionId): ?string
+    {
+        $image=null;
+        $swatchCollection = $this->swatchCollectionFactory->create();
+        $swatchCollection->addFieldtoFilter('option_id',$attributeOptionId);
+        $swatch=$swatchCollection->getFirstItem();
+        if ($value = $swatch->getValue()) {
+            $image= $this->swatchHelper->getSwatchAttributeImage(Swatch::SWATCH_IMAGE_NAME, $value);
+        }
+
+        return$image;
     }
 }
