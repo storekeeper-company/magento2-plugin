@@ -869,7 +869,7 @@ class Orders extends AbstractHelper
         }
         if (((float)$item->getTaxAmount()) > 0) {
             $payloadItem['ppu_wt'] = $this->getPriceValueForPayload($item->getPriceInclTax(), $order);
-            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($this->getOriginalPriceIncludingTax($item), $order);
+            $payloadItem['before_discount_ppu_wt'] = $this->getPriceValueForPayload($item->getOriginalPrice(), $order);
         } else {
             $itemPrice = $this->getItemPrice($item);
             $itemOriginalPrice = $this->getPriceValueForPayload($item->getOriginalPrice(), $order);
@@ -1174,7 +1174,7 @@ class Orders extends AbstractHelper
         } else {
             $priceWithTax = $bundleItem->getPriceInclTax();
             $bundleItemPriceWithTax = $priceWithTax ? $this->getPriceValueForPayload($bundleItem->getPriceInclTax(), $order) : 0.0;
-            $bundleItemOriginalPriceWithTax = $this->getOriginalPriceIncludingTax($bundleItem);
+            $bundleItemOriginalPriceWithTax = $bundleItem->getOriginalPrice();
             $payload = [
                 'before_discount_ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['before_discount_ppu_wt'] : $bundleItemOriginalPriceWithTax,
                 'ppu_wt' => $hasDiscount ? $bundleItemWithDiscountData['ppu_wt'] : $bundleItemPriceWithTax
@@ -1255,19 +1255,5 @@ class Orders extends AbstractHelper
             $creditmemo->setInvoice($invoice);
             $this->creditmemoService->refund($creditmemo);
         }
-    }
-
-    /**
-     * @param Item $item
-     * @return float
-     */
-    private function getOriginalPriceIncludingTax(Item $item): float
-    {
-        $originalPrice = $item->getOriginalPrice();
-        $taxPercent = $item->getTaxPercent();
-        $taxAmount = $originalPrice * ($taxPercent / 100);
-        $priceIncludingTax = $originalPrice + $taxAmount;
-
-        return $priceIncludingTax;
     }
 }
