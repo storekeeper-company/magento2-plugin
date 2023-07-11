@@ -131,14 +131,14 @@ class AttributeOptionExportManager extends AbstractExportManager
      */
     private function getSwatchImage(string $attributeOptionId): ?string
     {
-        $image=null;
+        $image = null;
         $swatchCollection = $this->swatchCollectionFactory->create();
         $swatchCollection->addFieldtoFilter('option_id',$attributeOptionId);
-        $swatch=$swatchCollection->getFirstItem();
+        $swatch = $swatchCollection->getFirstItem();
         if ($value = $swatch->getValue()) {
-            $image= $this->swatchHelper->getSwatchAttributeImage(Swatch::SWATCH_IMAGE_NAME, $value);
+            $image = $this->swatchHelper->getSwatchAttributeImage(Swatch::SWATCH_IMAGE_NAME, $value);
         }
 
-        return$image;
+        return $image;
     }
 }
