@@ -2,4 +2,7 @@
     <publisher topic="storekeeper.queue.events">
         <connection name="db" exchange="magento-db" />
     </publisher>
+    <publisher topic="storekeeper.disconnect.events">
+        <connection name="db" exchange="magento-db" />
+    </publisher>
 </config>
