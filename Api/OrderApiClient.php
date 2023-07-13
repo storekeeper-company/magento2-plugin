@@ -121,7 +121,7 @@ class OrderApiClient extends ApiClient
             [],
             [
                 [
-                    'name' => 'flat_product/product_id__=',
+                    'name' => 'id__=',
                     'val' => $storeKeeperId
                 ]
             ]
