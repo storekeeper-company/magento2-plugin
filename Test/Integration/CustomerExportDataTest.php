@@ -2,11 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration;
 
-use Aws\Backup\BackupClient;
-use PHPUnit\Framework\TestCase;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
 
-class CustomerExportDataTest extends TestCase
+class CustomerExportDataTest extends AbstractTest
 {
     const CUSTOMER_ONE = [
         "path://language_iso2" => "en",
@@ -84,6 +83,7 @@ class CustomerExportDataTest extends TestCase
 
     /**
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/customers_for_export.php
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_shop_language en
      * @magentoDbIsolation enabled
      */
     public function testGetCustomerExportData()
