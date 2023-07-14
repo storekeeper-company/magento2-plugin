@@ -11,12 +11,14 @@ use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Message\ManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+use Magento\Framework\MessageQueue\PublisherInterface;
 
 class Disconnect extends Action implements HttpGetActionInterface
 {
     private Http $request;
     private Auth $authHelper;
     private Url $url;
+    private PublisherInterface $publisher;
 
     /**
      * Constructor
@@ -26,19 +28,22 @@ class Disconnect extends Action implements HttpGetActionInterface
      * @param Auth $authHelper
      * @param ManagerInterface $messageManager
      * @param Url $url
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         Context $context,
         Http $request,
         Auth $authHelper,
         ManagerInterface $messageManager,
-        Url $url
+        Url $url,
+        PublisherInterface $publisher
     ) {
         parent::__construct($context);
         $this->request = $request;
         $this->authHelper = $authHelper;
         $this->messageManager = $messageManager;
         $this->url = $url;
+        $this->publisher = $publisher;
     }
 
     /**
@@ -70,6 +75,8 @@ class Disconnect extends Action implements HttpGetActionInterface
      */
     public function execute()
     {
+        $this->publisher->publish('storekeeper.disconnect.events', 'sk_disconnect');
+
         $storeId = $this->request->getParam('storeId');
         try {
             $this->authHelper->disconnectStore($storeId);
