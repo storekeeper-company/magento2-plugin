@@ -945,4 +945,29 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $target->setData($productData);
         $this->productRepository->save($target);
     }
+
+    /**
+     * @return void
+     */
+    public function cleanProductStorekeeperId(): void
+    {
+        try {
+            $productCollection = $this->productCollectionFactory->create();
+            $productCollection
+                ->setStoreId(Store::DEFAULT_STORE_ID)
+                ->addAttributeToFilter('storekeeper_product_id', ['neq' => null])
+                ->setFlag('has_stock_status_filter', false)
+                ->addAttributeToSelect('*');
+
+            if ($productCollection->count()) {
+                foreach ($productCollection->getItems() as $product) {
+                    $product->setData('storekeeper_product_id', '');
+                    $product->save();
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getTraceAsString());
+        }
+    }
 }

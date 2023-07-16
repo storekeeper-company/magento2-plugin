@@ -5,10 +5,4 @@
                consumerInstance="Magento\Framework\MessageQueue\Consumer"
                handler="StoreKeeper\StoreKeeper\Model\Consumer::process"/>
     </broker>
-    <broker topic="storekeeper.disconnect.events" exchange="magento-db" type="db">
-        <queue name="storekeeper.disconnect.events"
-               consumer="storekeeper.disconnect.events"
-               consumerInstance="Magento\Framework\MessageQueue\Consumer"
-               handler="StoreKeeper\StoreKeeper\Model\Disconnect\Consumer::process"/>
-    </broker>
 </config>

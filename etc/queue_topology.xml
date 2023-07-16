@@ -1,6 +1,5 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
     <exchange name="magento-db" type="topic" connection="db">
         <binding id="updateBindingvendor" topic="storekeeper.queue.events" destinationType="queue" destination="storekeeper.queue.events"/>
-        <binding id="storekeeperDisconnectEvents" topic="storekeeper.disconnect.events" destinationType="queue" destination="storekeeper.disconnect.events"/>
     </exchange>
 </config>
