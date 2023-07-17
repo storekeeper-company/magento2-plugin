@@ -87,31 +87,13 @@ class CategoryExportManager extends AbstractExportManager
                 $category->getMetaTitle(), //'path://seo_title'
                 $category->getMetaKeywords(), //'path://seo_keywords'
                 $category->getMetaDescription(), //'path://seo_description'
-                $this->getCategoryImageUrl($category), //'path://image_url'
+                $category->getImageUrl(), //'path://image_url'
                 null, //'path://published'
                 $category->getPosition(), //'path://order'
                 $this->getCategoryParentUrl($category), //'path://parent_slug'
                 null, //'path://protected'
             ];
             $result[] = array_combine(self::HEADERS_PATHS, $data);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param CategoryInterface $category
-     * @return string|null
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     */
-    private function getCategoryImageUrl(CategoryInterface $category): ?string
-    {
-        $categoryImageUrl = $category->getImageUrl();
-        $result = null;
-
-        if (!empty($categoryImageUrl)) {
-            $result = rtrim($this->storeManager->getStore()->getBaseUrl(), '/') . $categoryImageUrl;
         }
 
         return $result;

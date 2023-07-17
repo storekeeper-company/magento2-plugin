@@ -1,6 +1,6 @@
 <?php
 
-namespace StoreKeeper\StoreKeeper\Test\Integration;
+namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
 use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
