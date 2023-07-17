@@ -18,8 +18,6 @@ use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
-use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
-use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
@@ -48,8 +46,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private AttributeFilter $attributeFilter;
     private DirectoryList $directoryList;
     private File $file;
-    private SourceItemsSaveInterface $sourceItemsSave;
-    private SourceItemInterfaceFactory $sourceItemFactory;
     private ProductLinkInterfaceFactory $productLinkFactory;
     private StockRegistryInterface $stockRegistry;
     private LoggerInterface $logger;
@@ -72,8 +68,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param AttributeFilter $attributeFilter
      * @param DirectoryList $directoryList
      * @param File $file
-     * @param SourceItemsSaveInterface $sourceItemsSave
-     * @param SourceItemInterfaceFactory $sourceItemFactory
      * @param ProductLinkInterfaceFactory $productLinkFactory
      * @param StockRegistryInterface $stockRegistry
      * @param LoggerInterface $logger
@@ -94,8 +88,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         AttributeFilter $attributeFilter,
         DirectoryList $directoryList,
         File $file,
-        SourceItemsSaveInterface $sourceItemsSave,
-        SourceItemInterfaceFactory $sourceItemFactory,
         ProductLinkInterfaceFactory $productLinkFactory,
         StockRegistryInterface $stockRegistry,
         LoggerInterface $logger,
@@ -114,8 +106,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attributeFilter = $attributeFilter;
         $this->directoryList = $directoryList;
         $this->file = $file;
-        $this->sourceItemsSave = $sourceItemsSave;
-        $this->sourceItemFactory = $sourceItemFactory;
         $this->productLinkFactory = $productLinkFactory;
         $this->stockRegistry = $stockRegistry;
         $this->logger = $logger;

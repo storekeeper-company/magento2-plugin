@@ -2,10 +2,12 @@
 
 Connect your Magento 2 stores to StoreKeeper.
 
-# Important Notice
+# Important Notices
 
 Before using module make sure that your shop have all tax rules, classes and rates configured accordingly to your shop's region. Please follow this [official Magento guide](https://experienceleague.adobe.com/docs/commerce-admin/stores-sales/site-store/taxes/international-tax-guidelines.html#eu-tax-configuration).
 
+If your project is using Multi-Source Inventory (MSI) functionality and/or MSI-related modules are enabled, please install
+this [addon module](https://github.com/storekeeper-company/magento2-plugin-msi-addon).
 # Installation
 
 1. Go to your Magento 2 directory and install the plugin via `composer`:
@@ -45,22 +47,29 @@ bin/magento cache:clean;
 
 13. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
 
+## Check after installation
+
+1. After installation check the results of the cron operations. Cron job name `storekeeper_storekeeper_cron_orders`
+   has to be added to `cron_schedule` DB table. Check `var/log/cron.log` file as well.
+
+2. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
+
 ## Payment Methods Configuration
 Payment methods awaylable via Storekeeper Payment Gateway can be activated in two places:
- 1. As an option of **StoreKeeper Payments** payment method, available under:<br/>
-_Stores->Configuration->Sales->Payment Methods->Other Payment Methods->**StoreKeeper Payments** (Yes/No)_
+1. As an option of **StoreKeeper Payments** payment method, available under:<br/>
+   _Stores->Configuration->Sales->Payment Methods->Other Payment Methods->**StoreKeeper Payments** (Yes/No)_
 
 In this case customer will see all Payment options activated on their storekeeper account.
 ![Storekeeper Payments available in Magento as single Payment option](docs/storekeeper_payments.png)
 2. As separate Payment option:<br/>
-In order to display in Magento Checkout any of Payment Methods available on storekeeper account as an individual payment option, admin user needs to activate  method under:<br />
-_Stores->Configuration->Storekeeper->**StoreKeeper Payments**_
-![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually_adminarea.png)
+   In order to display in Magento Checkout any of Payment Methods available on storekeeper account as an individual payment option, admin user needs to activate  method under:<br />
+   _Stores->Configuration->Storekeeper->**StoreKeeper Payments**_
+   ![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually_adminarea.png)
 
 In this case activated Payment Method(s) will appear as individual Payment Method option, and dissapear as sub-option on **StoreKeeper Payments**
 ![Payment method iDEAL available as separate Payment option](docs/sk_payment_individually.png)
 
-_Payment methods that does not have own logo will receive current store logo set in Content->Design->Configuration area of Magento admin panel_ 
+_Payment methods that does not have own logo will receive current store logo set in Content->Design->Configuration area of Magento admin panel_
 
 ## Queue
 
@@ -80,11 +89,11 @@ Disconnecting your Magento 2 store can be done in two ways
 
 2. Select your StoreKeeper Sales Channel
 
-3. Go to `Settings` 
+3. Go to `Settings`
 
 4. Scroll down to the `Disconnect` button and click it
 
-## Disconnect from Magento 2 
+## Disconnect from Magento 2
 
 1. Log into your Magento 2 backend
 
