@@ -31,7 +31,7 @@ class BlueprintExportDataTest extends AbstractTest
      * @return array
      * @throws \Exception
      */
-    private function getBlueprintCsvContent(): array
+    public function getBlueprintCsvContent(): array
     {
         $data = $this->csvFileContent->getFileContents('blueprint');
         $data = explode(',', $this->json->unserialize(str_replace('\n', ',', $this->json->serialize($data))));
@@ -46,7 +46,7 @@ class BlueprintExportDataTest extends AbstractTest
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    private function getTestBlueprintExportData(): array
+    public function getTestBlueprintExportData(): array
     {
         return [
             0 => 'path://name',

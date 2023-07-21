@@ -29,18 +29,26 @@ class CategoryExportDataTest extends AbstractTest
      */
     public function testGetCategoryExportData()
     {
-        $c = $this->getTestCategoryExportData();
+        $this->assertEquals($this->getTestCategoryExportData(), $this->getCategoryExportData());
+    }
+
+    /**
+     * @return array
+     */
+    public function getCategoryExportData(): array
+    {
         $categoryCollection = $this->categoryCollectionFactory->create();
         $categories = $categoryCollection->addFieldToSelect('*')->getItems();
         $categoryExportData = $this->categoryExportManager->getCategoryExportData($categories);
-        $this->assertEquals($this->getTestCategoryExportData(), $this->getFoundEntityData('Category 1', $categoryExportData, 'path://title'));
+
+        return $this->getFoundEntityData('Category 1', $categoryExportData, 'path://title');
     }
 
     /**
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    private function getTestCategoryExportData(): array
+    public function getTestCategoryExportData(): array
     {
         return [
             'path://title' => 'Category 1',

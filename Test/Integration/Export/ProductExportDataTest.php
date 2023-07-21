@@ -7,8 +7,8 @@ use Magento\TestFramework\Helper\Bootstrap;
 
 class ProductExportDataTest extends AbstractTest
 {
-    protected $categoryExportManager;
-    protected $categoryCollectionFactory;
+    protected $productExportManager;
+    protected $productCollectionFactory;
 
     protected function setUp(): void
     {
@@ -27,31 +27,30 @@ class ProductExportDataTest extends AbstractTest
      */
     public function testGetProductExportData()
     {
-        $products = $this->getProducts();
-        $productExportData = $this->productExportManager->getProductExportData($products);
-        $this->assertEquals($this->getTestProductExportData(), $this->getFoundEntityData('taxable_product', $productExportData, 'path://product.sku'));
+        $this->assertEquals($this->getTestProductExportData(), $this->getProductExportData());
     }
 
     /**
      * @return array
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function getProducts(): array
+    public function getProductExportData(): array
     {
         $productCollection = $this->productCollectionFactory->create();
         $productCollection->addFieldToSelect('*');
         $productCollection->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
         $productCollection->addMediaGalleryData();
         $productCollection->setOrder('entity_id', 'asc');
+        $productExportData = $this->productExportManager->getProductExportData($productCollection->getItems());
 
-        return $productCollection->getItems();
+        return $this->getFoundEntityData('taxable_product', $productExportData, 'path://product.sku');
     }
 
     /**
      * @return array
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    private function getTestProductExportData(): array
+    public function getTestProductExportData(): array
     {
         return [
             'path://product.type' => 'simple',

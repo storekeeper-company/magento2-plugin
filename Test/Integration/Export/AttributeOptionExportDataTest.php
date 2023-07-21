@@ -18,7 +18,7 @@ class AttributeOptionExportDataTest extends AbstractTest
         'path://attribute.label' => 'Gender'
     ];
 
-    protected $attributeExportManager;
+    protected $attributeOptionExportManager;
     protected $attributeOptionCollectionFactory;
 
     protected function setUp(): void
@@ -33,9 +33,18 @@ class AttributeOptionExportDataTest extends AbstractTest
      */
     public function testGetAttributeOptionExportData()
     {
+        $this->assertEquals(self::TEST_ATTRIBUTE_OPTION_EXPORT_DATA, $this->getAttributeOptionExportData());
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttributeOptionExportData(): array
+    {
         $attributeOptionCollection = $this->attributeOptionCollectionFactory->create();
         $attributeOptions = $attributeOptionCollection->addFieldToSelect('*')->getItems();
         $attributeOptionExportData = $this->attributeOptionExportManager->getAttributeOptionExportData($attributeOptions);
-        $this->assertEquals(self::TEST_ATTRIBUTE_OPTION_EXPORT_DATA, $this->getFoundEntityData('gender_1', $attributeOptionExportData, 'path://name'));
+
+        return $this->getFoundEntityData('gender_1', $attributeOptionExportData, 'path://name');
     }
 }

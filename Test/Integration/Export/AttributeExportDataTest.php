@@ -34,10 +34,19 @@ class AttributeExportDataTest extends AbstractTest
      */
     public function testGetAttributeExportData()
     {
+        $this->assertEquals(self::TEST_ATTRIBUTE_EXPORT_DATA, $this->getAttributeExportData());
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttributeExportData(): array
+    {
         $attributeCollection = $this->attributeCollectionFactory->create()->getCollection();
         $attributeCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, 4);
         $attributes = $attributeCollection->addFieldToSelect('*')->getItems();
         $attributeExportData = $this->attributeExportManager->getAttributeExportData($attributes);
-        $this->assertEquals(self::TEST_ATTRIBUTE_EXPORT_DATA, $this->getFoundEntityData('color', $attributeExportData, 'path://name'));
+
+        return $this->getFoundEntityData('color', $attributeExportData, 'path://name');
     }
 }

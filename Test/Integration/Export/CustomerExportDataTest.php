@@ -8,7 +8,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 class CustomerExportDataTest extends AbstractTest
 {
     const CUSTOMER_ONE = [
-        "path://language_iso2" => "en",
+        "path://language_iso2" => "nl",
         "path://business_data.name" => "CompanyName",
         "path://business_data.country_iso2" => "US",
         "path://business_data.vat_number" => "9021090210",
@@ -35,7 +35,7 @@ class CustomerExportDataTest extends AbstractTest
         "path://address_billing.country_iso2" => "US"
     ];
     const CUSTOMER_TWO = [
-        "path://language_iso2" => "en",
+        "path://language_iso2" => "nl",
         "path://business_data.name" => "CompanyName",
         "path://business_data.country_iso2" => "US",
         "path://business_data.vat_number" => "9876543210",
@@ -83,15 +83,25 @@ class CustomerExportDataTest extends AbstractTest
 
     /**
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/customers_for_export.php
-     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_shop_language en
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_shop_language nl
      * @magentoDbIsolation enabled
      */
     public function testGetCustomerExportData()
     {
+        $this->assertEquals(self::CUSTOMER_ONE, array_slice($this->getCustomerExportData()[0], 1));
+        $this->assertEquals(self::CUSTOMER_TWO, array_slice($this->getCustomerExportData()[1], 1));
+    }
+
+    /**
+     * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getCustomerExportData(): array
+    {
         $customerCollection = $this->customerCollectionFactory->create();
         $customers = $customerCollection->addAttributeToSelect('*')->getItems();
         $customerExportData = $this->customerExportManager->getCustomerExportData($customers);
-        $this->assertEquals(self::CUSTOMER_ONE, array_slice($customerExportData[0], 1));
-        $this->assertEquals(self::CUSTOMER_TWO, array_slice($customerExportData[1], 1));
+
+        return $customerExportData;
     }
 }
