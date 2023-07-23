@@ -46,6 +46,7 @@ class CategoryExportManager extends AbstractExportManager
         'Parent slug',
         'Protected'
     ];
+    const CATEGORY_ROOT_CATALOG_NAME = 'Root Catalog';
 
     private CategoryRepositoryInterface $categoryRepository;
     private StoreManagerInterface $storeManager;
@@ -73,13 +74,13 @@ class CategoryExportManager extends AbstractExportManager
         $currentLocale = $this->getCurrentLocale();
         foreach ($categories as $category) {
             $categoryName = $category->getName();
-            if ($categoryName == 'Root Catalog') {
+            if ($categoryName == self::CATEGORY_ROOT_CATALOG_NAME) {
                 continue;
             }
             $data = [
                 $categoryName, //'path://title'
                 $currentLocale, //'path://translatable.lang'
-                $this->isMainLanguage(), //'path://is_main_lang'
+                'yes', //'path://is_main_lang'
                 $category->getUrl(), //'path://slug'
                 null, //'path://summary'
                 null, //'path://icon'

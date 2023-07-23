@@ -75,7 +75,7 @@ class AttributeOptionExportManager extends AbstractExportManager
                 isset($attributeData['attribute_code']) ? $attributeData['attribute_code'] . '_' . $attributeOptionId : null, //path://name'
                 $attributeOptionData['label'], //'path://label'
                 $this->getCurrentLocale(), //'path://translatable.lang'
-                $this->isMainLanguage(), //'path://is_main_lang'
+                'yes', //'path://is_main_lang'
                 $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
                 $this->getSwatchImage($attributeOptionId), //'path://image_url'
                 $attribute->getAttributeCode(), //'path://attribute.name'

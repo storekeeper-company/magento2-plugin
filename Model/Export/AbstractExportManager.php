@@ -42,7 +42,7 @@ abstract class AbstractExportManager
     public function getCurrentLocale(): string
     {
         $storeId = $this->storeManager->getStore()->getId();
-        
+
         return $this->authHelper->getLanguageForStore($storeId);
     }
 
@@ -59,18 +59,5 @@ abstract class AbstractExportManager
         }
 
         return $languageCode;
-    }
-
-    /**
-     * @return string
-     */
-    public function isMainLanguage(): string
-    {
-        $result = 'yes';
-        if ($this->getCurrentLocale() != $this->getCurrentStoreLanguageCode()) {
-            $result = 'no';
-        }
-
-        return $result;
     }
 }

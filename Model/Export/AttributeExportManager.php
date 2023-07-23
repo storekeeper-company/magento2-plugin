@@ -41,6 +41,7 @@ class AttributeExportManager extends AbstractExportManager
         'Published',
         'Unique'
     ];
+    const PRODUCT_ENTITY_TYPE_ID = '4';
 
     private AttributeSetRepositoryInterface $attributeSetRepository;
     private SearchCriteriaBuilder $searchCriteriaBuilder;
@@ -84,7 +85,7 @@ class AttributeExportManager extends AbstractExportManager
                 $attribute->getAttributeCode(), //'path://name'
                 $attribute->getFrontendLabel(), //'path://label'
                 $this->getCurrentLocale(), //'path://translatable.lang'
-                $this->isMainLanguage(), //'path://is_main_lang'
+                'yes', //'path://is_main_lang'
                 $hasOption ? 'yes' : 'no', //'path://is_options'
                 $hasOption ? 'string' : null, //'path://type'
                 $attribute->getIsRequired() ? 'yes' : 'no', //'path://required'
@@ -133,16 +134,16 @@ class AttributeExportManager extends AbstractExportManager
      */
     private function getAttributeSetList(): array
     {
-        $attributeSetList = null;
+        $attributeSetList = [];
 
         $searchCriteria = $this->searchCriteriaBuilder->create();
         $attributeSet = $this->attributeSetRepository->getList($searchCriteria);
 
         if ($attributeSet->getTotalCount()) {
-            $attributeSetList = $attributeSet;
+            $attributeSetList = $attributeSet->getItems();
         }
 
-        return $attributeSetList->getItems();
+        return $attributeSetList;
     }
 
     public function getArrtibuteSetIds(string $attributeSetName, string $attributeCode)
@@ -154,7 +155,7 @@ class AttributeExportManager extends AbstractExportManager
             $attributeSetName
         )->addFieldToFilter(
             'entity_type_id',
-            '4'
+            self::PRODUCT_ENTITY_TYPE_ID
         );
         $attributesCollection=$this->attributeCollectionFactory->create()->setAttributeSetFilter($attributeSet->getFirstItem()->getId())->load();
 
