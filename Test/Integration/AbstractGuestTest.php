@@ -27,7 +27,7 @@ use Magento\Checkout\Model\PaymentInformationManagement;
 use Magento\Quote\Model\GuestCart\GuestCartManagement;
 use Magento\Quote\Model\MaskedQuoteIdToQuoteId;
 
-class AbstractGuestTest extends AbstractTest
+abstract class AbstractGuestTest extends AbstractTest
 {
     protected function setUp(): void
     {

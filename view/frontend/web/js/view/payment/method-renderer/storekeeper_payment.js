@@ -132,6 +132,12 @@ define(
                         });
                     }
                 }
+            },
+            isVisible: function() {
+                if (!window.checkoutConfig.storekeeper_payment_methods.length) {
+                    return false;
+                }
+                return true;
             }
         });
     }

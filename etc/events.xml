@@ -12,8 +12,4 @@
     <event name="sales_order_save_before">
         <observer name="storekeeper_sales_order_save_before" instance="StoreKeeper\StoreKeeper\Observers\SalesOrderSaveBeforeObserver"/>
     </event>
-    <event name="sales_order_shipment_save_after">
-        <observer name="inventory_sales_source_deduction_processor" disabled="true"/>
-        <observer name="inventory_sales_source_deduction_processor_rewrite" instance="StoreKeeper\StoreKeeper\Observers\SourceDeductionProcessor"/>
-    </event>
 </config>

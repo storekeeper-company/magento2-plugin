@@ -92,6 +92,7 @@ class ConfigProvider implements ConfigProviderInterface
      */
     private function getStoreKeeperPaymentMethods(): array
     {
+        $paymentMethods = [];
         $storeKeeperPaymentMethods =  $this->paymentApiClient->getListTranslatedPaymentMethodForHooks($this->storeManager->getStore()->getId());
         foreach ($storeKeeperPaymentMethods['data'] as $storeKeeperPaymentMethod) {
             if ($storeKeeperPaymentMethod['eid'] != 'Web::PaymentModule') {
@@ -113,6 +114,7 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function getMappedPaymentMethods(): array
     {
+        $mappedPaymentMethods = [];
         foreach ($this->methodCodes as $code) {
             $this->methods[$code] = [
                 'eId' => $this->paymentHelper->getMethodInstance($code)->getEId(),

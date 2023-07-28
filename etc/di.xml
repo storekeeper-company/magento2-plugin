@@ -2,7 +2,6 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="StoreKeeper\StoreKeeper\Api\Webhook\WebhookInterface" type="StoreKeeper\StoreKeeper\Api\Webhook\Webhook"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Webhook\InfoWebhookInterface" type="StoreKeeper\StoreKeeper\Api\Webhook\Connectinfo"/>
-    <preference for="Magento\InventorySourceDeductionApi\Model\SourceDeductionServiceInterface" type="StoreKeeper\StoreKeeper\Model\SourceDeductionService"/>
 
     <type name="StoreKeeper\StoreKeeper\Api\Webhook\Webhook">
         <arguments>

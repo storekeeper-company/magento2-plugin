@@ -20,7 +20,7 @@ class PaymentApiClient extends ApiClient
      * @param OrderApiClient $orderApiClient
      */
     public function __construct(
-        OrderApiClient $orderApiClient,
+        OrderApiClient $orderApiClient
     ) {
         $this->orderApiClient = $orderApiClient;
     }

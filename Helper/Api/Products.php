@@ -18,8 +18,6 @@ use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
-use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
-use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
@@ -27,6 +25,7 @@ use Parsedown;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface;
 
 /**
  * @depracated
@@ -48,13 +47,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private AttributeFilter $attributeFilter;
     private DirectoryList $directoryList;
     private File $file;
-    private SourceItemsSaveInterface $sourceItemsSave;
-    private SourceItemInterfaceFactory $sourceItemFactory;
     private ProductLinkInterfaceFactory $productLinkFactory;
     private StockRegistryInterface $stockRegistry;
     private LoggerInterface $logger;
     private ProductApiClient $productApiClient;
     private OrderApiClient $orderApiClient;
+    private SourceItemsProcessorInterface $sourceItemsProcessor;
 
     /**
      * Constructor
@@ -72,13 +70,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param AttributeFilter $attributeFilter
      * @param DirectoryList $directoryList
      * @param File $file
-     * @param SourceItemsSaveInterface $sourceItemsSave
-     * @param SourceItemInterfaceFactory $sourceItemFactory
      * @param ProductLinkInterfaceFactory $productLinkFactory
      * @param StockRegistryInterface $stockRegistry
      * @param LoggerInterface $logger
      * @param ProductApiClient $productApiClient
      * @param OrderApiClient $orderApiClient
+     * @param SSourceItemsProcessorInterface $sourceItemsProcessor
      */
     public function __construct(
         Auth $authHelper,
@@ -94,13 +91,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         AttributeFilter $attributeFilter,
         DirectoryList $directoryList,
         File $file,
-        SourceItemsSaveInterface $sourceItemsSave,
-        SourceItemInterfaceFactory $sourceItemFactory,
         ProductLinkInterfaceFactory $productLinkFactory,
         StockRegistryInterface $stockRegistry,
         LoggerInterface $logger,
         ProductApiClient $productApiClient,
-        OrderApiClient $orderApiClient
+        OrderApiClient $orderApiClient,
+        SourceItemsProcessorInterface $sourceItemsProcessor
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -114,13 +110,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->attributeFilter = $attributeFilter;
         $this->directoryList = $directoryList;
         $this->file = $file;
-        $this->sourceItemsSave = $sourceItemsSave;
-        $this->sourceItemFactory = $sourceItemFactory;
         $this->productLinkFactory = $productLinkFactory;
         $this->stockRegistry = $stockRegistry;
         $this->logger = $logger;
         $this->productApiClient = $productApiClient;
         $this->orderApiClient = $orderApiClient;
+        $this->sourceItemsProcessor = $sourceItemsProcessor;
     }
 
     /**
@@ -333,21 +328,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     public function updateById($storeId, $storeKeeperId)
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
-
-        $results = $this->authHelper->getModule('ShopModule', $storeId)->naturalSearchShopFlatProductForHooks(
-            ' ',
-            $language,
-            0,
-            1,
-            [],
-            [
-                [
-                    'name' => 'flat_product/product_id__=',
-                    'val' => $storeKeeperId
-                ]
-            ]
-        );
-
+        $results = $this->orderApiClient->getNaturalSearchShopFlatProductForHooks($language, $storeId, $storeKeeperId);
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
             if ($product = $this->exists($storeId, $result)) {
@@ -385,7 +366,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if (empty($storekeeperProductId)) {
             throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
         }
-        $storekeeperLinkIds = $this->authHelper->getModule('ShopModule', $storeId)
+        $storekeeperLinkIds = $this->orderApiClient->getShopModule($storeId)
             ->$storeKeeperEndpoint($storekeeperProductId);
 
         $storekeeperLinkSkus = [];
@@ -604,10 +585,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $websiteId = $this->getStoreWebsiteId($storeId);
 
         $flat_product = $result['flat_product'];
-        $product_price = $result['product_price'];
-
-        $price = $product_price['ppu'];
-        $price_wt = $product_price['ppu_wt'];
+        $productPrice = $result['product_price']['ppu'];
+        $productDefaultPrice = $result['product_default_price']['ppu'];
 
         $title = $flat_product['title'];
 
@@ -655,9 +634,16 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setName($title);
             }
 
-            if ((float) $target->getPrice() != (float) $price_wt) {
+            if ((float) $target->getPrice() != (float) $productDefaultPrice) {
                 $shouldUpdate = true;
-                $target->setPrice($price_wt);
+                $target->setPrice($productDefaultPrice);
+            }
+
+            if ($productPrice != $productDefaultPrice) {
+                if ((float) $target->getSpecialPrice() != (float) $productPrice) {
+                    $shouldUpdate = true;
+                    $target->setSpecialPrice($productPrice);
+                }
             }
 
             $storekeeper_id = $this->getResultStoreKeeperId($result);
@@ -784,40 +770,40 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 }
             }
 
+            $sourceItemData = [
+                'source_code' => 'default',
+                'status' => 1
+            ];
+
             $shouldUpdateStock = false;
-            $stockItem = $this->stockItem->load($target->getId(), 'product_id');
+            $stockItem = $this->stockItem->load($this->productRepository->get($sku)->getId(), 'product_id');
 
             (float) $product_stock_value = $product['product_stock']['value'];
-            $product_stock_in_stock = $product['product_stock']['in_stock'];
             $product_stock_unlimited = $product['product_stock']['unlimited'];
 
             if ($product_stock_unlimited &&
-                ($stockItem->GetBackorders() == false || $stockItem->getUseConfigBackOrders() == true)
+                ($stockItem->getBackorders() == false || $stockItem->getUseConfigBackOrders() == true)
             ) {
-                $stockItem->setBackorders(true);
-                $stockItem->setUseConfigBackorders(false);
+                $sourceItemData['backorders'] = true;
+                $sourceItemData['use_config_backorders'] = false;
             } elseif (!$product_stock_unlimited &&
-                ($stockItem->GetBackorders() == true || $stockItem->getUseConfigBackOrders() == false)
+                ($stockItem->getBackorders() == true || $stockItem->getUseConfigBackOrders() == false)
             ) {
-                $stockItem->setBackorders(false);
-                $stockItem->setUseConfigBackorders(true);
-            }
-
-            // prevent managing stock for storekeeper products
-            if ($stockItem->getManageStock() || $stockItem->getUseConfigManageStock()) {
-                $shouldUpdateStock = true;
-                $stockItem->setManageStock(false);
-                $stockItem->setUseConfigManageStock(false);
+                $sourceItemData['backorders'] = false;
+                $sourceItemData['use_config_backorders'] = true;
             }
 
             if (is_null($stockItem->getQty()) || $stockItem->getQty() != $product_stock_value) {
                 $shouldUpdateStock = true;
-                $stockItem->setQty($product_stock_value);
+                $sourceItemData['quantity'] = $product_stock_value;
             }
 
-            if ($shouldUpdateStock) {
-                $stockItem->save();
-            }
+            $this->sourceItemsProcessor->execute(
+                $sku,
+                [
+                    $sourceItemData
+                ]
+            );
 
             if (!empty($categoryIds = $this->getResultCategoryIds($result))) {
                 // assign the store to the first available, otherwise delete operations will go wrong
