@@ -406,7 +406,7 @@ class AbstractTest extends TestCase
     protected function createTestOrderWithPayment(bool $isGuest): string
     {
         //Retrieve product from repository
-        $product = $this->getProduct();
+        $product = $this->getProduct(self::SIMPLE_PRODUCT_SKU);
         $product->setOptions(null);
         $taxClassId = $this->getTaxClass()->getId();
         $this->createTaxRule($this->getTaxRate(), $taxClassId);
