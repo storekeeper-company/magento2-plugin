@@ -47,9 +47,9 @@ class Notification implements \Magento\Framework\Notification\MessageInterface
      */
     public function isDisplayed(): bool
     {
-        $result = false;
-        if (in_array($this->getDefaultCountry(), $this->getEuCountries()) && !$this->areTaxCalculationConfigsEqual()) {
-            $result = true;
+        $result = true;
+        if (in_array($this->getDefaultCountry(), $this->getEuCountries()) && $this->areTaxCalculationConfigsEqual()) {
+            $result = false;
         }
 
         return $result;
