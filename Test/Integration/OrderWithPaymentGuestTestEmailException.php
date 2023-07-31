@@ -6,7 +6,7 @@ use Magento\Sales\Model\Order;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 
-class OrderWithPaymentGuestTest extends AbstractGuestTest
+class OrderWithPaymentGuestTestEmailException extends AbstractGuestTest
 {
     protected function setUp(): void
     {
