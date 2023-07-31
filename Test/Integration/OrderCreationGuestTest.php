@@ -11,6 +11,9 @@ use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\StoreManagerInterface;
 
+/**
+ * @magentoDbIsolation enabled
+ */
 class OrderCreationGuestTest extends AbstractGuestTest
 {
     protected function setUp(): void
@@ -35,6 +38,6 @@ class OrderCreationGuestTest extends AbstractGuestTest
             $orderData['payment'],
             $orderData['orderItem']
         );
-        $this->assertOrderCreation($order);
+        $this->assertOrderCreation($order, 3);
     }
 }

@@ -154,10 +154,7 @@ abstract class AbstractTest extends TestCase
                     }
                 }
             );
-        $this->requestMock->method('getParams')
-            ->willReturn([
-                'orderID' => '1'
-            ]);
+
         $this->paymentApiClientMock->method('getStoreKeeperPayment')
             ->willReturn([
                 'id' => 1,
@@ -494,6 +491,7 @@ abstract class AbstractTest extends TestCase
 
     /**
      * @param bool $isGuest
+     * @param int $orderId
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -501,10 +499,10 @@ abstract class AbstractTest extends TestCase
      * @throws \Magento\Framework\Exception\StateException
      * @throws \Magento\Framework\Exception\State\InvalidTransitionException
      */
-    protected function executeOrderWithPayment(bool $isGuest): void
+    protected function executeOrderWithPayment(bool $isGuest, int $orderId): void
     {
         // Create test order and get orderId
-        $orderId = $this->createTestOrderWithPayment($isGuest);
+        $testOrderId = $this->createTestOrderWithPayment($isGuest);
 
         // Execute Redirect and Finish controllers
         $this->redirect->execute();
@@ -617,16 +615,17 @@ abstract class AbstractTest extends TestCase
 
     /**
      * @param Order $order
+     * @param int $orderId
      * @return void
      */
-    protected function assertOrderCreation(Order $order): void
+    protected function assertOrderCreation(Order $order, int $orderId): void
     {
         $this->orderRepository->save($order);
         $this->assertEquals(1, $order->getStorekeeperOrderPendingSync());
         $this->assertEquals(Order::STATE_NEW, $order->getState());
 
         $this->cronOrders->execute();
-        $savedOrder = $this->orderRepository->get('1');
+        $savedOrder = $this->orderRepository->get($orderId);
 
         $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
         $this->assertEquals(self::STORE_KEEPER_ORDER_NUMBER, $savedOrder->getStorekeeperOrderNumber());
