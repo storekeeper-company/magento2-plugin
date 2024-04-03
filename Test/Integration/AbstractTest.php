@@ -491,7 +491,6 @@ abstract class AbstractTest extends TestCase
 
     /**
      * @param bool $isGuest
-     * @param int $orderId
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -619,7 +618,6 @@ abstract class AbstractTest extends TestCase
 
     /**
      * @param Order $order
-     * @param int $orderId
      * @return void
      */
     protected function assertOrderCreation(Order $order): void

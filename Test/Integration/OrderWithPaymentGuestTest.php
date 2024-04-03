@@ -19,6 +19,6 @@ class OrderWithPaymentGuestTest extends AbstractGuestTest
      */
     public function testGuestPayment()
     {
-        $this->executeOrderWithPayment(true, 9);
+        $this->executeOrderWithPayment(true);
     }
 }
