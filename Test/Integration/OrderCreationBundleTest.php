@@ -32,7 +32,7 @@ class OrderCreationBundleTest extends AbstractTest
     {
         $existingOrder = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order::class)
             ->loadByIncrementId('100000001');
-        $this->assertOrderCreation($existingOrder, 1);
+        $this->assertOrderCreation($existingOrder);
     }
 
     /**
@@ -46,6 +46,6 @@ class OrderCreationBundleTest extends AbstractTest
     {
         $existingOrder = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order::class)
             ->loadByIncrementId('100000001');
-        $this->assertOrderCreation($existingOrder, 2);
+        $this->assertOrderCreation($existingOrder);
     }
 }

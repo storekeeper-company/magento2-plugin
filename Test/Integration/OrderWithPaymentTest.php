@@ -10,10 +10,6 @@ class OrderWithPaymentTest extends AbstractTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->requestMock->method('getParams')
-            ->willReturn([
-                'orderID' => '10'
-            ]);
     }
 
     /**
@@ -23,6 +19,6 @@ class OrderWithPaymentTest extends AbstractTest
      */
     public function testPayment()
     {
-        $this->executeOrderWithPayment(false, 10);
+        $this->executeOrderWithPayment(false);
     }
 }

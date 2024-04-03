@@ -499,17 +499,21 @@ abstract class AbstractTest extends TestCase
      * @throws \Magento\Framework\Exception\StateException
      * @throws \Magento\Framework\Exception\State\InvalidTransitionException
      */
-    protected function executeOrderWithPayment(bool $isGuest, int $orderId): void
+    protected function executeOrderWithPayment(bool $isGuest): void
     {
         // Create test order and get orderId
         $testOrderId = $this->createTestOrderWithPayment($isGuest);
+        $this->requestMock->method('getParams')
+            ->willReturn([
+                'orderID' => $testOrderId
+            ]);
 
         // Execute Redirect and Finish controllers
         $this->redirect->execute();
         $this->finish->execute();
 
         // Assert order state to 'processing' state
-        $order = $this->orderRepository->get($orderId);
+        $order = $this->orderRepository->get($testOrderId);
         $this->assertEquals($order->getState(), Order::STATE_PROCESSING);
     }
 
@@ -618,14 +622,14 @@ abstract class AbstractTest extends TestCase
      * @param int $orderId
      * @return void
      */
-    protected function assertOrderCreation(Order $order, int $orderId): void
+    protected function assertOrderCreation(Order $order): void
     {
         $this->orderRepository->save($order);
         $this->assertEquals(1, $order->getStorekeeperOrderPendingSync());
         $this->assertEquals(Order::STATE_NEW, $order->getState());
 
         $this->cronOrders->execute();
-        $savedOrder = $this->orderRepository->get($orderId);
+        $savedOrder = $this->orderRepository->get($order->getId());
 
         $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
         $this->assertEquals(self::STORE_KEEPER_ORDER_NUMBER, $savedOrder->getStorekeeperOrderNumber());

@@ -39,7 +39,7 @@ class OrderCreationTest extends AbstractTest
             $orderData['payment'],
             $orderData['orderItem']
         );
-        $this->assertOrderCreation($order, 4);
+        $this->assertOrderCreation($order);
     }
 
     /**
@@ -53,7 +53,7 @@ class OrderCreationTest extends AbstractTest
     {
         $existingOrder = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order::class)
             ->loadByIncrementId('100000001');
-        $this->assertOrderCreation($existingOrder, 5);
+        $this->assertOrderCreation($existingOrder);
     }
 
     /**
@@ -67,6 +67,6 @@ class OrderCreationTest extends AbstractTest
     {
         $existingOrder = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order::class)
             ->loadByIncrementId('100000001');
-        $this->assertOrderCreation($existingOrder, 6);
+        $this->assertOrderCreation($existingOrder);
     }
 }

@@ -10,10 +10,6 @@ class OrderWithPaymentGuestTest extends AbstractGuestTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->requestMock->method('getParams')
-            ->willReturn([
-                'orderID' => '9'
-            ]);
     }
 
     /**

@@ -38,6 +38,6 @@ class OrderCreationGuestTest extends AbstractGuestTest
             $orderData['payment'],
             $orderData['orderItem']
         );
-        $this->assertOrderCreation($order, 3);
+        $this->assertOrderCreation($order);
     }
 }
