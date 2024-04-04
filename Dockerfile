@@ -6,7 +6,7 @@ FROM thecodingmachine/php:${PHP_VERSION}-${THECODINGMACHINE_VERSION}-apache as t
 USER root
 RUN apt-get update\
     && apt-get install -y  --no-install-recommends \
-      mariadb-client rsync \
+      mariadb-client rsync jq \
     && rm -rf /var/lib/apt/lists/*
 
 USER docker
