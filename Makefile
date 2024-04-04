@@ -12,10 +12,10 @@ test-build:
 	$(DOCKER_COMPOSE_CMD) build test
 
 test-unit: test-build
-	$(DOCKER_COMPOSE_CMD) run --rm test run-unit-test
+	$(DOCKER_COMPOSE_CMD) run --rm test /magento-plugin/docker/run-unit-test
 
 test-integration: test-build
-	$(DOCKER_COMPOSE_CMD) run --rm test run-integration-test
+	$(DOCKER_COMPOSE_CMD) run --rm test /magento-plugin/docker/run-integration-test
 
 test: test-unit test-integration
 
