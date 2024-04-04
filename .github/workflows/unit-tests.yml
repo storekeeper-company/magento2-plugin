@@ -23,6 +23,8 @@ jobs:
         run: make test-install
         env:
           PHP_VERSION: ${{ matrix.php }}
+          MAGENTO_PUBLIC: ${{ secrets.MAGENTO_PUBLIC }}
+          MAGENTO_PRIVATE: ${{ secrets.MAGENTO_PRIVATE }}
 
       - name: Run unit tests
         run: make test-unit
