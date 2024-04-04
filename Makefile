@@ -28,8 +28,8 @@ test-install: check-magento-keys test-build
 # Check Magento keys
 check-magento-keys:
 ifndef MAGENTO_PUBLIC
-	$(error MAGENTO_PUBLIC is undefined)
+	$(error MAGENTO_PUBLIC needs to set and env variable)
 endif
 ifndef MAGENTO_PRIVATE
-	$(error MAGENTO_PRIVATE is undefined)
+	$(error MAGENTO_PRIVATE needs to set and env variable)
 endif
