@@ -21,6 +21,7 @@ class Orders
     private LoggerInterface $logger;
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
     private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
+    private StoreManagerInterface $storeManager;
     private OrderRepositoryInterface $orderRepository;
 
 

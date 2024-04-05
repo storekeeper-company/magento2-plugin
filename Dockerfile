@@ -11,7 +11,7 @@ RUN apt-get update\
 
 USER docker
 
-COPY . /magento-plugin
+COPY --chown=docker:docker . /magento-plugin
 
 ARG CONTAINER_CWD=/var/www/html
 
