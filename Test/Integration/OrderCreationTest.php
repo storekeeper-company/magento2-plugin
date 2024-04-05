@@ -16,6 +16,7 @@ use Magento\Store\Model\StoreManagerInterface;
  */
 class OrderCreationTest extends AbstractTest
 {
+
     protected function setUp(): void
     {
         parent::setUp();

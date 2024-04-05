@@ -4,6 +4,6 @@ set -euo pipefail
 echo -n "PHP: "
 php -v
 
-cd $MAGENTO_DIR/tests/integration
+cd $MAGENTO_DIR/dev/tests/integration
 exec ../../../vendor/bin/phpunit $STOREKEEPER_PLUGIN_DIR/Test/Integration/ "$@"
 

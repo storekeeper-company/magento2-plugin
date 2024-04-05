@@ -62,6 +62,7 @@ abstract class AbstractTest extends TestCase
     protected $redirect;
     protected $finish;
     protected $guestCartManagement;
+    protected $maskedQuoteIdToQuoteId;
     protected $authHelper;
     protected $configHelper;
     protected $orderCollectionFactory;
