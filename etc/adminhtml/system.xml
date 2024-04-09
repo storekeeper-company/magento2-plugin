@@ -132,20 +132,20 @@
             <resource>StoreKeeper_StoreKeeper::configuration</resource>
             <group id="featured_attributes_mapping" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Featured attributes mapping</label>
-                <field id="barcode_attribute" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="barcode" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Barcode</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes</source_model>
                 </field>
-                <field id="brands_attribute" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Brands</label>
+                <field id="brand" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Brand</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes</source_model>
                 </field>
-                <field id="fashion_collections_attribute" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="fashion_collections" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Fashion Collections</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes</source_model>
                 </field>
-                <field id="seasons_attribute" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Seasons</label>
+                <field id="season" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Season</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes</source_model>
                 </field>
             </group>

@@ -209,30 +209,48 @@ class CsvFileContent
     private function getHeaderColsData(string $entityType, array $exportData): array
     {
         if ($entityType == self::CATALOG_PRODUCT_ENTITY) {
-            $headerCols = ProductExportManager::HEADERS_PATHS;
-            $headerColsLabels = $this->productExportManager->getMappedHeadersLabels(ProductExportManager::HEADERS_PATHS, ProductExportManager::HEADERS_LABELS);
+            $headerCols = $this->productExportManager->getHeaderPathsExtended();
+            $headerColsLabels = $this->productExportManager->getMappedHeadersLabels(
+                $this->productExportManager->getHeaderPathsExtended(),
+                $this->productExportManager->getHeaderLabelsExtended()
+            );
         }
         if ($entityType == self::CUSTOMER_ENTITY) {
             $headerCols = CustomerExportManager::HEADERS_PATHS;
-            $headerColsLabels = $this->customerExportManager->getMappedHeadersLabels(CustomerExportManager::HEADERS_PATHS, CustomerExportManager::HEADERS_LABELS);
+            $headerColsLabels = $this->customerExportManager->getMappedHeadersLabels(
+                CustomerExportManager::HEADERS_PATHS,
+                CustomerExportManager::HEADERS_LABELS
+            );
         }
         if ($entityType == self::CATEGORY_ENTITY) {
             $headerCols = CategoryExportManager::HEADERS_PATHS;
-            $headerColsLabels = $this->categoryExportManager->getMappedHeadersLabels(CategoryExportManager::HEADERS_PATHS, CategoryExportManager::HEADERS_LABELS);
+            $headerColsLabels = $this->categoryExportManager->getMappedHeadersLabels(
+                CategoryExportManager::HEADERS_PATHS,
+                CategoryExportManager::HEADERS_LABELS
+            );
         }
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $headerData = $this->attributeExportManager->getHeaderCols($exportData);
             $headerCols = $headerData['paths'];
-            $headerColsLabels = $this->attributeExportManager->getMappedHeadersLabels($headerData['paths'], $headerData['labels']);
+            $headerColsLabels = $this->attributeExportManager->getMappedHeadersLabels(
+                $headerData['paths'],
+                $headerData['labels']
+            );
         }
         if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
             $headerCols = AttributeOptionExportManager::HEADERS_PATHS;
-            $headerColsLabels = $this->attributeOptionExportManager->getMappedHeadersLabels(AttributeOptionExportManager::HEADERS_PATHS, AttributeOptionExportManager::HEADERS_LABELS);
+            $headerColsLabels = $this->attributeOptionExportManager->getMappedHeadersLabels(
+                AttributeOptionExportManager::HEADERS_PATHS,
+                AttributeOptionExportManager::HEADERS_LABELS
+            );
         }
         if ($entityType == self::BLUEPRINT_ENTITY) {
             $headerData = $this->blueprintExportManager->getHeaderCols($exportData);
             $headerCols = $headerData['paths'];
-            $headerColsLabels = $this->blueprintExportManager->getMappedHeadersLabels($headerData['paths'], $headerData['labels']);
+            $headerColsLabels = $this->blueprintExportManager->getMappedHeadersLabels(
+                $headerData['paths'],
+                $headerData['labels']
+            );
         }
         $headerColsData = [
             'cols' => $headerCols,

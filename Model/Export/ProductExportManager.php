@@ -2,9 +2,9 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as AttributeCollectionFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
@@ -27,6 +27,9 @@ use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
+use Psr\Log\LoggerInterface;
 
 class ProductExportManager extends AbstractExportManager
 {
@@ -129,6 +132,56 @@ class ProductExportManager extends AbstractExportManager
         'Image 10'
     ];
 
+    const DISALLOWED_ATTRIBUTES = [
+        "category_ids",
+        "cost",
+        "created_at",
+        "custom_design",
+        "custom_design_from",
+        "custom_design_to",
+        "custom_layout",
+        "custom_layout_update",
+        "custom_layout_update_file",
+        "description",
+        "gallery",
+        "gift_message_available",
+        "has_options",
+        "image",
+        "image_label",
+        "links_exist",
+        "links_purchased_separately",
+        "links_title",
+        "media_gallery",
+        "meta_description",
+        "meta_keyword",
+        "meta_title",
+        "msrp_display_actual_price_type",
+        "name",
+        "news_from_date",
+        "news_to_date",
+        "old_id",
+        "options_container",
+        "page_layout",
+        "price",
+        "price_type",
+        "price_view",
+        "quantity_and_stock_status",
+        "required_options",
+        "samples_title",
+        "shipment_type",
+        "short_description",
+        "sku",
+        "sku_type",
+        "small_image",
+        "small_image_label",
+        "special_from_date",
+        "special_price",
+        "special_to_date",
+        "status",
+        "tax_class_id",
+        "updated_at"
+    ];
+
     private CollectionFactory $productCollectionFactory;
     private Csv $csv;
     private Filesystem $filesystem;
@@ -148,15 +201,24 @@ class ProductExportManager extends AbstractExportManager
     private SetFactory $attributeSetFactory;
     private ImageFactory $imageFactory;
     private Auth $authHelper;
+    private Config $configHelper;
+    private LoggerInterface $logger;
+    private AttributeCollectionFactory $attributeCollectionFactory;
+    protected array $headerPathsExtended = self::HEADERS_PATHS;
+    protected array $headerLabelsExtended = self::HEADERS_LABELS;
+    protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
 
     /**
-     * ExportManager constructor.
+     * ExportManager constructor
+     *
+     * @param Resolver $localeResolver
      * @param CollectionFactory $productCollectionFactory
      * @param Csv $csv
      * @param Filesystem $filesystem
      * @param DirectoryList $directoryList
      * @param File $file
      * @param StoreManagerInterface $storeManager
+     * @param StoreConfigManagerInterface $storeConfigManager
      * @param StockRegistryInterface $stockRegistry
      * @param TaxCalculationInterface $taxCalculation
      * @param Calculation $calculation
@@ -169,7 +231,9 @@ class ProductExportManager extends AbstractExportManager
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SetFactory $attributeSetFactory
      * @param ImageFactory $imageFactory
-     * @param Auth$authHelper
+     * @param Auth $authHelper
+     * @param Config $configHelper
+     * @param LoggerInterface $logger
      */
     public function __construct(
         Resolver $localeResolver,
@@ -192,7 +256,10 @@ class ProductExportManager extends AbstractExportManager
         CategoryRepositoryInterface $categoryRepository,
         SetFactory $attributeSetFactory,
         ImageFactory $imageFactory,
-        Auth $authHelper
+        Auth $authHelper,
+        Config $configHelper,
+        LoggerInterface $logger,
+        AttributeCollectionFactory $attributeCollectionFactory
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -213,11 +280,16 @@ class ProductExportManager extends AbstractExportManager
         $this->categoryRepository = $categoryRepository;
         $this->attributeSetFactory = $attributeSetFactory;
         $this->imageFactory = $imageFactory;
+        $this->configHelper = $configHelper;
+        $this->logger = $logger;
+        $this->attributeCollectionFactory = $attributeCollectionFactory;
     }
 
     public function getProductExportData(array $products): array
     {
         $result = [];
+        $featuredAttributes = $this->configHelper->getFeaturedAttributesMapping();
+        $productAttributes = $this->attributeCollectionFactory->create();
         foreach ($products as $product) {
             /** @var ProductInterface $product */
             $productPrice = $product->getPrice();
@@ -270,9 +342,89 @@ class ProductExportManager extends AbstractExportManager
             ];
             $data = $this->addProductImageUrlData($data, $product);
             $result[] = array_combine(self::HEADERS_PATHS, $data);
+            foreach ($featuredAttributes as $key => $value) {
+                if ($value !== 'not-mapped') {
+                    $attributeValue = $product->getData($value);
+                    try {
+                        $dataKey = key($result);
+                        $attribute = $product->getResource()->getAttribute($value);
+                        if ($attributeValue !== null && $attribute->usesSource()) {
+                            $attributeValue = $attribute->getFrontend()->getValue($product);
+                        }
+
+                        if ($attributeValue !== null) {
+                            $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
+                            $result[$dataKey]['path://content_vars.' . $key . '.value_label'] = $attribute->getDefaultFrontendLabel();
+                        }
+
+                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
+                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
+                        $this->extendHeaderLabels($value . ' (raw)');
+                        $this->extendHeaderLabels($value . ' (label)');
+                        $this->extendDisallowedAttributes($value);
+                    } catch (\Exception $e) {
+                        $this->logger->error($e->getMessage());
+                    }
+                }
+            }
+
+            foreach ($productAttributes as $productAttribute) {
+                $attributeCode = $productAttribute->getAttributeCode();
+                if (array_search($attributeCode, $this->getDisallowedAttributesExtended()) === false) {
+                    $attributeValue = $product->getData($attributeCode);
+                    if ($attributeValue !== null && $productAttribute->usesSource()) {
+                        $attributeValue = $productAttribute->getFrontend()->getValue($product);
+                    }
+                    if ($attributeValue !== null) {
+                        $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue;
+                        $result[$dataKey]['path://content_vars.' . $attributeCode . '.value_label'] = $productAttribute->getDefaultFrontendLabel();
+                    }
+
+                    $this->extendHeaderPaths('path://content_vars.' . $attributeCode . '.value');
+                    $this->extendHeaderPaths('path://content_vars.' . $attributeCode . '.value_label');
+                    $this->extendHeaderLabels($attributeCode . ' (raw)');
+                    $this->extendHeaderLabels($attributeCode . ' (label)');
+                }
+            }
         }
 
         return $result;
+    }
+
+    public function getHeaderPathsExtended()
+    {
+        return $this->headerPathsExtended;
+    }
+
+    public function getHeaderLabelsExtended()
+    {
+        return $this->headerLabelsExtended;
+    }
+
+    public function getDisallowedAttributesExtended()
+    {
+        return $this->disallowedAttributesExtended;
+    }
+
+    protected function extendHeaderPaths(string $key)
+    {
+        if (array_search($key, $this->headerPathsExtended) === false) {
+            $this->headerPathsExtended[] = $key;
+        }
+    }
+
+    protected function extendHeaderLabels(string $key)
+    {
+        if (array_search($key, $this->headerLabelsExtended) === false) {
+            $this->headerLabelsExtended[] = $key;
+        }
+    }
+
+    protected function extendDisallowedAttributes(string $key)
+    {
+        if (array_search($key, $this->disallowedAttributesExtended) === false) {
+            $this->disallowedAttributesExtended[] = $key;
+        }
     }
 
     /**
