@@ -342,11 +342,11 @@ class ProductExportManager extends AbstractExportManager
             ];
             $data = $this->addProductImageUrlData($data, $product);
             $result[] = array_combine(self::HEADERS_PATHS, $data);
+            $dataKey = array_key_last($result);
             foreach ($featuredAttributes as $key => $value) {
                 if ($value !== 'not-mapped') {
                     $attributeValue = $product->getData($value);
                     try {
-                        $dataKey = key($result);
                         $attribute = $product->getResource()->getAttribute($value);
                         if ($attributeValue !== null && $attribute->usesSource()) {
                             $attributeValue = $attribute->getFrontend()->getValue($product);
