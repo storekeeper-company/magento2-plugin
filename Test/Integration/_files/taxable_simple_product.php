@@ -27,6 +27,12 @@ $productRepository->cleanCache();
 /** @var ProductInterfaceFactory $productFactory */
 $productFactory = $objectManager->get(ProductInterfaceFactory::class);
 $product = $productFactory->create();
+
+$registry = $objectManager->get(\Magento\Framework\Registry::class);
+$taxRule = $registry->registry('_fixture/Magento_Tax_Model_Calculation_Rule');
+$productTaxClassIds = $taxRule->getProductTaxClassIds();
+$productTaxClassId = reset($productTaxClassIds);
+
 $productData = [
     ProductInterface::TYPE_ID => Type::TYPE_SIMPLE,
     ProductInterface::ATTRIBUTE_SET_ID => $product->getDefaultAttributeSetId(),
@@ -50,7 +56,7 @@ $productData = [
         'is_in_stock' => 1,
     ],
     'category_ids' => [3],
-    'tax_class_id' => 6, //Taxable Goods
+    'tax_class_id' => $productTaxClassId, //Taxable Goods
 ];
 $product->setData($productData);
 

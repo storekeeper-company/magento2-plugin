@@ -38,6 +38,7 @@ class ProductExportDataTest extends AbstractTest
     {
         $productCollection = $this->productCollectionFactory->create();
         $productCollection->addFieldToSelect('*');
+        $productCollection->addFieldToFilter('sku', ['eq' => 'taxable_product']);
         $productCollection->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
         $productCollection->addMediaGalleryData();
         $productCollection->setOrder('entity_id', 'asc');
@@ -100,6 +101,10 @@ class ProductExportDataTest extends AbstractTest
             'path://product.product_images.7.download_url' => NULL,
             'path://product.product_images.8.download_url' => NULL,
             'path://product.product_images.9.download_url' => NULL,
+            'path://content_vars.url_key.value' => 'taxable-product',
+            'path://content_vars.url_key.value_label' => 'URL Key',
+            'path://content_vars.visibility.value' => 'Catalog, Search',
+            'path://content_vars.visibility.value_label' => 'Visibility'
         ];
     }
 }
