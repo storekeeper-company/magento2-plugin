@@ -343,27 +343,34 @@ class ProductExportManager extends AbstractExportManager
             $data = $this->addProductImageUrlData($data, $product);
             $result[] = array_combine(self::HEADERS_PATHS, $data);
             $dataKey = array_key_last($result);
-            foreach ($featuredAttributes as $key => $value) {
-                if ($value !== 'not-mapped') {
-                    $attributeValue = $product->getData($value);
-                    try {
-                        $attribute = $product->getResource()->getAttribute($value);
-                        if ($attributeValue !== null && $attribute->usesSource()) {
-                            $attributeValue = $attribute->getFrontend()->getValue($product);
-                        }
+            if (is_array($featuredAttributes)) {
+                foreach ($featuredAttributes as $key => $value) {
+                    if ($value !== 'not-mapped') {
+                        $attributeValue = $product->getData($value);
+                        try {
+                            $attribute = $product->getResource()->getAttribute($value);
+                            if ($attributeValue !== null && $attribute->usesSource()) {
+                                $attributeValue = $attribute->getFrontend()->getValue($product);
+                            }
 
-                        if ($attributeValue !== null) {
-                            $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
-                            $result[$dataKey]['path://content_vars.' . $key . '.value_label'] = $attribute->getDefaultFrontendLabel();
-                        }
+                            if ($attributeValue !== null) {
+                                if (is_a($attributeValue, 'Magento\Framework\Phrase')) {
+                                    $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue->getText();
+                                } else {
+                                    $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
+                                }
 
-                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
-                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
-                        $this->extendHeaderLabels($value . ' (raw)');
-                        $this->extendHeaderLabels($value . ' (label)');
-                        $this->extendDisallowedAttributes($value);
-                    } catch (\Exception $e) {
-                        $this->logger->error($e->getMessage());
+                                $result[$dataKey]['path://content_vars.' . $key . '.value_label'] = $attribute->getDefaultFrontendLabel();
+                            }
+
+                            $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
+                            $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
+                            $this->extendHeaderLabels($value . ' (raw)');
+                            $this->extendHeaderLabels($value . ' (label)');
+                            $this->extendDisallowedAttributes($value);
+                        } catch (\Exception $e) {
+                            $this->logger->error($e->getMessage());
+                        }
                     }
                 }
             }
@@ -376,7 +383,12 @@ class ProductExportManager extends AbstractExportManager
                         $attributeValue = $productAttribute->getFrontend()->getValue($product);
                     }
                     if ($attributeValue !== null) {
-                        $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue;
+                        if (is_a($attributeValue, 'Magento\Framework\Phrase')) {
+                            $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue->getText();
+                        } else {
+                            $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue;
+                        }
+
                         $result[$dataKey]['path://content_vars.' . $attributeCode . '.value_label'] = $productAttribute->getDefaultFrontendLabel();
                     }
 
