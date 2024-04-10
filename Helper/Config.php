@@ -2,9 +2,10 @@
 namespace StoreKeeper\StoreKeeper\Helper;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
 
-class Config extends \Magento\Framework\App\Helper\AbstractHelper
+class Config extends AbstractHelper
 {
     public const SYNC_NONE = 1;
     public const SYNC_PRODUCTS = 2;
@@ -14,6 +15,7 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
     const STOREKEEPER_SYNC_MODE = 'storekeeper_general/general/storekeeper_sync_mode';
     const STOREKEEPER_TOKEN = 'storekeeper_general/general/storekeeper_token';
     const IS_DEBUG_LOGS = 'storekeeper_general/general/debug_logs';
+    const STOREKEEPER_EXPORT_FEATURED_ATTRIBUTES_MAPPING_SECTION = 'storekeeper_export/featured_attributes_mapping';
 
     /**
      * Constructor
@@ -72,5 +74,10 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
     public function isDebugLogs($storeId)
     {
         return $this->getScopeConfigValue(self::IS_DEBUG_LOGS, ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
+    public function getFeaturedAttributesMapping()
+    {
+        return $this->getScopeConfigValue(self::STOREKEEPER_EXPORT_FEATURED_ATTRIBUTES_MAPPING_SECTION);
     }
 }
