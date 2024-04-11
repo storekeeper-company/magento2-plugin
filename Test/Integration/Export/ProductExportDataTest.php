@@ -21,6 +21,10 @@ class ProductExportDataTest extends AbstractTest
      * @magentoConfigFixture current_store tax/calculation/price_includes_tax 1
      * @magentoConfigFixture current_store tax/display/type 3
      * @magentoConfigFixture current_store tax/defaults/country NL
+     * @magentoConfigFixture current_store storekeeper_export/featured_attributes_mapping/barcode not-mapped
+     * @magentoConfigFixture current_store storekeeper_export/featured_attributes_mapping/brand manufacturer
+     * @magentoConfigFixture current_store storekeeper_export/featured_attributes_mapping/fashion_collections not-mapped
+     * @magentoConfigFixture current_store storekeeper_export/featured_attributes_mapping/season not-mapped
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/categories.php
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/tax_classes.php
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/taxable_simple_product.php
@@ -104,7 +108,9 @@ class ProductExportDataTest extends AbstractTest
             'path://content_vars.url_key.value' => 'taxable-product',
             'path://content_vars.url_key.value_label' => 'URL Key',
             'path://content_vars.visibility.value' => 'Catalog, Search',
-            'path://content_vars.visibility.value_label' => 'Visibility'
+            'path://content_vars.visibility.value_label' => 'Visibility',
+            'path://content_vars.brand.value' => 'Magento Inc.',
+            'path://content_vars.brand.value_label' => 'Manufacturer'
         ];
     }
 }
