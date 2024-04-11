@@ -91,6 +91,7 @@ class CustomerExportManager extends AbstractExportManager
         $result = [];
         foreach ($customers as $customer) {
             $billingAddress = $customer->getDefaultBillingAddress();
+            $shippingAddress = $customer->getDefaultShippingAddress();
             $data = [
                 $this->random->getUniqueHash(), // 'path://shortname' - 'GUID'
                 $this->getCurrentLocale(), // 'path://language_iso2' - 'Language (iso2)'
@@ -102,11 +103,11 @@ class CustomerExportManager extends AbstractExportManager
                 $customer->getEmail(), // 'path://contact_set.email'
                 $billingAddress->getTelephone(), // 'path://contact_set.phone'
                 null, // 'path://contact_set.fax'
-                $billingAddress->getName(), // 'path://contact_address.name'
-                $billingAddress->getRegion(), // 'path://contact_address.state'
-                $billingAddress->getCity(), // 'path://contact_address.city'
-                $billingAddress->getPostcode(), // 'path://contact_address.zipcode'
-                implode(', ', $billingAddress->getStreet()), // 'path://contact_address.street'
+                $shippingAddress->getName(), // 'path://contact_address.name'
+                $shippingAddress->getRegion(), // 'path://contact_address.state'
+                $shippingAddress->getCity(), // 'path://contact_address.city'
+                $shippingAddress->getPostcode(), // 'path://contact_address.zipcode'
+                implode(', ', $shippingAddress->getStreet()), // 'path://contact_address.street'
                 null, // 'path://contact_address.streetnumber'
                 null, // 'path://contact_address.flatnumber'
                 $billingAddress->getCountryId(), // 'path://contact_address.country_iso2'

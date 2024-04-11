@@ -42,43 +42,80 @@ $customer->isObjectNew(true);
 $customer->save();
 $customerRegistry->remove($customer->getId());
 
-//Creating address
-/** @var Address $customerAddress */
-$customerAddress = $objectManager->create(Address::class);
-$customerAddress->isObjectNew(true);
-$customerAddress->setData(
+//Creating billing address
+/** @var Address $customerBillingAddress */
+$customerBillingAddress = $objectManager->create(Address::class);
+$customerBillingAddress->isObjectNew(true);
+$customerBillingAddress->setData(
     [
         'attribute_set_id' => 2,
         'telephone' => 3468676,
         'postcode' => 75477,
         'country_id' => 'US',
-        'city' => 'CityM',
+        'city' => 'Business City',
         'company' => 'CompanyName',
         'vat_id' => 9021090210,
-        'street' => 'CustomerAddress1',
+        'street' => 'Customer 1 Billing Address street',
         'lastname' => 'Smith',
         'firstname' => 'John',
         'parent_id' => $customer->getId(),
         'region_id' => 1,
     ]
 );
-$customerAddress->save();
+$customerBillingAddress->save();
 /** @var AddressRepositoryInterface $addressRepository */
 $addressRepository = $objectManager->get(AddressRepositoryInterface::class);
-$customerAddress = $addressRepository->getById($customerAddress->getId());
-$customerAddress->setCustomerId($customer->getId());
-$customerAddress->isDefaultBilling(true);
-$customerAddress->setIsDefaultShipping(true);
-$customerAddress = $addressRepository->save($customerAddress);
+$customerBillingAddress = $addressRepository->getById($customerBillingAddress->getId());
+$customerBillingAddress->setCustomerId($customer->getId());
+$customerBillingAddress->isDefaultBilling(true);
+$customerBillingAddress->setIsDefaultShipping(false);
+$customerBillingAddress = $addressRepository->save($customerBillingAddress);
 
-$customer->setDefaultBilling($customerAddress->getId());
-$customer->setDefaultShipping($customerAddress->getId());
+$customer->setDefaultBilling($customerBillingAddress->getId());
 $customer->save();
 
-$customerRegistry->remove($customerAddress->getCustomerId());
+$customerRegistry->remove($customerBillingAddress->getCustomerId());
 /** @var AddressRegistry $addressRegistry */
 $addressRegistry = $objectManager->get(AddressRegistry::class);
-$addressRegistry->remove($customerAddress->getId());
+$addressRegistry->remove($customerBillingAddress->getId());
+
+//Creating shipping address
+/** @var Address $customerShippingAddress */
+$customerShippingAddress = $objectManager->create(Address::class);
+$customerShippingAddress->isObjectNew(true);
+$customerShippingAddress->setData(
+    [
+        'attribute_set_id' => 2,
+        'telephone' => 3468677,
+        'postcode' => 75478,
+        'country_id' => 'US',
+        'city' => 'Home City',
+        'company' => 'CompanyName',
+        'vat_id' => 9021090210,
+        'street' => 'Customer 1 Shipping Address street',
+        'lastname' => 'Smith',
+        'firstname' => 'John',
+        'parent_id' => $customer->getId(),
+        'region_id' => 1,
+    ]
+);
+$customerShippingAddress->save();
+/** @var AddressRepositoryInterface $addressRepository */
+$addressRepository = $objectManager->get(AddressRepositoryInterface::class);
+$customerShippingAddress = $addressRepository->getById($customerShippingAddress->getId());
+$customerShippingAddress->setCustomerId($customer->getId());
+$customerShippingAddress->isDefaultShipping(true);
+$customerShippingAddress->setIsDefaultShipping(true);
+$customerShippingAddress = $addressRepository->save($customerShippingAddress);
+
+$customer->setDefaultShipping($customerShippingAddress->getId());
+$customer->save();
+
+$customerRegistry->remove($customerShippingAddress->getCustomerId());
+/** @var AddressRegistry $addressRegistry */
+$addressRegistry = $objectManager->get(AddressRegistry::class);
+$addressRegistry->remove($customerShippingAddress->getId());
+
 /** @var \Magento\JwtUserToken\Api\RevokedRepositoryInterface $revokedRepo */
 $revokedRepo = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()
     ->get(\Magento\JwtUserToken\Api\RevokedRepositoryInterface::class);
@@ -110,41 +147,80 @@ $customer->isObjectNew(true);
 $customer->save();
 $customerRegistry->remove($customer->getId());
 
-//Creating address
-/** @var Address $customerAddress */
-$customerAddress = $objectManager->create(Address::class);
-$customerAddress->isObjectNew(true);
-$customerAddress->setData(
+//Creating billing address
+/** @var Address $customerBillingAddress */
+$customerBillingAddress = $objectManager->create(Address::class);
+$customerBillingAddress->isObjectNew(true);
+$customerBillingAddress->setData(
     [
         'attribute_set_id' => 2,
         'telephone' => 1234567,
         'postcode' => 12345,
         'country_id' => 'US',
-        'city' => 'CityC',
+        'city' => 'Business City',
         'company' => 'CompanyName',
         'vat_id' => 9876543210,
-        'street' => 'CustomerAddress2',
+        'street' => 'Customer 2 Billing Address street',
         'lastname' => 'Johnson',
         'firstname' => 'Robert',
         'parent_id' => $customer->getId(),
         'region_id' => 1,
     ]
 );
-$customerAddress->save();
+$customerBillingAddress->save();
 /** @var AddressRepositoryInterface $addressRepository */
 $addressRepository = $objectManager->get(AddressRepositoryInterface::class);
-$customerAddress = $addressRepository->getById($customerAddress->getId());
-$customerAddress->setCustomerId($customer->getId());
-$customerAddress->isDefaultBilling(true);
-$customerAddress->setIsDefaultShipping(true);
-$customerAddress = $addressRepository->save($customerAddress);
+$customerBillingAddress = $addressRepository->getById($customerBillingAddress->getId());
+$customerBillingAddress->setCustomerId($customer->getId());
+$customerBillingAddress->isDefaultBilling(true);
+$customerBillingAddress->setIsDefaultShipping(false);
+$customerBillingAddress = $addressRepository->save($customerBillingAddress);
 
-$customer->setDefaultBilling($customerAddress->getId());
-$customer->setDefaultShipping($customerAddress->getId());
+$customer->setDefaultBilling($customerBillingAddress->getId());
 $customer->save();
 
-$customerRegistry->remove($customerAddress->getCustomerId());
-$addressRegistry->remove($customerAddress->getId());
+$customerRegistry->remove($customerBillingAddress->getCustomerId());
+/** @var AddressRegistry $addressRegistry */
+$addressRegistry = $objectManager->get(AddressRegistry::class);
+$addressRegistry->remove($customerBillingAddress->getId());
+
+//Creating shipping address
+/** @var Address $customerShippingAddress */
+$customerShippingAddress = $objectManager->create(Address::class);
+$customerShippingAddress->isObjectNew(true);
+$customerShippingAddress->setData(
+    [
+        'attribute_set_id' => 2,
+        'telephone' => 1234568,
+        'postcode' => 12346,
+        'country_id' => 'US',
+        'city' => 'Home City',
+        'company' => 'CompanyName',
+        'vat_id' => 9876543210,
+        'street' => 'Customer 2 Shipping Address street',
+        'lastname' => 'Johnson',
+        'firstname' => 'Robert',
+        'parent_id' => $customer->getId(),
+        'region_id' => 1,
+    ]
+);
+$customerShippingAddress->save();
+/** @var AddressRepositoryInterface $addressRepository */
+$addressRepository = $objectManager->get(AddressRepositoryInterface::class);
+$customerShippingAddress = $addressRepository->getById($customerShippingAddress->getId());
+$customerShippingAddress->setCustomerId($customer->getId());
+$customerShippingAddress->isDefaultShipping(true);
+$customerShippingAddress->setIsDefaultShipping(true);
+$customerShippingAddress = $addressRepository->save($customerShippingAddress);
+
+$customer->setDefaultShipping($customerShippingAddress->getId());
+$customer->save();
+
+$customerRegistry->remove($customerShippingAddress->getCustomerId());
+/** @var AddressRegistry $addressRegistry */
+$addressRegistry = $objectManager->get(AddressRegistry::class);
+$addressRegistry->remove($customerShippingAddress->getId());
+
 $revokedRepo->saveRevoked(
     new \Magento\JwtUserToken\Api\Data\Revoked(
         \Magento\Authorization\Model\UserContextInterface::USER_TYPE_CUSTOMER,
