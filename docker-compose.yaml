@@ -1,0 +1,86 @@
+version: '3.7'
+
+services:
+  test:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: test
+      args:
+        PHP_VERSION: $PHP_VERSION
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
+      - rabbitmq
+    volumes:
+      - appdata:/var/www/html/
+      - composer-home:/home/docker/.composer/
+      - sockdata:/sock
+    environment:
+      PHP_EXTENSION_SOAP: 1
+      PHP_EXTENSION_GPM: 1
+      PHP_EXTENSION_INTL: 1
+      PHP_EXTENSION_BCMATH: 1
+      PHP_EXTENSION_IMAGICK: 1
+      PHP_EXTENSION_DS: 1
+      PHP_EXTENSION_CTYPE: 1
+      PHP_EXTENSION_CURL: 1
+      PHP_EXTENSION_DOM: 1
+      PHP_EXTENSION_GD: 1
+      PHP_EXTENSION_HASH: 1
+      PHP_EXTENSION_JSON: 1
+      PHP_EXTENSION_MBSTRING: 1
+      PHP_EXTENSION_OPENSSL: 1
+      PHP_EXTENSION_PDO_MYSQL: 1
+      PHP_EXTENSION_XSL: 1
+      PHP_EXTENSION_ZIP: 1
+      PHP_EXTENSION_LIBXML: 1
+      MAGENTO_PUBLIC: ${MAGENTO_PUBLIC:-''}
+      MAGENTO_PRIVATE: ${MAGENTO_PRIVATE:-''}
+
+  db:
+    image: mariadb:10.4
+    command:
+      --max_allowed_packet=64M
+      --optimizer_use_condition_selectivity=1
+      --optimizer_switch="rowid_filter=off"
+    env_file: docker/env/db.env
+    volumes:
+      - dbdata:/var/lib/mysql
+
+  redis:
+    image: redis:6.2-alpine
+
+  # If you wish to use Elasticsearch, comment out opensearch image above and
+  # uncomment this block. Do the same in the composer.healthcheck.yaml file.
+  # Additionally, if you are performing the manual setup, you will need to
+  # update the bin/setup command to use the $ES_HOST variable as the value for
+  # the --elasticsearch-host argument passed to bin/magento setup:install.
+  elasticsearch:
+    image: markoshust/magento-elasticsearch:7.17-0
+    env_file: docker/env/elasticsearch.env
+    environment:
+      - "discovery.type=single-node"
+      ## Avoid test failures due to small disks
+      ## More info at https://github.com/markshust/docker-magento/issues/488
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "index.blocks.read_only_allow_delete"
+
+  rabbitmq:
+    image: markoshust/magento-rabbitmq:3.9-0
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    env_file: docker/env/rabbitmq.env
+
+  mailcatcher:
+    image: sj26/mailcatcher
+
+
+volumes:
+  appdata:
+  dbdata:
+  rabbitmqdata:
+  sockdata:
+  ssldata:
+  composer-home: {}

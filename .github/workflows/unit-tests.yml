@@ -1,0 +1,38 @@
+# based on https://github.com/woocommerce/woocommerce/blob/trunk/.github/workflows/pr-unit-tests.yml
+name: Run unit tests
+on: [push]
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.2' ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build docker image (php ${{ matrix.php }})
+        run: make test-build
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+
+      - name: Install magento
+        run: make test-install
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+          MAGENTO_PUBLIC: ${{ secrets.MAGENTO_PUBLIC }}
+          MAGENTO_PRIVATE: ${{ secrets.MAGENTO_PRIVATE }}
+
+      - name: Run unit tests
+        run: make test-unit
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+
+      - name: Run integration tests
+        run: make test-integration
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+

@@ -30,6 +30,7 @@ class Webhook
     private UrlInterface $backendUrl;
     private StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection;
     private JsonResponse $jsonResponse;
+    private StoreKeeperFailedSyncOrderCollectionFactory $storeKeeperFailedSyncOrderCollectionFactory;
 
     /**
      * @param Request $request

@@ -20,6 +20,7 @@ class Consumer
     private Categories $categoriesHelper;
     private Orders $ordersHelper;
     private Config $configHelper;
+    private LoggerInterface $logger;
 
     public function __construct(
         Products $productsHelper,

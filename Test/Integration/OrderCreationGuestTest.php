@@ -11,6 +11,9 @@ use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\StoreManagerInterface;
 
+/**
+ * @magentoDbIsolation enabled
+ */
 class OrderCreationGuestTest extends AbstractGuestTest
 {
     protected function setUp(): void

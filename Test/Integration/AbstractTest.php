@@ -27,7 +27,7 @@ use Magento\Checkout\Model\PaymentInformationManagement;
 use Magento\Quote\Model\GuestCart\GuestCartManagement;
 use Magento\Quote\Model\MaskedQuoteIdToQuoteId;
 
-class AbstractTest extends TestCase
+abstract class AbstractTest extends TestCase
 {
     const ORDER_INCREMENT_ID = '100001007';
     const SIMPLE_PRODUCT_SKU = 'simple-2';
@@ -62,6 +62,7 @@ class AbstractTest extends TestCase
     protected $redirect;
     protected $finish;
     protected $guestCartManagement;
+    protected $maskedQuoteIdToQuoteId;
     protected $authHelper;
     protected $configHelper;
     protected $orderCollectionFactory;
@@ -154,10 +155,7 @@ class AbstractTest extends TestCase
                     }
                 }
             );
-        $this->requestMock->method('getParams')
-            ->willReturn([
-                'orderID' => '1'
-            ]);
+
         $this->paymentApiClientMock->method('getStoreKeeperPayment')
             ->willReturn([
                 'id' => 1,
@@ -406,7 +404,7 @@ class AbstractTest extends TestCase
     protected function createTestOrderWithPayment(bool $isGuest): string
     {
         //Retrieve product from repository
-        $product = $this->getProduct();
+        $product = $this->getProduct(self::SIMPLE_PRODUCT_SKU);
         $product->setOptions(null);
         $taxClassId = $this->getTaxClass()->getId();
         $this->createTaxRule($this->getTaxRate(), $taxClassId);
@@ -504,14 +502,18 @@ class AbstractTest extends TestCase
     protected function executeOrderWithPayment(bool $isGuest): void
     {
         // Create test order and get orderId
-        $orderId = $this->createTestOrderWithPayment($isGuest);
+        $testOrderId = $this->createTestOrderWithPayment($isGuest);
+        $this->requestMock->method('getParams')
+            ->willReturn([
+                'orderID' => $testOrderId
+            ]);
 
         // Execute Redirect and Finish controllers
         $this->redirect->execute();
         $this->finish->execute();
 
         // Assert order state to 'processing' state
-        $order = $this->orderRepository->get($orderId);
+        $order = $this->orderRepository->get($testOrderId);
         $this->assertEquals($order->getState(), Order::STATE_PROCESSING);
     }
 
@@ -626,7 +628,7 @@ class AbstractTest extends TestCase
         $this->assertEquals(Order::STATE_NEW, $order->getState());
 
         $this->cronOrders->execute();
-        $savedOrder = $this->orderRepository->get('1');
+        $savedOrder = $this->orderRepository->get($order->getId());
 
         $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
         $this->assertEquals(self::STORE_KEEPER_ORDER_NUMBER, $savedOrder->getStorekeeperOrderNumber());
