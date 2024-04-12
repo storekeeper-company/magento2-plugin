@@ -23,6 +23,8 @@ class Base36Coder
     }
 
     /**
+     * Based on:
+     * https://www.php.net/manual/en/function.base-convert.php#109660
      * @param string$str
      * @param int $frombase
      * @param int $tobase
