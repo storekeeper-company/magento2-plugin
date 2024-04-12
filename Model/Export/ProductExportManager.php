@@ -308,43 +308,43 @@ class ProductExportManager extends AbstractExportManager
             $categoryData = $this->getCategoryData($product);
 
             $data = [
-                $productData['product_type'],
-                $product->getSku(),
-                $product->getName(),
-                $product->getShortDescription(),
-                $product->getDescription(),
-                $product->getUrlKey(), // slug
-                $product->getMetaTitle(),
-                $product->getMetaKeyword(),
-                $product->getMetaDescription(),
-                $productData['is_active'],
-                $stockData['is_in_stock'],
-                $stockData['stock_qty'],
-                $stockData['is_manage_stock'],
-                $stockData['is_backorder_enabled'],
-                $taxData['vat_rate'] ?? null,
-                $taxData['vat_iso2'] ?? null,
-                $this->storeManager->getStore()->getCurrentCurrencyCode(),
-                $this->productHelper->getTaxPrice($product, $productPrice, false), // price excl. tax
-                $this->productHelper->getTaxPrice($product, $productPrice, true), // price incl. tax
-                $this->productHelper->getTaxPrice($product, $productSpecialPrice, false), // product.product_discount_price.ppu - Discount price
-                $this->productHelper->getTaxPrice($product, $productSpecialPrice, true), // product.product_discount_price.ppu_wt - Discount price with VAT
-                null, // product.product_purchase_price.ppu - Purchase price
-                null, // product.product_purchase_price.ppu_wt - Purchase price with VAT
-                null, // product.product_bottom_price.ppu - Bottom price
-                null, // product.product_bottom_price.ppu_wt - Bottom price with VAT
-                $this->productHelper->getTaxPrice($product, $productCostPrice, false), // product.product_cost_price.ppu - Cost price
-                $this->productHelper->getTaxPrice($product, $productCostPrice, true), // product.product_cost_price.ppu_wt - Cost price with VAT
-                null, // product.configurable_product_kind.alias - Product kind alias
-                null, // product.configurable_product.sku - Configurable product sku
-                $categoryData['category_name'] ?? null,
-                $categoryData['category_url'] ?? null,
-                null, // extra_category_slugs - Extra Category slugs
-                null, // extra_label_slugs - Extra Label slugs
-                $productData['attribute_set_name'],
-                null, // attribute_set_alias - Attribute set alias
-                $productData['is_salable'],
-                null // shop_products.main.relation_limited - Sales relation limited
+                $productData['product_type'], // path://product.type
+                $product->getSku(), // path://product.sku
+                $product->getName(), // path://title
+                $product->getShortDescription(), // path://summary
+                $product->getDescription(), // path://body
+                $product->getUrlKey(), // path://slug
+                $product->getMetaTitle(), // path://seo_title
+                $product->getMetaKeyword(), // path://seo_keywords
+                $product->getMetaDescription(), // path://seo_description
+                $productData['is_active'], // path://product.active
+                $stockData['is_in_stock'], // path://product.product_stock.in_stock
+                $stockData['stock_qty'], // path://product.product_stock.value
+                $stockData['is_manage_stock'], // path://product.product_stock.unlimited
+                $stockData['is_backorder_enabled'], // path://shop_products.main.backorder_enabled
+                $taxData['vat_rate'] ?? null, // path://product.product_price.tax
+                $taxData['vat_iso2'] ?? null, // path://product.product_price.tax_rate.country_iso2
+                $this->storeManager->getStore()->getCurrentCurrencyCode(), // path://product.product_price.currency_iso3
+                $this->productHelper->getTaxPrice($product, $productPrice, false),// path://product.product_price.ppu - price excl. tax
+                $this->productHelper->getTaxPrice($product, $productPrice, true), // path://product.product_price.ppu_wt - price incl. tax
+                $this->productHelper->getTaxPrice($product, $productSpecialPrice, false), // path://product.product_discount_price.ppu - Discount price
+                $this->productHelper->getTaxPrice($product, $productSpecialPrice, true), // path://product.product_discount_price.ppu_wt - Discount price with VAT
+                null, // path://product.product_purchase_price.ppu - Purchase price
+                null, // path://product.product_purchase_price.ppu_wt - Purchase price with VAT
+                null, // path://product.product_bottom_price.ppu - Bottom price
+                null, // path://product.product_bottom_price.ppu_wt - Bottom price with VAT
+                $this->productHelper->getTaxPrice($product, $productCostPrice, false), // path://product.product_cost_price.ppu - Cost price
+                $this->productHelper->getTaxPrice($product, $productCostPrice, true), // path://product.product_cost_price.ppu_wt - Cost price with VAT
+                null, // path://product.configurable_product_kind.alias - Product kind alias
+                null, // path://product.configurable_product.sku - Configurable product sku
+                $categoryData['category_name'] ?? null, // path://main_category.title
+                $categoryData['category_url'] ?? null, // path://main_category.slug
+                null, // path://extra_category_slugs - Extra Category slugs
+                null, // path://extra_label_slugs - Extra Label slugs
+                $productData['attribute_set_name'], // path://attribute_set_name
+                null, // path://attribute_set_alias - Attribute set alias
+                $productData['is_salable'], // path://shop_products.main.active
+                null // path://shop_products.main.relation_limited - Sales relation limited
             ];
             $data = $this->addProductImageUrlData($data, $product);
             $result[] = array_combine(self::HEADERS_PATHS, $data);
