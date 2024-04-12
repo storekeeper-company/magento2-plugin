@@ -16,7 +16,7 @@ class FullExportDataTest extends AbstractTest
 {
     protected $attributeExportManager;
     protected $attributeCollectionFactory;
-        protected $attributeExportDataTest;
+    protected $attributeExportDataTest;
     protected $attributeOptionExportManager;
     protected $attributeOptionCollectionFactory;
     protected $attributeOptionExportDataTest;
@@ -47,8 +47,8 @@ class FullExportDataTest extends AbstractTest
         $this->attributeExportDataTest = $objectManager->getObject(
             AttributeExportDataTest::class,
             [
-'attributeCollectionFactory' => $this->attributeCollectionFactory,
-'attributeExportManager' => $this->attributeExportManager
+                'attributeCollectionFactory' => $this->attributeCollectionFactory,
+                'attributeExportManager' => $this->attributeExportManager
             ]
         );
         $this->attributeOptionCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory::class);

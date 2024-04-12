@@ -27,6 +27,7 @@ use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Psr\Log\LoggerInterface;
@@ -204,6 +205,7 @@ class ProductExportManager extends AbstractExportManager
     private Config $configHelper;
     private LoggerInterface $logger;
     private AttributeCollectionFactory $attributeCollectionFactory;
+    private Base36Coder $base36Coder;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -234,6 +236,8 @@ class ProductExportManager extends AbstractExportManager
      * @param Auth $authHelper
      * @param Config $configHelper
      * @param LoggerInterface $logger
+     * @param AttributeCollectionFactory $attributeCollectionFactory
+     * @param Base36Coder $base36Coder
      */
     public function __construct(
         Resolver $localeResolver,
@@ -259,7 +263,8 @@ class ProductExportManager extends AbstractExportManager
         Auth $authHelper,
         Config $configHelper,
         LoggerInterface $logger,
-        AttributeCollectionFactory $attributeCollectionFactory
+        AttributeCollectionFactory $attributeCollectionFactory,
+        Base36Coder $base36Coder
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -283,6 +288,7 @@ class ProductExportManager extends AbstractExportManager
         $this->configHelper = $configHelper;
         $this->logger = $logger;
         $this->attributeCollectionFactory = $attributeCollectionFactory;
+        $this->base36Coder = $base36Coder;
     }
 
     public function getProductExportData(array $products): array
@@ -347,6 +353,7 @@ class ProductExportManager extends AbstractExportManager
                 foreach ($featuredAttributes as $key => $value) {
                     if ($value !== 'not-mapped') {
                         $attributeValue = $product->getData($value);
+                        $key = $this->base36Coder->encode($key);
                         try {
                             $attribute = $product->getResource()->getAttribute($value);
                             if ($attributeValue !== null && $attribute->usesSource()) {
@@ -365,8 +372,8 @@ class ProductExportManager extends AbstractExportManager
 
                             $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
                             $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
-                            $this->extendHeaderLabels($value . ' (raw)');
-                            $this->extendHeaderLabels($value . ' (label)');
+                            $this->extendHeaderLabels($key . ' (raw)');
+                            $this->extendHeaderLabels($key . ' (label)');
                             $this->extendDisallowedAttributes($value);
                         } catch (\Exception $e) {
                             $this->logger->error($e->getMessage());
@@ -379,6 +386,7 @@ class ProductExportManager extends AbstractExportManager
                 $attributeCode = $productAttribute->getAttributeCode();
                 if (array_search($attributeCode, $this->getDisallowedAttributesExtended()) === false) {
                     $attributeValue = $product->getData($attributeCode);
+                    $attributeCode = $this->base36Coder->encode($attributeCode);
                     if ($attributeValue !== null && $productAttribute->usesSource()) {
                         $attributeValue = $productAttribute->getFrontend()->getValue($product);
                     }

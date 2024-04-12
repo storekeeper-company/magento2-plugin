@@ -105,12 +105,12 @@ class ProductExportDataTest extends AbstractTest
             'path://product.product_images.7.download_url' => NULL,
             'path://product.product_images.8.download_url' => NULL,
             'path://product.product_images.9.download_url' => NULL,
-            'path://content_vars.url_key.value' => 'taxable-product',
-            'path://content_vars.url_key.value_label' => 'URL Key',
-            'path://content_vars.visibility.value' => 'Catalog, Search',
-            'path://content_vars.visibility.value_label' => 'Visibility',
-            'path://content_vars.brand.value' => 'Magento Inc.',
-            'path://content_vars.brand.value_label' => 'Manufacturer'
+            'path://content_vars.5e8rjy3o.value' => 'Magento Inc.',
+            'path://content_vars.5e8rjy3o.value_label' => 'Manufacturer',
+            'path://content_vars.91i7v278gop.value' => 'taxable-product',
+            'path://content_vars.91i7v278gop.value_label' => 'URL Key',
+            'path://content_vars.2j23pg2ba4q754e1.value' => 'Catalog, Search',
+            'path://content_vars.2j23pg2ba4q754e1.value_label' => 'Visibility'
         ];
     }
 }
