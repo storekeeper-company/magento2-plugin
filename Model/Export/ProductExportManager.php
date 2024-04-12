@@ -536,7 +536,7 @@ class ProductExportManager extends AbstractExportManager
             $taxRateId = $taxCalculation->getData('tax_calculation_rate_id');
             $taxRate = $this->taxRateRepository->get($taxRateId);
             $data = [
-                'vat_rate' => (float)$taxRate->getRate(),
+                'vat_rate' => (float)($taxRate->getRate()/100),
                 'vat_iso2' => $taxRate->getTaxCountryId()
             ];
         }

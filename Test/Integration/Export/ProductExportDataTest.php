@@ -72,7 +72,7 @@ class ProductExportDataTest extends AbstractTest
             'path://product.product_stock.value' => 100,
             'path://product.product_stock.unlimited' => 'yes',
             'path://shop_products.main.backorder_enabled' => 'no',
-            'path://product.product_price.tax' => 21.0,
+            'path://product.product_price.tax' => 0.21,
             'path://product.product_price.tax_rate.country_iso2' => 'NL',
             'path://product.product_price.currency_iso3' => 'USD',
             'path://product.product_price.ppu' => 10.0,
