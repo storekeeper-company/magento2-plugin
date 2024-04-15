@@ -2,6 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
+use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
 
@@ -9,11 +10,13 @@ class ProductExportDataTest extends AbstractTest
 {
     protected $productExportManager;
     protected $productCollectionFactory;
+    protected $base36Coder;
 
     protected function setUp(): void
     {
         $this->productCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
         $this->productExportManager = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\ProductExportManager::class);
+        $this->base36Coder = Bootstrap::getObjectManager()->create(Base36Coder::class);
     }
     /**
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_shop_language nl
@@ -105,12 +108,12 @@ class ProductExportDataTest extends AbstractTest
             'path://product.product_images.7.download_url' => NULL,
             'path://product.product_images.8.download_url' => NULL,
             'path://product.product_images.9.download_url' => NULL,
-            'path://content_vars.5e8rjy3o.value' => 'Magento Inc.',
-            'path://content_vars.5e8rjy3o.value_label' => 'Manufacturer',
-            'path://content_vars.91i7v278gop.value' => 'taxable-product',
-            'path://content_vars.91i7v278gop.value_label' => 'URL Key',
-            'path://content_vars.2j23pg2ba4q754e1.value' => 'Catalog, Search',
-            'path://content_vars.2j23pg2ba4q754e1.value_label' => 'Visibility'
+            'path://content_vars.' . $this->base36Coder->encode('brand') . '.value' => 'Magento Inc.',
+            'path://content_vars.' . $this->base36Coder->encode('brand') . '.value_label' => 'Manufacturer',
+            'path://content_vars.' . $this->base36Coder->encode('url_key') . '.value' => 'taxable-product',
+            'path://content_vars.' . $this->base36Coder->encode('url_key') . '.value_label' => 'URL Key',
+            'path://content_vars.' . $this->base36Coder->encode('visibility') . '.value' => 'Catalog, Search',
+            'path://content_vars.' . $this->base36Coder->encode('visibility') . '.value_label' => 'Visibility'
         ];
     }
 }

@@ -17,10 +17,13 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
 
 Resolver::getInstance()->requireDataFixture(
-    'Magento/ConfigurableProduct/_files/configurable_attribute_first.php'
+    'StoreKeeper_StoreKeeper::Test/Integration/_files/configurable_attribute_sk_color.php'
 );
 Resolver::getInstance()->requireDataFixture(
-    'Magento/ConfigurableProduct/_files/configurable_attribute_second.php'
+    'StoreKeeper_StoreKeeper::Test/Integration/_files/configurable_attribute_sk_size.php'
+);
+Resolver::getInstance()->requireDataFixture(
+    'StoreKeeper_StoreKeeper::Test/Integration/_files/configurable_attribute_sk_shoe_size.php'
 );
 
 /** @var ProductRepositoryInterface $productRepository */
@@ -32,20 +35,24 @@ $installer = Bootstrap::getObjectManager()->create(CategorySetup::class);
 
 /** @var \Magento\Eav\Model\Config $eavConfig */
 $eavConfig = Bootstrap::getObjectManager()->get(\Magento\Eav\Model\Config::class);
-$firstAttribute = $eavConfig->getAttribute(Product::ENTITY, 'test_configurable_first');
-$secondAttribute = $eavConfig->getAttribute(Product::ENTITY, 'test_configurable_second');
+$firstAttribute = $eavConfig->getAttribute(Product::ENTITY, 'sk_color');
+$secondAttribute = $eavConfig->getAttribute(Product::ENTITY, 'sk_size');
+$thirdAttribute = $eavConfig->getAttribute(Product::ENTITY, 'sk_shoe_size');
 
 /* Create simple products per each option value*/
 /** @var AttributeOptionInterface[] $firstAttributeOptions */
 $firstAttributeOptions = $firstAttribute->getOptions();
 /** @var AttributeOptionInterface[] $secondAttributeOptions */
 $secondAttributeOptions = $secondAttribute->getOptions();
+/** @var AttributeOptionInterface[] $thirdAttributeOptions */
+$thirdAttributeOptions = $thirdAttribute->getOptions();
 
 $attributeSetId = $installer->getAttributeSetId('catalog_product', 'Default');
 $associatedProductIds = [];
 $productIds = [10, 20];
 $firstAttributeValues = [];
 $secondAttributeValues = [];
+$thirdAttributeValues = [];
 $i = 1;
 foreach ($productIds as $productId) {
     $firstOption = $firstAttributeOptions[$i];
@@ -154,12 +161,12 @@ foreach ($productIds as $productId) {
     $product = $productRepository->save($product);
 
     $firstAttributeValues[] = [
-        'label' => 'test first ' . $i,
+        'label' => 'test sk color ' . $i,
         'attribute_id' => $firstAttribute->getId(),
         'value_index' => $firstOption->getValue(),
     ];
     $secondAttributeValues[] = [
-        'label' => 'test second ' . $i,
+        'label' => 'test sk size ' . $i,
         'attribute_id' => $secondAttribute->getId(),
         'value_index' => $secondOption->getValue(),
     ];
@@ -204,6 +211,74 @@ $product->setTypeId(Configurable::TYPE_CODE)
     ->setWebsiteIds([1])
     ->setName('Configurable Product 12345')
     ->setSku('configurable_12345')
+    ->setVisibility(Visibility::VISIBILITY_BOTH)
+    ->setStatus(Status::STATUS_ENABLED)
+    ->setStockData(['use_config_manage_stock' => 1, 'is_in_stock' => 1]);
+$productRepository->cleanCache();
+$productRepository->save($product);
+
+$associatedProductIds = [];
+$productIds = [50];
+$firstAttributeValues = [];
+$secondAttributeValues = [];
+$i = 1;
+
+foreach ($productIds as $productId) {
+    $firstOption = $thirdAttributeOptions[$i];
+    /** @var $product Product */
+    $product = Bootstrap::getObjectManager()->create(Product::class);
+    $product->setTypeId(Type::TYPE_SIMPLE)
+        ->setId($productId)
+        ->setAttributeSetId($attributeSetId)
+        ->setWebsiteIds([1])
+        ->setName('Configurable Option ' . $firstOption->getLabel())
+        ->setSku('simple_' . $productId)
+        ->setPrice($productId)
+        ->setVisibility(Visibility::VISIBILITY_NOT_VISIBLE)
+        ->setStatus(Status::STATUS_ENABLED)
+        ->setStockData(['use_config_manage_stock' => 1, 'qty' => 100, 'is_qty_decimal' => 0, 'is_in_stock' => 1]);
+    $customAttributes = [
+        $thirdAttribute->getAttributeCode() => $firstOption->getValue()
+    ];
+    foreach ($customAttributes as $attributeCode => $attributeValue) {
+        $product->setCustomAttributes($customAttributes);
+    }
+    $product = $productRepository->save($product);
+
+    $thirdAttributeValues[] = [
+        'label' => 'test sk shoe size ' . $i,
+        'attribute_id' => $thirdAttribute->getId(),
+        'value_index' => $firstOption->getValue(),
+    ];
+    $associatedProductIds[] = $product->getId();
+    $i++;
+}
+
+/** @var $product Product */
+$product = Bootstrap::getObjectManager()->create(Product::class);
+/** @var Factory $optionsFactory */
+$optionsFactory = Bootstrap::getObjectManager()->create(Factory::class);
+$configurableAttributesData = [
+    [
+        'attribute_id' => $thirdAttribute->getId(),
+        'code' => $thirdAttribute->getAttributeCode(),
+        'label' => $thirdAttribute->getStoreLabel(),
+        'position' => '0',
+        'values' => $thirdAttributeValues,
+    ]
+];
+$configurableOptions = $optionsFactory->create($configurableAttributesData);
+$extensionConfigurableAttributes = $product->getExtensionAttributes();
+$extensionConfigurableAttributes->setConfigurableProductOptions($configurableOptions);
+$extensionConfigurableAttributes->setConfigurableProductLinks($associatedProductIds);
+$product->setExtensionAttributes($extensionConfigurableAttributes);
+
+$product->setTypeId(Configurable::TYPE_CODE)
+    ->setId(21)
+    ->setAttributeSetId($attributeSetId)
+    ->setWebsiteIds([1])
+    ->setName('Third Configurable Product')
+    ->setSku('configurable_w_shoe_size')
     ->setVisibility(Visibility::VISIBILITY_BOTH)
     ->setStatus(Status::STATUS_ENABLED)
     ->setStockData(['use_config_manage_stock' => 1, 'is_in_stock' => 1]);

@@ -61,7 +61,7 @@ class BlueprintExportManager extends AbstractExportManager
                 $compoundAlias = $blueprint['alias'];
 
                 if (!isset($result[$compoundAlias])) {
-                    $result[$compoundAlias] = array_combine(self::HEADERS_PATHS, $blueprint);;
+                    $result[$compoundAlias] = array_combine(self::HEADERS_PATHS, $blueprint);
                 }
             } else {
                 $configurableAttribute = current($configurableAttributes);
@@ -110,10 +110,9 @@ class BlueprintExportManager extends AbstractExportManager
      */
     public function getHeaderCols(array $blueprintData): array
     {
-        $headers=[];
         $paths = self::HEADERS_PATHS;
         $labels = self::HEADERS_LABELS;
-        foreach ($blueprintData as $key =>$value) {
+        foreach ($blueprintData as $key => $value) {
             if (str_contains($key, self::ADD_HEADER_FLAG)) {
                 $key = str_replace(self::ADD_HEADER_FLAG, '', $key );
                 $pathData = $this->getEncodedAttributePathData($key);
@@ -122,12 +121,11 @@ class BlueprintExportManager extends AbstractExportManager
                 array_push($labels, ...$labelData);
             }
         }
-        $headers=[
-            'paths' =>$paths,
-            'labels' =>$labels
-        ];
 
-        return $headers;
+        return [
+            'paths' => $paths,
+            'labels' => $labels
+        ];
     }
 
     /**
@@ -136,7 +134,7 @@ class BlueprintExportManager extends AbstractExportManager
      */
     private function getEncodedAttributePathData(string $key): array
     {
-        $encodedName =$this->base36Coder->encode($key);
+        $encodedName = $this->base36Coder->encode($key);
 
         return [
             "path://attribute.encoded__$encodedName.is_configurable",
@@ -150,7 +148,7 @@ class BlueprintExportManager extends AbstractExportManager
      */
     private function getLabelData(string $label): array
     {
-                return[
+                return [
                     "$label (Configurable)",
                     "$label (Synchronized)"
                 ];

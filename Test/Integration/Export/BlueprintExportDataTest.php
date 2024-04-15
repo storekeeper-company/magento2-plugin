@@ -2,6 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
+use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
 
@@ -10,12 +11,14 @@ class BlueprintExportDataTest extends AbstractTest
     protected $blueprintExportManager;
     protected  $csvFileContent;
     protected  $json;
+    protected $base36Coder;
 
     protected function setUp(): void
     {
         $this->blueprintExportManager = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager::class);
         $this->csvFileContent = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\CsvFileContent::class);
         $this->json = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\Serializer\Json::class);
+        $this->base36Coder = Bootstrap::getObjectManager()->create(Base36Coder::class);
     }
     /**
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_shop_language nl
@@ -33,13 +36,10 @@ class BlueprintExportDataTest extends AbstractTest
      */
     public function getBlueprintCsvContent(): array
     {
-        $data = $this->csvFileContent->getFileContents('blueprint');
-        $data = explode(',', $this->json->unserialize(str_replace('\n', ',', $this->json->serialize($data))));
-        $data = array_filter($data, function ($value) {
-            return !empty($value);
-        });
+        $csvData = $this->csvFileContent->getFileContents('blueprint');
+        $arrayData = str_getcsv($csvData, "\n");
 
-        return $data;
+        return $arrayData;
     }
 
     /**
@@ -49,46 +49,12 @@ class BlueprintExportDataTest extends AbstractTest
     public function getTestBlueprintExportData(): array
     {
         return [
-            0 => 'path://name',
-            1 => 'path://alias',
-            2 => 'path://sku_pattern',
-            3 => 'path://title_pattern',
-            4 => 'path://attribute.encoded__3rt6eutvzsqn6el82yobt8wuw3by8ahxzddg.is_configurable',
-            5 => 'path://attribute.encoded__3rt6eutvzsqn6el82yobt8wuw3by8ahxzddg.is_synchronized',
-            6 => 'path://attribute.encoded__qtrhln8jikdgtjqxh2kzzzdno7ozk0u07xxes.is_configurable',
-            7 => 'path://attribute.encoded__qtrhln8jikdgtjqxh2kzzzdno7ozk0u07xxes.is_synchronized',
-            8 => 'Name',
-            9 => 'Alias',
-            10 => '"Sku pattern"',
-            11 => '"Title pattern"',
-            12 => '"Test Configurable First (Configurable)"',
-            13 => '"Test Configurable First (Synchronized)"',
-            14 => '"Test Configurable Second (Configurable)"',
-            15 => '"Test Configurable Second (Synchronized)"',
-            16 => '"Test Configurable First"',
-            17 => 'test_configurable_first',
-            18 => '{{sku}}-{{content_vars[\'test_configurable_first\'][\'value\']}}',
-            19 => '{{title}}-{{content_vars[\'test_configurable_first\'][\'value_label\']}}',
-            20 => 'yes',
-            21 => 'no',
-            22 => 'no',
-            23 => 'no',
-            24 => '"Test Configurable Second"',
-            25 => 'test_configurable_second',
-            26 => '{{sku}}-{{content_vars[\'test_configurable_second\'][\'value\']}}',
-            27 => '{{title}}-{{content_vars[\'test_configurable_second\'][\'value_label\']}}',
-            28 => 'no',
-            29 => 'no',
-            30 => 'yes',
-            31 => 'no',
-            32 => '"Test Configurable First Test Configurable Second"',
-            33 => 'test_configurable_first-test_configurable_second',
-            34 => '{{sku}}-{{content_vars[\'test_configurable_first\'][\'value\']}}-{{content_vars[\'test_configurable_second\'][\'value\']}}',
-            35 => '{{title}}-{{content_vars[\'test_configurable_first\'][\'value_label\']}}-{{content_vars[\'test_configurable_second\'][\'value_label\']}}',
-            36 => 'yes',
-            37 => 'no',
-            38 => 'yes',
-            39 => 'no',
+            0 => 'path://name,path://alias,path://sku_pattern,path://title_pattern,path://attribute.encoded__' . $this->base36Coder->encode('sk_color') . '.is_configurable,path://attribute.encoded__' . $this->base36Coder->encode('sk_color') . '.is_synchronized,path://attribute.encoded__' . $this->base36Coder->encode('sk_size') . '.is_configurable,path://attribute.encoded__' . $this->base36Coder->encode('sk_size') . '.is_synchronized,path://attribute.encoded__' . $this->base36Coder->encode('sk_shoe_size') . '.is_configurable,path://attribute.encoded__' . $this->base36Coder->encode('sk_shoe_size') . '.is_synchronized',
+            1 => 'Name,Alias,"Sku pattern","Title pattern","Storekeeper Color (Configurable)","Storekeeper Color (Synchronized)","Storekeeper Size (Configurable)","Storekeeper Size (Synchronized)","Storekeeper Shoe Size (Configurable)","Storekeeper Shoe Size (Synchronized)"',
+            2 => "Storekeeper Color,sk_color,{{sku}}-{{content_vars['sk_color']['value']}},{{title}}-{{content_vars['sk_color']['value_label']}},yes,no,no,no,no,no",
+            3 => "Storekeeper Size,sk_size,{{sku}}-{{content_vars['sk_size']['value']}},{{title}}-{{content_vars['sk_size']['value_label']}},no,no,yes,no,no,no",
+            4 => "Storekeeper Color Storekeeper Size,sk_color-sk_size,{{sku}}-{{content_vars['sk_color']['value']}}-{{content_vars['sk_size']['value']}},{{title}}-{{content_vars['sk_color']['value_label']}}-{{content_vars['sk_size']['value_label']}},yes,no,yes,no,yes,no",
+            5 => "Storekeeper Shoe Size,sk_shoe_size,{{sku}}-{{content_vars['sk_shoe_size']['value']}},{{title}}-{{content_vars['sk_shoe_size']['value_label']}},no,no,no,no,yes,no"
         ];
     }
 }

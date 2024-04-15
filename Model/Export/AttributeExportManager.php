@@ -104,20 +104,18 @@ class AttributeExportManager extends AbstractExportManager
      */
     public function getHeaderCols(array $attributeData): array
     {
-                $headers=[];
         $paths = self::HEADERS_PATHS;
         $labels = self::HEADERS_LABELS;
         foreach ($this->getAttributeSetList() as $attributeSet) {
             $attributeSetName = $attributeSet->getAttributeSetName();
-                array_push($paths, $this->getEncodedAttributePath($attributeSetName));
-                array_push($labels, $attributeSetName);
+            $paths[] = $this->getEncodedAttributePath($attributeSetName);
+            $labels[] = $attributeSetName;
         }
-                $headers=[
-            'paths' =>$paths,
-            'labels' =>$labels
-        ];
 
-        return $headers;
+        return [
+            'paths' => $paths,
+            'labels' => $labels
+        ];
     }
 
     /**
@@ -157,7 +155,7 @@ class AttributeExportManager extends AbstractExportManager
             'entity_type_id',
             self::PRODUCT_ENTITY_TYPE_ID
         );
-        $attributesCollection=$this->attributeCollectionFactory->create()->setAttributeSetFilter($attributeSet->getFirstItem()->getId())->load();
+        $attributesCollection = $this->attributeCollectionFactory->create()->setAttributeSetFilter($attributeSet->getFirstItem()->getId())->load();
 
         return $attributesCollection->getAllIds();
     }
@@ -169,7 +167,7 @@ class AttributeExportManager extends AbstractExportManager
      */
     public function getAttributeId(string $attributeCode): ?int
     {
-        return$this->attributeRepository->get(Product::ENTITY, $attributeCode)->getAttributeId();
+        return $this->attributeRepository->get(Product::ENTITY, $attributeCode)->getAttributeId();
     }
 
     /**
