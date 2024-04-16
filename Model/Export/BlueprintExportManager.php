@@ -55,6 +55,7 @@ class BlueprintExportManager extends AbstractExportManager
                     $attributeCode = $configurableAttribute['attribute_code'];
                     if (!isset($result[$attributeCode])) {
                         $result[self::ADD_HEADER_FLAG . $attributeCode] = array_combine(self::HEADERS_PATHS, $this->buildBlueprintData([$configurableAttribute]));
+                        $result[self::ADD_HEADER_FLAG . $attributeCode]['ignore_row'] = true;
                     }
                 }
                 $blueprint = $this->buildBlueprintData($configurableAttributes);
@@ -93,7 +94,7 @@ class BlueprintExportManager extends AbstractExportManager
             $titlePattern .= "-{{content_vars['{$configurableAttribute['attribute_code']}']['value_label']}}";
         }
 
-        $name = implode(' ', $attributeData['name']);
+        $name = implode(' & ', $attributeData['name']);
         $alias = implode('-', $attributeData['alias']);
 
         return [
@@ -164,9 +165,9 @@ class BlueprintExportManager extends AbstractExportManager
         $diff = array_diff_key($labels, $dataRow);
         foreach ($diff as $key => $value) {
             if (mb_substr_count($dataRow['path://sku_pattern'], 'content_vars') > 1) {
-                $compoundLabelData = explode(' ', $dataRow['path://name']);
+                $compoundLabelData = explode('&', $dataRow['path://name']);
                 foreach ($compoundLabelData as $compoundLabelItem) {
-                    $dataRow[$key] = $this->isLabelItemMatchHeader($compoundLabelItem, $value) ? 'yes' : 'no';
+                    $dataRow[$key] = $this->isLabelItemMatchHeader(trim($compoundLabelItem), $value) ? 'yes' : 'no';
                     if ($dataRow[$key] =='yes') {
                         break;
                     }

@@ -6,6 +6,8 @@ use Magento\Framework\Option\ArrayInterface;
 
 class Attributes implements ArrayInterface
 {
+    const NOT_MAPPED = 'not-mapped';
+
     protected $attributeCollectionFactory;
 
     public function __construct(CollectionFactory $attributeCollectionFactory)
@@ -16,7 +18,7 @@ class Attributes implements ArrayInterface
     public function toOptionArray()
     {
         $options = [];
-        $options[] = ['label' => '------ Not mapped ------', 'value' => 'not-mapped'];
+        $options[] = ['label' => '------ Not mapped ------', 'value' => self::NOT_MAPPED];
         $attributes = $this->attributeCollectionFactory->create();
         foreach ($attributes as $attribute) {
             $options[] = [

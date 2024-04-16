@@ -29,6 +29,7 @@ use Magento\Catalog\Helper\ImageFactory;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Psr\Log\LoggerInterface;
 
@@ -351,7 +352,7 @@ class ProductExportManager extends AbstractExportManager
             $dataKey = array_key_last($result);
             if (is_array($featuredAttributes)) {
                 foreach ($featuredAttributes as $key => $value) {
-                    if ($value !== 'not-mapped') {
+                    if ($value !== Attributes::NOT_MAPPED) {
                         $attributeValue = $product->getData($value);
                         $key = $this->base36Coder->encode($key);
                         try {
@@ -361,7 +362,7 @@ class ProductExportManager extends AbstractExportManager
                             }
 
                             if ($attributeValue !== null) {
-                                if (is_a($attributeValue, 'Magento\Framework\Phrase')) {
+                                if ($attributeValue instanceof \Magento\Framework\Phrase) {
                                     $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue->getText();
                                 } else {
                                     $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
@@ -391,7 +392,7 @@ class ProductExportManager extends AbstractExportManager
                         $attributeValue = $productAttribute->getFrontend()->getValue($product);
                     }
                     if ($attributeValue !== null) {
-                        if (is_a($attributeValue, 'Magento\Framework\Phrase')) {
+                        if ($attributeValue instanceof \Magento\Framework\Phrase) {
                             $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue->getText();
                         } else {
                             $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue;
