@@ -4,7 +4,7 @@ Connect your Magento 2 stores to StoreKeeper.
 
 # Important Notices
 
-Before using module make sure that your shop have all tax rules, classes and rates configured accordingly to your shop's region. Please follow this [official Magento guide](https://experienceleague.adobe.com/docs/commerce-admin/stores-sales/site-store/taxes/international-tax-guidelines.html#eu-tax-configuration).
+Before using module make sure that your shop have all tax rules, classes and rates configured accordingly to your shop's region. Please follow this [official Magento guide](https://experienceleague.adobe.com/en/docs/commerce-admin/stores-sales/site-store/taxes/international-tax-guidelines#eu-tax-configuration).
 
 If your project is using Multi-Source Inventory (MSI) functionality and/or MSI-related modules are enabled, please install
 this [addon module](https://github.com/storekeeper-company/magento2-plugin-msi-addon).
