@@ -57,7 +57,7 @@ class DisconnectStore extends AbstractElement
     {
         $storeId = $this->request->getParam('store');
         if ($this->authHelper->isConnected($storeId)) {
-            $url = $this->backendUrlManager->getUrl('storekeeper/index/disconnect', ['storeId' =>$this->request->getParam('store')]);
+            $url = $this->backendUrlManager->getUrl('storekeeper/index/disconnect', ['storeId' => $this->request->getParam('store')]);
             return "<a href='{$url}' class='action-default'>" . __("Disconnect from StoreKeeper") . "</a>";
         }
     }

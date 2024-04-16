@@ -655,4 +655,23 @@ abstract class AbstractTest extends TestCase
             'orderItem' => $orderItem
         ];
     }
+
+    /**
+     * @param string $code
+     * @param array $entityExportData
+     * @param string $key
+     * @return array
+     */
+    protected function getFoundEntityData(string $code, array$entityExportData, string$key): array
+    {
+        $foundEntityData = [];
+        foreach ($entityExportData as $entityExportDataItem) {
+            if (isset($entityExportDataItem[$key]) && $entityExportDataItem[$key] == $code) {
+                $foundEntityData = $entityExportDataItem;
+                break;
+            }
+        }
+
+        return $foundEntityData;
+    }
 }
