@@ -49,7 +49,7 @@ class AttributeSetExportDataTest extends AbstractTest
     {
         return [
             'path://name' => 'Default',
-            'path://alias' => NULL,
+            'path://alias' => 'default',
             'path://translatable.lang' => 'nl',
             'path://is_main_lang' => 'yes',
             'path://published' => 'true'

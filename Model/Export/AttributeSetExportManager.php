@@ -50,7 +50,7 @@ class AttributeSetExportManager extends AbstractExportManager
 
             $data = [
                 $attributeSetName, //path://name
-                null, //path://alias
+                $this->formatAlias($attributeSetName), //path://alias
                 $currentLocale, //'path://translatable.lang'
                 'yes', //'path://is_main_lang'
                 'true' //'path://published'

@@ -343,7 +343,7 @@ class ProductExportManager extends AbstractExportManager
                 null, // path://extra_category_slugs - Extra Category slugs
                 null, // path://extra_label_slugs - Extra Label slugs
                 $productData['attribute_set_name'], // path://attribute_set_name
-                null, // path://attribute_set_alias - Attribute set alias
+                $this->formatAlias($productData['attribute_set_name']), // path://attribute_set_alias - Attribute set alias
                 $productData['is_salable'], // path://shop_products.main.active
                 null // path://shop_products.main.relation_limited - Sales relation limited
             ];

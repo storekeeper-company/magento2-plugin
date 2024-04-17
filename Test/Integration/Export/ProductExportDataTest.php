@@ -95,7 +95,7 @@ class ProductExportDataTest extends AbstractTest
             'path://extra_category_slugs' => NULL,
             'path://extra_label_slugs' => NULL,
             'path://attribute_set_name' => 'Default',
-            'path://attribute_set_alias' => NULL,
+            'path://attribute_set_alias' => 'default',
             'path://shop_products.main.active' => 'yes',
             'path://shop_products.main.relation_limited' => NULL,
             'path://product.product_images.0.download_url' => NULL,
