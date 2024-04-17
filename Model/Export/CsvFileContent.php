@@ -3,20 +3,15 @@
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
 use Magento\Store\Model\Store;
-use StoreKeeper\StoreKeeper\Model\Export\ProductExportManager;
-use StoreKeeper\StoreKeeper\Model\Export\CustomerExportManager;
-use StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager;
-use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
-use StoreKeeper\StoreKeeper\Model\Export\AttributeOptionExportManager;
-use StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\ImportExport\Model\Export\Adapter\CsvFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
+use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory as AttributeSetCollectionFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory as AttributeOptionCollectionFactory;
-use Magento\Eav\Model\Entity\Collection\AbstractCollection;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
@@ -26,6 +21,7 @@ class CsvFileContent
     const CATALOG_PRODUCT_ENTITY = 'catalog_product';
     const CUSTOMER_ENTITY = 'customer';
     const CATEGORY_ENTITY = 'category';
+    const ATTRIBUTE_SET_ENTITY = 'attribute_set';
     const ATTRIBUTE_ENTITY = 'attribute';
     const ATTRIBUTE_OPTION_ENTITY = 'attribute_option';
     const BLUEPRINT_ENTITY = 'blueprint';
@@ -35,6 +31,7 @@ class CsvFileContent
     private ProductExportManager $productExportManager;
     private CustomerExportManager $customerExportManager;
     private CategoryExportManager $categoryExportManager;
+    private AttributeSetExportManager $attributeSetExportManager;
     private AttributeExportManager $attributeExportManager;
     private AttributeOptionExportManager $attributeOptionExportManager;
     private BlueprintExportManager $blueprintExportManager;
@@ -45,11 +42,32 @@ class CsvFileContent
     private CategoryCollectionFactory $categoryCollectionFactory;
     private AttributeFactory $attributeFactory;
     private AttributeOptionCollectionFactory $attributeOptionCollectionFactory;
+    private AttributeSetCollectionFactory $attributeSetCollectionFactory;
 
+    /**
+     * Constructor
+     *
+     * @param ProductExportManager $productExportManager
+     * @param CustomerExportManager $customerExportManager
+     * @param CategoryExportManager $categoryExportManager
+     * @param AttributeSetExportManager $attributeSetExportManager
+     * @param AttributeExportManager $attributeExportManager
+     * @param AttributeOptionExportManager $attributeOptionExportManager
+     * @param BlueprintExportManager $blueprintExportManager
+     * @param DateTime $dateTime
+     * @param CsvFactory $csvFactory
+     * @param ProductCollectionFactory $productCollectionFactory
+     * @param CustomerCollectionFactory $customerCollectionFactory
+     * @param CategoryCollectionFactory $categoryCollectionFactory
+     * @param AttributeFactory $attributeFactory
+     * @param AttributeOptionCollectionFactory $attributeOptionCollectionFactory
+     * @param AttributeSetCollectionFactory $attributeSetCollectionFactory
+     */
     public function __construct(
         ProductExportManager $productExportManager,
         CustomerExportManager $customerExportManager,
         CategoryExportManager $categoryExportManager,
+        AttributeSetExportManager $attributeSetExportManager,
         AttributeExportManager $attributeExportManager,
         AttributeOptionExportManager $attributeOptionExportManager,
         BlueprintExportManager $blueprintExportManager,
@@ -59,11 +77,13 @@ class CsvFileContent
         CustomerCollectionFactory $customerCollectionFactory,
         CategoryCollectionFactory $categoryCollectionFactory,
         AttributeFactory $attributeFactory,
-        AttributeOptionCollectionFactory $attributeOptionCollectionFactory
+        AttributeOptionCollectionFactory $attributeOptionCollectionFactory,
+        AttributeSetCollectionFactory $attributeSetCollectionFactory,
     ) {
         $this->productExportManager = $productExportManager;
         $this->customerExportManager = $customerExportManager;
         $this->categoryExportManager = $categoryExportManager;
+        $this->attributeSetExportManager = $attributeSetExportManager;
         $this->attributeExportManager = $attributeExportManager;
         $this->attributeOptionExportManager = $attributeOptionExportManager;
         $this->blueprintExportManager = $blueprintExportManager;
@@ -74,6 +94,7 @@ class CsvFileContent
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->attributeFactory = $attributeFactory;
         $this->attributeOptionCollectionFactory = $attributeOptionCollectionFactory;
+        $this->attributeSetCollectionFactory = $attributeSetCollectionFactory;
     }
 
     /**
@@ -164,6 +185,10 @@ class CsvFileContent
             $entityCollection->addFieldToSelect('*');
             $entityCollection->setOrder('entity_id', 'asc');
         }
+        if ($entityType == self::ATTRIBUTE_SET_ENTITY) {
+            $entityCollection = $this->attributeSetCollectionFactory->create();
+            $entityCollection->setEntityTypeFilter(4);
+        }
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $entityCollection = $this->attributeFactory->create()->getCollection();
             $entityCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, 4);
@@ -192,6 +217,9 @@ class CsvFileContent
         }
         if ($entityType == self::CATEGORY_ENTITY) {
             $exportData = $this->categoryExportManager->getCategoryExportData($items);
+        }
+        if ($entityType == self::ATTRIBUTE_SET_ENTITY) {
+            $exportData = $this->attributeSetExportManager->getAttributeSetExportData($items);
         }
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $exportData = $this->attributeExportManager->getAttributeExportData($items);
@@ -234,6 +262,13 @@ class CsvFileContent
                 CategoryExportManager::HEADERS_LABELS
             );
         }
+        if ($entityType == self::ATTRIBUTE_SET_ENTITY) {
+            $headerCols = AttributeSetExportManager::HEADERS_PATHS;
+            $headerColsLabels = $this->attributeSetExportManager->getMappedHeadersLabels(
+                AttributeSetExportManager::HEADERS_PATHS,
+                AttributeSetExportManager::HEADERS_LABELS
+            );
+        }
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $headerData = $this->attributeExportManager->getHeaderCols($exportData);
             $headerCols = $headerData['paths'];
@@ -274,6 +309,7 @@ class CsvFileContent
             self::CATALOG_PRODUCT_ENTITY,
             self::CUSTOMER_ENTITY,
             self::CATEGORY_ENTITY,
+            self::ATTRIBUTE_SET_ENTITY,
             self::ATTRIBUTE_ENTITY,
             self::ATTRIBUTE_OPTION_ENTITY,
             self::BLUEPRINT_ENTITY
