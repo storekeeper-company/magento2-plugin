@@ -18,6 +18,12 @@
         </button>
     </div>
     <div style="margin-top: 30px; display: flex; align-items: center;">
+        <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Attribute Sets')) ?></span>
+        <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('attribute_set')) ?>'">
+            <span><?= $block->escapeHtml(__('Generate')) ?></span>
+        </button>
+    </div>
+    <div style="margin-top: 30px; display: flex; align-items: center;">
         <span style="margin-right: 30px; font-size: 1.6rem; font-weight: 600; min-width: 200px;"><?= $block->escapeHtml(__('Export Attributes')) ?></span>
         <button class="action-scalable" type="button" onclick="window.location.href = '<?= $block->escapeHtml($block->getGenerateUrl('attribute')) ?>'">
             <span><?= $block->escapeHtml(__('Generate')) ?></span>

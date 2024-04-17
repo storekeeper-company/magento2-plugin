@@ -46,6 +46,19 @@ abstract class AbstractExportManager
         return $this->authHelper->getLanguageForStore($storeId);
     }
 
+    /**
+     * @param $name
+     * @param $r
+     * @return array|string|string[]|null
+     */
+    protected function formatAlias($name, $r = '_')
+    {
+        $name = trim($name);
+        $name = mb_strtolower($name);
+        $name = preg_replace('/\s/', $r, $name);
+
+        return preg_replace('/\\'.$r.'+/', $r, $name);
+    }
 
     /**
      * @return string
