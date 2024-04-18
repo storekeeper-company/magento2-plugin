@@ -68,20 +68,22 @@ class AttributeOptionExportManager extends AbstractExportManager
         $result = [];
         foreach ($attributeOptions as $attributeOption) {
             $attribute = $this->getAttribute($attributeOption);
-            $attributeData = $this->getAttributeData($attribute);
-            $attributeOptionId = $attributeOption->getId();
-            $attributeOptionData = $this->getAttributeOptionData($attribute, $attributeOption);
-            $data = [
-                isset($attributeData['attribute_code']) ? $attributeData['attribute_code'] . '_' . $attributeOptionId : null, //path://name'
-                $attributeOptionData['label'], //'path://label'
-                $this->getCurrentLocale(), //'path://translatable.lang'
-                'yes', //'path://is_main_lang'
-                $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
-                $this->getSwatchImage($attributeOptionId), //'path://image_url'
-                $attribute->getAttributeCode(), //'path://attribute.name'
-                $attribute->getFrontendLabel() //'path://attribute.label'
-            ];
-            $result[] = array_combine(self::HEADERS_PATHS, $data);
+            if ($attribute->getEntityTypeId() === $this->getProductEntityTypeId() && $attribute->getFrontendLabel()) {
+                $attributeData = $this->getAttributeData($attribute);
+                $attributeOptionId = $attributeOption->getId();
+                $attributeOptionData = $this->getAttributeOptionData($attribute, $attributeOption);
+                $data = [
+                    isset($attributeData['attribute_code']) ? $attributeData['attribute_code'] . '_' . $attributeOptionId : null, //path://name'
+                    $attributeOptionData['label'], //'path://label'
+                    $this->getCurrentLocale(), //'path://translatable.lang'
+                    'yes', //'path://is_main_lang'
+                    $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
+                    $this->getSwatchImage($attributeOptionId), //'path://image_url'
+                    $attribute->getAttributeCode(), //'path://attribute.name'
+                    $attribute->getFrontendLabel() //'path://attribute.label'
+                ];
+                $result[] = array_combine(self::HEADERS_PATHS, $data);
+            }
         }
 
         return $result;

@@ -41,7 +41,6 @@ class AttributeExportManager extends AbstractExportManager
         'Published',
         'Unique'
     ];
-    const PRODUCT_ENTITY_TYPE_ID = '4';
 
     private AttributeSetRepositoryInterface $attributeSetRepository;
     private SearchCriteriaBuilder $searchCriteriaBuilder;
@@ -153,7 +152,7 @@ class AttributeExportManager extends AbstractExportManager
             $attributeSetName
         )->addFieldToFilter(
             'entity_type_id',
-            self::PRODUCT_ENTITY_TYPE_ID
+            $this->getProductEntityTypeId()
         );
         $attributesCollection = $this->attributeCollectionFactory->create()->setAttributeSetFilter($attributeSet->getFirstItem()->getId())->load();
 

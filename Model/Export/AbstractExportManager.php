@@ -2,6 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
+use Magento\Catalog\Setup\CategorySetup;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
@@ -44,6 +45,14 @@ abstract class AbstractExportManager
         $storeId = $this->storeManager->getStore()->getId();
 
         return $this->authHelper->getLanguageForStore($storeId);
+    }
+
+    /**
+     * @return int
+     */
+    public function getProductEntityTypeId(): int
+    {
+        return CategorySetup::CATALOG_PRODUCT_ENTITY_TYPE_ID;
     }
 
     /**

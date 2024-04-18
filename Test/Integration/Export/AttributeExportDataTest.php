@@ -20,8 +20,8 @@ class AttributeExportDataTest extends AbstractTest
         'path://unique' => 'no'
     ];
 
-    protected $attributeExportManager;
-    protected $attributeCollectionFactory;
+    protected AttributeExportManager $attributeExportManager;
+    protected AttributeFactory $attributeCollectionFactory;
 
     protected function setUp(): void
     {
@@ -44,7 +44,7 @@ class AttributeExportDataTest extends AbstractTest
     public function getAttributeExportData(): array
     {
         $attributeCollection = $this->attributeCollectionFactory->create()->getCollection();
-        $attributeCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, AttributeExportManager::PRODUCT_ENTITY_TYPE_ID);
+        $attributeCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, $this->attributeExportManager->getProductEntityTypeId());
         $attributes = $attributeCollection->addFieldToSelect('*')->getItems();
         $attributeExportData = $this->attributeExportManager->getAttributeExportData($attributes);
 
