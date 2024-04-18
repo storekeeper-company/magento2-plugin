@@ -124,7 +124,7 @@ class AttributeExportManager extends AbstractExportManager
      */
     private function getEncodedAttributePath(string $key): string
     {
-        return "path://attribute_set.encoded__{$this->base36Coder->encode($key)}.is_assigned";
+        return "path://attribute_set.encoded__{$this->base36Coder->encode($this->formatAlias($key))}.is_assigned";
     }
 
     /**

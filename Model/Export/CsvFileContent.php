@@ -192,6 +192,7 @@ class CsvFileContent
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $entityCollection = $this->attributeFactory->create()->getCollection();
             $entityCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, 4);
+            $entityCollection->addFieldToFilter('frontend_label', ['notnull' => true]);
             $entityCollection->addFieldToSelect('*');
         }
         if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {
