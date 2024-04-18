@@ -68,7 +68,7 @@ class AttributeOptionExportManager extends AbstractExportManager
         $result = [];
         foreach ($attributeOptions as $attributeOption) {
             $attribute = $this->getAttribute($attributeOption);
-            if ($attribute->getEntityTypeId() === $this->getProductEntityTypeId() && $attribute->getFrontendLabel()) {
+            if ($attribute->getEntityTypeId() == $this->getProductEntityTypeId() && $attribute->getFrontendLabel()) {
                 $attributeData = $this->getAttributeData($attribute);
                 $attributeOptionId = $attributeOption->getId();
                 $attributeOptionData = $this->getAttributeOptionData($attribute, $attributeOption);
