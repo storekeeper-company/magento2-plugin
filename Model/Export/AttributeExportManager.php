@@ -2,13 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Catalog\Model\Product;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
-use Magento\Eav\Api\Data\AttributeSetInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Catalog\Api\AttributeSetRepositoryInterface;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\CollectionFactory as AttributeCollectionFactory;

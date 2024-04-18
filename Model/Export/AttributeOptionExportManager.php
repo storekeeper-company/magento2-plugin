@@ -2,13 +2,9 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use Magento\Catalog\Api\Data\CategoryInterface;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
-use Magento\Eav\Api\AttributeRepositoryInterface;
-use StoreKeeper\StoreKeeper\Model\Export\CsvFileContent;
 use Magento\Eav\Model\Attribute;
 use Magento\Eav\Api\Data\AttributeOptionInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;

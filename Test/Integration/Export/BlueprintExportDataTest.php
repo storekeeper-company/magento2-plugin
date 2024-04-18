@@ -2,9 +2,13 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
-use StoreKeeper\StoreKeeper\Helper\Base36Coder;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use Magento\Framework\Serialize\Serializer\Json;
 use Magento\TestFramework\Helper\Bootstrap;
+use StoreKeeper\StoreKeeper\Helper\Base36Coder;
+use StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager;
+use StoreKeeper\StoreKeeper\Model\Export\CsvFileContent;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+
 
 class BlueprintExportDataTest extends AbstractTest
 {
@@ -15,9 +19,9 @@ class BlueprintExportDataTest extends AbstractTest
 
     protected function setUp(): void
     {
-        $this->blueprintExportManager = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager::class);
-        $this->csvFileContent = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\CsvFileContent::class);
-        $this->json = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\Serializer\Json::class);
+        $this->blueprintExportManager = Bootstrap::getObjectManager()->create(BlueprintExportManager::class);
+        $this->csvFileContent = Bootstrap::getObjectManager()->create(CsvFileContent::class);
+        $this->json = Bootstrap::getObjectManager()->create(Json::class);
         $this->base36Coder = Bootstrap::getObjectManager()->create(Base36Coder::class);
     }
     /**

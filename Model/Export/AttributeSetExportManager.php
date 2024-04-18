@@ -2,7 +2,6 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;

@@ -2,10 +2,14 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
-use Magento\TestFramework\Helper\Bootstrap;
-use Magento\Framework\UrlInterface;
+use Magento\Catalog\Model\Category;
 use Magento\Catalog\Model\Category\FileInfo;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
+use Magento\Framework\UrlInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+use StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 
 class CategoryExportDataTest extends AbstractTest
 {
@@ -16,10 +20,10 @@ class CategoryExportDataTest extends AbstractTest
 
     protected function setUp(): void
     {
-        $this->categoryCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Category\CollectionFactory::class);
-        $this->categoryExportManager = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager::class);
-        $this->category = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\Category::class);
-        $this->store = Bootstrap::getObjectManager()->create(\Magento\Store\Model\StoreManagerInterface::class);
+        $this->categoryCollectionFactory = Bootstrap::getObjectManager()->create(CollectionFactory::class);
+        $this->categoryExportManager = Bootstrap::getObjectManager()->create(CategoryExportManager::class);
+        $this->category = Bootstrap::getObjectManager()->create(Category::class);
+        $this->store = Bootstrap::getObjectManager()->create(StoreManagerInterface::class);
     }
 
     /**

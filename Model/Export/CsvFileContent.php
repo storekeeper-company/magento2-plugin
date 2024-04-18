@@ -7,7 +7,6 @@ use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\ImportExport\Model\Export\Adapter\CsvFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
-use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory as AttributeSetCollectionFactory;

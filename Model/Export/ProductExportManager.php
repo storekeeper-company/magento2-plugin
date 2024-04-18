@@ -7,14 +7,12 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as AttributeCollectionFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\File\Csv;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\Tax\Api\TaxCalculationInterface;
 use Magento\Tax\Model\Calculation;
 use Magento\Tax\Model\ResourceModel\Calculation as ResourceCalculation;
@@ -30,7 +28,6 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Psr\Log\LoggerInterface;
 
 class ProductExportManager extends AbstractExportManager

@@ -2,9 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
-use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class AttributeExportDataTest extends AbstractTest
 {
@@ -20,12 +21,12 @@ class AttributeExportDataTest extends AbstractTest
         'path://unique' => 'no'
     ];
 
-    protected AttributeExportManager $attributeExportManager;
-    protected AttributeFactory $attributeCollectionFactory;
+    protected $attributeExportManager;
+    protected $attributeCollectionFactory;
 
     protected function setUp(): void
     {
-        $this->attributeCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory::class);
+        $this->attributeCollectionFactory = Bootstrap::getObjectManager()->create(AttributeFactory::class);
         $this->attributeExportManager = Bootstrap::getObjectManager()->create(AttributeExportManager::class);
     }
 

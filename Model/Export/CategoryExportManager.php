@@ -3,7 +3,6 @@
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
 use Magento\Catalog\Api\Data\CategoryInterface;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;

@@ -2,8 +2,12 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory;
+use Magento\Framework\Locale\Resolver;
+use Magento\Framework\Math\Random;
 use Magento\TestFramework\Helper\Bootstrap;
+use StoreKeeper\StoreKeeper\Model\Export\CustomerExportManager;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 
 class CustomerExportDataTest extends AbstractTest
 {
@@ -69,11 +73,11 @@ class CustomerExportDataTest extends AbstractTest
 
     protected function setUp(): void
     {
-        $this->random = Bootstrap::getObjectManager()->create(\Magento\Framework\Math\Random::class);
-        $this->localeResolver = Bootstrap::getObjectManager()->create(\Magento\Framework\Locale\Resolver::class);
-        $this->customerCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Customer\Model\ResourceModel\Customer\CollectionFactory::class);
+        $this->random = Bootstrap::getObjectManager()->create(Random::class);
+        $this->localeResolver = Bootstrap::getObjectManager()->create(Resolver::class);
+        $this->customerCollectionFactory = Bootstrap::getObjectManager()->create(CollectionFactory::class);
         $this->customerExportManager = Bootstrap::getObjectManager()->create(
-            \StoreKeeper\StoreKeeper\Model\Export\CustomerExportManager::class,
+            CustomerExportManager::class,
             [
                 'random' => $this->random,
                 'localeResolver' => $this->localeResolver
