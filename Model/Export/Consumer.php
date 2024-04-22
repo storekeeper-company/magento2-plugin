@@ -4,7 +4,6 @@ namespace StoreKeeper\StoreKeeper\Model\Export;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Psr\Log\LoggerInterface;
-use StoreKeeper\StoreKeeper\Model\Export\CsvFileContent;
 use Magento\Framework\Filesystem;
 
 class Consumer

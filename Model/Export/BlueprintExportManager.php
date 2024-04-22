@@ -5,7 +5,6 @@ namespace StoreKeeper\StoreKeeper\Model\Export;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Api\StoreConfigManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 

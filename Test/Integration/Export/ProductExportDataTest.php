@@ -2,9 +2,11 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
-use StoreKeeper\StoreKeeper\Helper\Base36Coder;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\TestFramework\Helper\Bootstrap;
+use StoreKeeper\StoreKeeper\Helper\Base36Coder;
+use StoreKeeper\StoreKeeper\Model\Export\ProductExportManager;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 
 class ProductExportDataTest extends AbstractTest
 {
@@ -14,8 +16,8 @@ class ProductExportDataTest extends AbstractTest
 
     protected function setUp(): void
     {
-        $this->productCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
-        $this->productExportManager = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\Export\ProductExportManager::class);
+        $this->productCollectionFactory = Bootstrap::getObjectManager()->create(CollectionFactory::class);
+        $this->productExportManager = Bootstrap::getObjectManager()->create(ProductExportManager::class);
         $this->base36Coder = Bootstrap::getObjectManager()->create(Base36Coder::class);
     }
     /**

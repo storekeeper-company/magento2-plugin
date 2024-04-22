@@ -7,14 +7,12 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as AttributeCollectionFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\File\Csv;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\Tax\Api\TaxCalculationInterface;
 use Magento\Tax\Model\Calculation;
 use Magento\Tax\Model\ResourceModel\Calculation as ResourceCalculation;
@@ -30,7 +28,6 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Psr\Log\LoggerInterface;
 
 class ProductExportManager extends AbstractExportManager
@@ -137,7 +134,7 @@ class ProductExportManager extends AbstractExportManager
     const DISALLOWED_ATTRIBUTES = [
         "category_ids",
         "cost",
-        "created_at",
+        "created_at", //no label
         "custom_design",
         "custom_design_from",
         "custom_design_to",
@@ -147,10 +144,10 @@ class ProductExportManager extends AbstractExportManager
         "description",
         "gallery",
         "gift_message_available",
-        "has_options",
+        "has_options", //no label
         "image",
         "image_label",
-        "links_exist",
+        "links_exist", //no label
         "links_purchased_separately",
         "links_title",
         "media_gallery",
@@ -161,14 +158,14 @@ class ProductExportManager extends AbstractExportManager
         "name",
         "news_from_date",
         "news_to_date",
-        "old_id",
+        "old_id", //no label
         "options_container",
         "page_layout",
         "price",
         "price_type",
         "price_view",
         "quantity_and_stock_status",
-        "required_options",
+        "required_options", //no label
         "samples_title",
         "shipment_type",
         "short_description",
@@ -181,7 +178,8 @@ class ProductExportManager extends AbstractExportManager
         "special_to_date",
         "status",
         "tax_class_id",
-        "updated_at"
+        "updated_at" //no label
+        //need to add url_path? it doesnt have fr label too
     ];
 
     private CollectionFactory $productCollectionFactory;

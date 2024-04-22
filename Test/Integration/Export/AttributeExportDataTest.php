@@ -2,9 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
-use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class AttributeExportDataTest extends AbstractTest
 {
@@ -25,7 +26,7 @@ class AttributeExportDataTest extends AbstractTest
 
     protected function setUp(): void
     {
-        $this->attributeCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory::class);
+        $this->attributeCollectionFactory = Bootstrap::getObjectManager()->create(AttributeFactory::class);
         $this->attributeExportManager = Bootstrap::getObjectManager()->create(AttributeExportManager::class);
     }
 
@@ -44,7 +45,7 @@ class AttributeExportDataTest extends AbstractTest
     public function getAttributeExportData(): array
     {
         $attributeCollection = $this->attributeCollectionFactory->create()->getCollection();
-        $attributeCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, AttributeExportManager::PRODUCT_ENTITY_TYPE_ID);
+        $attributeCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, $this->attributeExportManager->getProductEntityTypeId());
         $attributes = $attributeCollection->addFieldToSelect('*')->getItems();
         $attributeExportData = $this->attributeExportManager->getAttributeExportData($attributes);
 

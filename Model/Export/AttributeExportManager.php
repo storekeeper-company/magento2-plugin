@@ -2,13 +2,10 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Catalog\Model\Product;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
-use Magento\Eav\Api\Data\AttributeSetInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Catalog\Api\AttributeSetRepositoryInterface;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\CollectionFactory as AttributeCollectionFactory;
@@ -41,7 +38,6 @@ class AttributeExportManager extends AbstractExportManager
         'Published',
         'Unique'
     ];
-    const PRODUCT_ENTITY_TYPE_ID = '4';
 
     private AttributeSetRepositoryInterface $attributeSetRepository;
     private SearchCriteriaBuilder $searchCriteriaBuilder;
@@ -124,7 +120,7 @@ class AttributeExportManager extends AbstractExportManager
      */
     private function getEncodedAttributePath(string $key): string
     {
-        return "path://attribute_set.encoded__{$this->base36Coder->encode($key)}.is_assigned";
+        return "path://attribute_set.encoded__{$this->base36Coder->encode($this->formatAlias($key))}.is_assigned";
     }
 
     /**
@@ -153,7 +149,7 @@ class AttributeExportManager extends AbstractExportManager
             $attributeSetName
         )->addFieldToFilter(
             'entity_type_id',
-            self::PRODUCT_ENTITY_TYPE_ID
+            $this->getProductEntityTypeId()
         );
         $attributesCollection = $this->attributeCollectionFactory->create()->setAttributeSetFilter($attributeSet->getFirstItem()->getId())->load();
 

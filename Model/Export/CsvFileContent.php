@@ -7,7 +7,6 @@ use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\ImportExport\Model\Export\Adapter\CsvFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Customer\Model\ResourceModel\Customer\CollectionFactory as CustomerCollectionFactory;
-use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory as AttributeSetCollectionFactory;
@@ -192,6 +191,7 @@ class CsvFileContent
         if ($entityType == self::ATTRIBUTE_ENTITY) {
             $entityCollection = $this->attributeFactory->create()->getCollection();
             $entityCollection->addFieldToFilter(\Magento\Eav\Model\Entity\Attribute\Set::KEY_ENTITY_TYPE_ID, 4);
+            $entityCollection->addFieldToFilter('frontend_label', ['notnull' => true]);
             $entityCollection->addFieldToSelect('*');
         }
         if ($entityType == self::ATTRIBUTE_OPTION_ENTITY) {

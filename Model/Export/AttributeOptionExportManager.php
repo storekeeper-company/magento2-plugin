@@ -2,13 +2,9 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
-use Magento\Catalog\Api\Data\CategoryInterface;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Locale\Resolver;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
-use Magento\Eav\Api\AttributeRepositoryInterface;
-use StoreKeeper\StoreKeeper\Model\Export\CsvFileContent;
 use Magento\Eav\Model\Attribute;
 use Magento\Eav\Api\Data\AttributeOptionInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
@@ -68,20 +64,22 @@ class AttributeOptionExportManager extends AbstractExportManager
         $result = [];
         foreach ($attributeOptions as $attributeOption) {
             $attribute = $this->getAttribute($attributeOption);
-            $attributeData = $this->getAttributeData($attribute);
-            $attributeOptionId = $attributeOption->getId();
-            $attributeOptionData = $this->getAttributeOptionData($attribute, $attributeOption);
-            $data = [
-                isset($attributeData['attribute_code']) ? $attributeData['attribute_code'] . '_' . $attributeOptionId : null, //path://name'
-                $attributeOptionData['label'], //'path://label'
-                $this->getCurrentLocale(), //'path://translatable.lang'
-                'yes', //'path://is_main_lang'
-                $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
-                $this->getSwatchImage($attributeOptionId), //'path://image_url'
-                $attribute->getAttributeCode(), //'path://attribute.name'
-                $attribute->getFrontendLabel() //'path://attribute.label'
-            ];
-            $result[] = array_combine(self::HEADERS_PATHS, $data);
+            if ($attribute->getEntityTypeId() == $this->getProductEntityTypeId() && $attribute->getFrontendLabel()) {
+                $attributeData = $this->getAttributeData($attribute);
+                $attributeOptionId = $attributeOption->getId();
+                $attributeOptionData = $this->getAttributeOptionData($attribute, $attributeOption);
+                $data = [
+                    isset($attributeData['attribute_code']) ? $attributeData['attribute_code'] . '_' . $attributeOptionId : null, //path://name'
+                    $attributeOptionData['label'], //'path://label'
+                    $this->getCurrentLocale(), //'path://translatable.lang'
+                    'yes', //'path://is_main_lang'
+                    $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
+                    $this->getSwatchImage($attributeOptionId), //'path://image_url'
+                    $attribute->getAttributeCode(), //'path://attribute.name'
+                    $attribute->getFrontendLabel() //'path://attribute.label'
+                ];
+                $result[] = array_combine(self::HEADERS_PATHS, $data);
+            }
         }
 
         return $result;

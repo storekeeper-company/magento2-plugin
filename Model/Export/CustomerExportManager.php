@@ -3,7 +3,6 @@
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
 use Magento\Framework\Locale\Resolver;
-use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use Magento\Framework\Math\Random;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
