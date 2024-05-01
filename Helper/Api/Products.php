@@ -25,6 +25,7 @@ use Parsedown;
 use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Helper\Config;
 use Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface;
 
 /**
@@ -53,6 +54,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private ProductApiClient $productApiClient;
     private OrderApiClient $orderApiClient;
     private SourceItemsProcessorInterface $sourceItemsProcessor;
+    private Config $configHelper;
 
     /**
      * Constructor
@@ -75,7 +77,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param LoggerInterface $logger
      * @param ProductApiClient $productApiClient
      * @param OrderApiClient $orderApiClient
-     * @param SSourceItemsProcessorInterface $sourceItemsProcessor
+     * @param SourceItemsProcessorInterface $sourceItemsProcessor
+     * @param Config $configHelper
      */
     public function __construct(
         Auth $authHelper,
@@ -96,7 +99,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         LoggerInterface $logger,
         ProductApiClient $productApiClient,
         OrderApiClient $orderApiClient,
-        SourceItemsProcessorInterface $sourceItemsProcessor
+        SourceItemsProcessorInterface $sourceItemsProcessor,
+        Config $configHelper
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -116,6 +120,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productApiClient = $productApiClient;
         $this->orderApiClient = $orderApiClient;
         $this->sourceItemsProcessor = $sourceItemsProcessor;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -771,24 +776,21 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             $sourceItemData = [
-                'source_code' => 'default',
+                'source_code' => $this->configHelper->getStockSource(),
                 'status' => 1
             ];
 
             $shouldUpdateStock = false;
             $stockItem = $this->stockItem->load($this->productRepository->get($sku)->getId(), 'product_id');
 
-            (float) $product_stock_value = $product['product_stock']['value'];
+            (float) $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
             $product_stock_unlimited = $product['product_stock']['unlimited'];
+            $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
 
-            if ($product_stock_unlimited &&
-                ($stockItem->getBackorders() == false || $stockItem->getUseConfigBackOrders() == true)
-            ) {
+            if ($backorder_enabled === true) {
                 $sourceItemData['backorders'] = true;
-                $sourceItemData['use_config_backorders'] = false;
-            } elseif (!$product_stock_unlimited &&
-                ($stockItem->getBackorders() == true || $stockItem->getUseConfigBackOrders() == false)
-            ) {
+                $sourceItemData['use_config_backorders'] = true;
+            } elseif ($backorder_enabled === false) {
                 $sourceItemData['backorders'] = false;
                 $sourceItemData['use_config_backorders'] = true;
             }
