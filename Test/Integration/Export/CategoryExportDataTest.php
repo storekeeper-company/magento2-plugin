@@ -9,9 +9,9 @@ use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Model\Export\CategoryExportManager;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 
-class CategoryExportDataTest extends AbstractTest
+class CategoryExportDataTest extends AbstractTestCase
 {
     protected $categoryExportManager;
     protected $categoryCollectionFactory;

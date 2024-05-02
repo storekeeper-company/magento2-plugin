@@ -4,12 +4,11 @@ namespace StoreKeeper\StoreKeeper\Test\Integration;
 
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Sales\Model\Order\Creditmemo;
 
-class WebhookTest extends AbstractTest
+class WebhookTest extends AbstractTestCase
 {
     const QUEUE_MESSAGE = '{"type":"updated","entity":"Order","storeId":"1","module":"ShopModule","key":"id","value":"55","refund":true}';
     const QUEUE_MESSAGE_STOCK_CHANGE = '{"type":"stock_change","entity":"Product","storeId":"1","module":"ShopModule","key":"id","value":"55"}';
