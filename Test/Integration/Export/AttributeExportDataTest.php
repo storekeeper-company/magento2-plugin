@@ -3,11 +3,11 @@
 namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 
 use StoreKeeper\StoreKeeper\Model\Export\AttributeExportManager;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\TestFramework\Helper\Bootstrap;
 
-class AttributeExportDataTest extends AbstractTest
+class AttributeExportDataTest extends AbstractTestCase
 {
     const TEST_ATTRIBUTE_EXPORT_DATA = [
         'path://name' => 'color',

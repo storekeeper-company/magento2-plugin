@@ -7,10 +7,9 @@ use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager;
 use StoreKeeper\StoreKeeper\Model\Export\CsvFileContent;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 
-
-class BlueprintExportDataTest extends AbstractTest
+class BlueprintExportDataTest extends AbstractTestCase
 {
     protected $blueprintExportManager;
     protected  $csvFileContent;

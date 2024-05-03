@@ -3,9 +3,8 @@
 namespace StoreKeeper\StoreKeeper\Test\Integration;
 
 use Magento\Sales\Model\Order;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 
-class OrderWithPaymentTest extends AbstractTest
+class OrderWithPaymentTest extends AbstractTestCase
 {
     protected function setUp(): void
     {

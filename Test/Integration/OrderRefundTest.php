@@ -2,9 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration;
 
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
-
-class OrderRefundTest extends AbstractTest
+class OrderRefundTest extends AbstractTestCase
 {
     protected function setUp(): void
     {

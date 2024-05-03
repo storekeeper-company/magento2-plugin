@@ -2,7 +2,6 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Integration;
 
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Customer\Model\Customer;
@@ -14,7 +13,7 @@ use Magento\Store\Model\StoreManagerInterface;
 /**
  * @magentoDbIsolation enabled
  */
-class OrderCreationBundleTest extends AbstractTest
+class OrderCreationBundleTest extends AbstractTestCase
 {
     protected function setUp(): void
     {

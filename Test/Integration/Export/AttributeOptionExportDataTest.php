@@ -5,9 +5,9 @@ namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory;
 use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeOptionExportManager;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 
-class AttributeOptionExportDataTest extends AbstractTest
+class AttributeOptionExportDataTest extends AbstractTestCase
 {
     const TEST_ATTRIBUTE_OPTION_EXPORT_DATA = [
         'path://name' => 'sk_color_4',

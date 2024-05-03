@@ -6,9 +6,9 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Model\Export\ProductExportManager;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 
-class ProductExportDataTest extends AbstractTest
+class ProductExportDataTest extends AbstractTestCase
 {
     protected $productExportManager;
     protected $productCollectionFactory;
