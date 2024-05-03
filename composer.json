@@ -6,7 +6,7 @@
         "symfony/polyfill-uuid": "*",
         "magento/product-community-edition": "^2.4.5",
         "brick/money": "0.9.*",
-        "storekeeper/api-wrapper": "v5.2",
+        "storekeeper/api-wrapper": "^6.2",
         "erusev/parsedown": "v1.7.4"
     },
     "suggest": {
