@@ -2,4 +2,7 @@
     <topic name="storekeeper.queue.events" request="string">
         <handler name="storekeeper.queue.events" type="StoreKeeper\StoreKeeper\Model\Consumer" method="process" />
     </topic>
+    <topic name="storekeeper.data.export" request="string">
+        <handler name="storekeeper.data.export" type="StoreKeeper\StoreKeeper\Model\Export\Consumer" method="process" />
+    </topic>
 </config>

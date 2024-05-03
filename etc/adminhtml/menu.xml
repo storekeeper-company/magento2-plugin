@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="StoreKeeper_StoreKeeper::system_convert_sk_export_data" title="StoreKeeper Export Data" translate="title" module="StoreKeeper_StoreKeeper" sortOrder="21" parent="Magento_Backend::system_convert" action="storekeeper/export" resource="StoreKeeper_StoreKeeper::export"/>
+    </menu>
+</config>

@@ -13,6 +13,7 @@ class ApiClient
 {
     private ScopeConfigInterface $scopeConfig;
     protected LoggerInterface $logger;
+    protected ?Auth $auth = null;
 
     /**
      * ApiClient constructor.
@@ -25,7 +26,6 @@ class ApiClient
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
-        $this->auth = null;
     }
 
     /**

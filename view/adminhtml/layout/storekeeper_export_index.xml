@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+            <block class="StoreKeeper\StoreKeeper\Block\Adminhtml\Generate" template="StoreKeeper_StoreKeeper::storekeeper/export_form.phtml" name="storekeeper.data.export"/>
+            <uiComponent name="sk_export_grid"/>
+        </referenceContainer>
+    </body>
+</page>
