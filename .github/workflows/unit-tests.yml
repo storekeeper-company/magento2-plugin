@@ -35,4 +35,3 @@ jobs:
         run: make test-integration
         env:
           PHP_VERSION: ${{ matrix.php }}
-

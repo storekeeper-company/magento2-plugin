@@ -27,7 +27,7 @@ use Magento\Checkout\Model\PaymentInformationManagement;
 use Magento\Quote\Model\GuestCart\GuestCartManagement;
 use Magento\Quote\Model\MaskedQuoteIdToQuoteId;
 
-abstract class AbstractTest extends TestCase
+abstract class AbstractTestCase extends TestCase
 {
     const ORDER_INCREMENT_ID = '100001007';
     const SIMPLE_PRODUCT_SKU = 'simple-2';

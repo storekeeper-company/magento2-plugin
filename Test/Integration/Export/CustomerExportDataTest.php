@@ -7,9 +7,9 @@ use Magento\Framework\Locale\Resolver;
 use Magento\Framework\Math\Random;
 use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Model\Export\CustomerExportManager;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 
-class CustomerExportDataTest extends AbstractTest
+class CustomerExportDataTest extends AbstractTestCase
 {
     const CUSTOMER_ONE = [
         "path://language_iso2" => "nl",
