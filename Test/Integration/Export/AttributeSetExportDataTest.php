@@ -5,12 +5,12 @@ namespace StoreKeeper\StoreKeeper\Test\Integration\Export;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory;
 use Magento\TestFramework\Helper\Bootstrap;
 use StoreKeeper\StoreKeeper\Model\Export\AttributeSetExportManager;
-use StoreKeeper\StoreKeeper\Test\Integration\AbstractTest;
+use StoreKeeper\StoreKeeper\Test\Integration\AbstractTestCase;
 
 /**
  * @magentoDbIsolation enabled
  */
-class AttributeSetExportDataTest extends AbstractTest
+class AttributeSetExportDataTest extends AbstractTestCase
 {
     protected $attributeSetExportManager;
     protected $attributeSetCollectionFactory;
