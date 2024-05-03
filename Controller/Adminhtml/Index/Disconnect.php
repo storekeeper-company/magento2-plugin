@@ -75,10 +75,14 @@ class Disconnect extends Action implements HttpGetActionInterface
      */
     public function execute()
     {
-        $this->publisher->publish('storekeeper.queue.events', '{"type":"disconnect"}');
-
-        $storeId = $this->request->getParam('storeId');
         try {
+            $storeId = $this->request->getParam('storeId');
+            $message = [
+                "type" => "disconnect",
+                "storeId" => $storeId
+            ];
+            
+            $this->publisher->publish('storekeeper.queue.events', json_encode($message));
             $this->authHelper->disconnectStore($storeId);
             $this->messageManager->addSuccess(__("Store {$storeId} has been disconnected from StoreKeeper"));
         } catch (\Exception $e) {

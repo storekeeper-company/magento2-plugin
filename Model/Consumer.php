@@ -52,63 +52,62 @@ class Consumer
      * @param string $request
      * @return void
      */
-    public function process($request)
+    public function process($request): void
     {
         $data = json_decode($request, true);
-        if ($data['type'] == 'disconnect') {
-            $this->productsHelper->cleanProductStorekeeperId($data['storeId']);
-            $this->authHelper->disconnectStore($data['storeId']);
-        } else {
-            try {
-                $storeId = $data['storeId'] ?? null;
-                $module = $data['module'];
-                $entity = $data['entity'];
-                $key = $data['key'];
-                $value = $data['value'];
-                $type = $data['type'];
-                $refund = $data['refund'] ?? false;
 
-                if (is_null($storeId)) {
-                    throw new \Exception("Missing store ID");
-                }
+        try {
+            $storeId = $data['storeId'] ?? null;
+            $type = $data['type'] ?? null;
+            $module = $data['module'] ?? null;
+            $entity = $data['entity'] ?? null;
+            $key = $data['key'] ?? null;
+            $value = $data['value'] ?? null;
+            $refund = $data['refund'] ?? false;
 
-                if ($type == "updated") {
-                    if ($entity == "ShopProduct") {
-                        $this->productsHelper->updateById($storeId, $value);
-                        $this->productsHelper->updateStock($storeId, $value);
-                    } elseif ($entity == 'Category') {
-                        $this->categoriesHelper->updateById($storeId, $value);
-                    } elseif ($entity == "Order") {
-                        $this->ordersHelper->updateById($storeId, $value, $refund);
-                    }
-                } elseif ($type == "deactivated") {
-                    if ($entity == "ShopProduct") {
-                        $this->productsHelper->onDeactivate($storeId, $value);
-                    } elseif ($entity == 'Category') {
-                        $this->categoriesHelper->onDeactivate($storeId, $value);
-                    }
-                } elseif ($type == "activated") {
-                    if ($entity == "ShopProduct") {
-                        $this->productsHelper->activate($storeId, $value);
-                    } elseif ($entity == 'Category') {
-                        $this->categoriesHelper->activate($storeId, $value);
-                    }
-                } elseif ($type == "deleted") {
-                    if ($entity == 'Category') {
-                        $this->categoriesHelper->onDeleted($storeId, $value);
-                    }
-                } elseif ($type == "created") {
-                    if ($entity == 'Category') {
-                        $this->categoriesHelper->onCreated($storeId, $value);
-                    } elseif ($entity == "ShopProduct") {
-                        $this->productsHelper->updateById($storeId, $value);
-                    }
-                } elseif ($type == 'stock_change') {
-                    $this->productsHelper->updateStock($storeId, $value);
-                }
-            } catch (\Exception $e) {
-                $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
+            if (is_null($storeId)) {
+                throw new \Exception("Missing store ID");
             }
+
+            if ($type == "updated") {
+                if ($entity == "ShopProduct") {
+                    $this->productsHelper->updateById($storeId, $value);
+                    $this->productsHelper->updateStock($storeId, $value);
+                } elseif ($entity == 'Category') {
+                    $this->categoriesHelper->updateById($storeId, $value);
+                } elseif ($entity == "Order") {
+                    $this->ordersHelper->updateById($storeId, $value, $refund);
+                }
+            } elseif ($type == "deactivated") {
+                if ($entity == "ShopProduct") {
+                    $this->productsHelper->onDeactivate($storeId, $value);
+                } elseif ($entity == 'Category') {
+                    $this->categoriesHelper->onDeactivate($storeId, $value);
+                }
+            } elseif ($type == "activated") {
+                if ($entity == "ShopProduct") {
+                    $this->productsHelper->activate($storeId, $value);
+                } elseif ($entity == 'Category') {
+                    $this->categoriesHelper->activate($storeId, $value);
+                }
+            } elseif ($type == "deleted") {
+                if ($entity == 'Category') {
+                    $this->categoriesHelper->onDeleted($storeId, $value);
+                }
+            } elseif ($type == "created") {
+                if ($entity == 'Category') {
+                    $this->categoriesHelper->onCreated($storeId, $value);
+                } elseif ($entity == "ShopProduct") {
+                    $this->productsHelper->updateById($storeId, $value);
+                }
+            } elseif ($type == 'stock_change') {
+                $this->productsHelper->updateStock($storeId, $value);
+            } elseif ($type == 'disconnect') {
+                $this->productsHelper->cleanProductStorekeeperId($data['storeId']);
+                $this->authHelper->disconnectStore($data['storeId']);
+            }
+        } catch (\Exception $e) {
+            $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
         }
     }
 }

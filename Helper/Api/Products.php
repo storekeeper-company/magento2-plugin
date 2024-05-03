@@ -955,10 +955,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $productCollection = $this->productCollectionFactory->create();
             $productCollection
-                ->setStoreId(Store::DEFAULT_STORE_ID)
+                ->setStoreId($storeId)
                 ->addAttributeToFilter('storekeeper_product_id', ['neq' => NULL])
-                ->setFlag('has_stock_status_filter', false)
-                ->addAttributeToSelect('*');
+                ->setFlag('has_stock_status_filter', false);
             $productCollectionIds = $productCollection->getAllIds();
 
             if (count($productCollectionIds) > 0) {
