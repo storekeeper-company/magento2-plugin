@@ -254,6 +254,13 @@ class Webhook
                     ];
                     $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
                 }
+            } elseif ($action == "disconnect") {
+                $message = [
+                    "type" => $action,
+                    "storeId" => $storeId
+                ];
+
+                $this->publisher->publish("storekeeper.queue.events", $this->json->serialize($message));
             }
         } else {
             $status = 403;

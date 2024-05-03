@@ -6,7 +6,7 @@ use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
-
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
@@ -21,17 +21,29 @@ class Consumer
     private Orders $ordersHelper;
     private Config $configHelper;
     private LoggerInterface $logger;
+    private Auth $authHelper;
 
+    /**
+     * Constructor
+     *
+     * @param Products $productsHelper
+     * @param Categories $categoriesHelper
+     * @param Orders $ordersHelper
+     * @param LoggerInterface $logger
+     * @param Auth $authHelper
+     */
     public function __construct(
         Products $productsHelper,
         Categories $categoriesHelper,
         Orders $ordersHelper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Auth $authHelper
     ) {
         $this->productsHelper = $productsHelper;
         $this->categoriesHelper = $categoriesHelper;
         $this->ordersHelper = $ordersHelper;
         $this->logger = $logger;
+        $this->authHelper = $authHelper;
     }
 
     /**
@@ -44,7 +56,8 @@ class Consumer
     {
         $data = json_decode($request, true);
         if ($data['type'] == 'disconnect') {
-            $this->productsHelper->cleanProductStorekeeperId();
+            $this->productsHelper->cleanProductStorekeeperId($data['storeId']);
+            $this->authHelper->disconnectStore($data['storeId']);
         } else {
             try {
                 $storeId = $data['storeId'] ?? null;
