@@ -10,6 +10,7 @@ use Magento\Catalog\Controller\Adminhtml\Product\Initialization\Helper\Attribute
 use Magento\CatalogInventory\Model\Stock\Item;
 use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\Product\Action;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
@@ -53,6 +54,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private ProductApiClient $productApiClient;
     private OrderApiClient $orderApiClient;
     private SourceItemsProcessorInterface $sourceItemsProcessor;
+    private Action $productAction;
 
     /**
      * Constructor
@@ -75,7 +77,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param LoggerInterface $logger
      * @param ProductApiClient $productApiClient
      * @param OrderApiClient $orderApiClient
-     * @param SSourceItemsProcessorInterface $sourceItemsProcessor
+     * @param SourceItemsProcessorInterface $sourceItemsProcessor
+     * @param Action $productAction
      */
     public function __construct(
         Auth $authHelper,
@@ -96,7 +99,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         LoggerInterface $logger,
         ProductApiClient $productApiClient,
         OrderApiClient $orderApiClient,
-        SourceItemsProcessorInterface $sourceItemsProcessor
+        SourceItemsProcessorInterface $sourceItemsProcessor,
+        Action $productAction
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -116,6 +120,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productApiClient = $productApiClient;
         $this->orderApiClient = $orderApiClient;
         $this->sourceItemsProcessor = $sourceItemsProcessor;
+        $this->productAction = $productAction;
     }
 
     /**
@@ -940,5 +945,31 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
         $target->setData($productData);
         $this->productRepository->save($target);
+    }
+
+    /**
+     * @return void
+     */
+    public function cleanProductStorekeeperId(string $storeId): void
+    {
+        try {
+            $productCollection = $this->productCollectionFactory->create();
+            $productCollection
+                ->setStoreId($storeId)
+                ->addAttributeToFilter('storekeeper_product_id', ['neq' => NULL])
+                ->setFlag('has_stock_status_filter', false);
+            $productCollectionIds = $productCollection->getAllIds();
+
+            if (count($productCollectionIds) > 0) {
+                $this->productAction->updateAttributes(
+                    $productCollectionIds,
+                    ['storekeeper_product_id' => NULL],
+                    $storeId
+                );
+            }
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getTraceAsString());
+        }
     }
 }
