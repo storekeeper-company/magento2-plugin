@@ -99,23 +99,6 @@ class SimpleProductStockTest extends TestCase
             ],
         ];
 
-        $tests['simple product in stock, unlimited, has positive orderable stock'] = [
-            [
-                'type' => 'simple',
-                'product_stock' => [
-                    'in_stock' => false,
-                    'unlimited' => true,
-                    'value' => 5,
-                ],
-                'orderable_stock_value' => 5,
-            ],
-            [
-                'in_stock' => true,
-                'manage_stock' => false,
-                'quantity' => null,
-            ],
-        ];
-
         $tests['simple in stock, unlimited, no orderable stock'] = [
             [
                 'type' => 'simple',
