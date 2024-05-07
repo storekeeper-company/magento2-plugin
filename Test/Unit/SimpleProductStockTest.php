@@ -7,67 +7,61 @@ use PHPUnit\Framework\TestCase;
 class SimpleProductStockTest extends TestCase
 {
     /**
+     * @dataProvider dataProviderTestGetStockProperties
+     * @param $result
+     * @param $expected
      * @return void
      */
-    public function testStock(): void
+    public function testStock($result, $expected): void
     {
-        $stockCases = $this->getStockCases();
+        //Calculating stock data
+        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
+        $product_stock_unlimited = $result['product_stock']['unlimited'];
+        $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
+        $in_stock = null === $product_stock_value || $product_stock_value > 0;
 
-        foreach ($stockCases as $label => $data) {
-            //Mapping data from Testcases
-            $result = $data[0];
-            $expected = $data[1];
-            $sourceItemData = [];
-
-            //Calculating stock data
-            $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
-            $product_stock_unlimited = $result['product_stock']['unlimited'];
-            $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
-            $in_stock = null === $product_stock_value || $product_stock_value > 0;
-
-            if ($product_stock_unlimited === true && $in_stock) {
-                $sourceItemData['manage_stock'] = 0;
-            } elseif ($product_stock_unlimited === true && !$in_stock) {
-                $sourceItemData['manage_stock'] = 1;
-            } else {
-                $sourceItemData['manage_stock'] = 1;
-            }
-
-            if ($backorder_enabled === true) {
-                $sourceItemData['backorders'] = true;
-                $sourceItemData['use_config_backorders'] = false;
-            } elseif ($backorder_enabled === false) {
-                $sourceItemData['backorders'] = false;
-                $sourceItemData['use_config_backorders'] = false;
-            } else {
-                $sourceItemData['use_config_backorders'] = true;
-            }
-
-            $stock_quantity = $sourceItemData['manage_stock'] ? $product_stock_value : null;
-
-            if (!is_null($stock_quantity) && $stock_quantity < 0) {
-                $stock_quantity = 0;
-            }
-
-            $sourceItemData['quantity'] = $stock_quantity;
-
-            //Formatting output array data
-            $output = [
-                'in_stock' => $in_stock,
-                'manage_stock' => (bool)$sourceItemData['manage_stock'],
-                'quantity' => $sourceItemData['quantity'],
-
-            ];
-            if (array_key_exists('backorders', $sourceItemData)) {
-                $output['backorders'] = ($sourceItemData['backorders'] === true) ? 'yes' : 'no';
-            }
-
-            //TODO Assert output array data and expected data
-            $this->assertEquals($output, $expected);
+        if ($product_stock_unlimited === true && $in_stock) {
+            $sourceItemData['manage_stock'] = 0;
+        } elseif ($product_stock_unlimited === true && !$in_stock) {
+            $sourceItemData['manage_stock'] = 1;
+        } else {
+            $sourceItemData['manage_stock'] = 1;
         }
+
+        if ($backorder_enabled === true) {
+            $sourceItemData['backorders'] = true;
+            $sourceItemData['use_config_backorders'] = false;
+        } elseif ($backorder_enabled === false) {
+            $sourceItemData['backorders'] = false;
+            $sourceItemData['use_config_backorders'] = false;
+        } else {
+            $sourceItemData['use_config_backorders'] = true;
+        }
+
+        $stock_quantity = $sourceItemData['manage_stock'] ? $product_stock_value : null;
+
+        if (!is_null($stock_quantity) && $stock_quantity < 0) {
+            $stock_quantity = 0;
+        }
+
+        $sourceItemData['quantity'] = $stock_quantity;
+
+        //Formatting output array data
+        $output = [
+            'in_stock' => $in_stock,
+            'manage_stock' => (bool)$sourceItemData['manage_stock'],
+            'quantity' => $sourceItemData['quantity'],
+
+        ];
+        if (array_key_exists('backorders', $sourceItemData)) {
+            $output['backorders'] = ($sourceItemData['backorders'] === true) ? 'yes' : 'no';
+        }
+
+        //TODO Assert output array data and expected data
+        $this->assertEquals($output, $expected);
     }
 
-    public function getStockCases(): array
+    public function dataProviderTestGetStockProperties(): array
     {
         $tests = [];
 
