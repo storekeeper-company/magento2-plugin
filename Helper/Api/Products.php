@@ -780,25 +780,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 'status' => 1
             ];
 
-            $shouldUpdateStock = false;
-            $stockItem = $this->stockItem->load($this->productRepository->get($sku)->getId(), 'product_id');
-
-            (float) $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
-            $product_stock_unlimited = $product['product_stock']['unlimited'];
-            $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
-
-            if ($backorder_enabled === true) {
-                $sourceItemData['backorders'] = true;
-                $sourceItemData['use_config_backorders'] = true;
-            } elseif ($backorder_enabled === false) {
-                $sourceItemData['backorders'] = false;
-                $sourceItemData['use_config_backorders'] = true;
-            }
-
-            if (is_null($stockItem->getQty()) || $stockItem->getQty() != $product_stock_value) {
-                $shouldUpdateStock = true;
-                $sourceItemData['quantity'] = $product_stock_value;
-            }
+            $sourceItemData = $this->updateSourceItemStock($sourceItemData, $result, $product);
 
             $this->sourceItemsProcessor->execute(
                 $sku,
@@ -838,6 +820,59 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         } else {
             return "Skipping product type {$type} with sku {$sku}\n";
         }
+    }
+
+    /**
+     * @param array $sourceItemData
+     * @param array $result
+     * @param array $product
+     * @return array
+     */
+    public function updateSourceItemStock(array $sourceItemData, array $result, array $product): array
+    {
+        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
+        $product_stock_unlimited = $product['product_stock']['unlimited'];
+        $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
+        $in_stock = $this->getInStock($result);
+
+        if ($product_stock_unlimited === true && $in_stock) {
+            $sourceItemData['manage_stock'] = 0;
+        } elseif ($product_stock_unlimited === true && !$in_stock) {
+            $sourceItemData['manage_stock'] = 1;
+        } else {
+            $sourceItemData['manage_stock'] = 1;
+        }
+
+        if ($backorder_enabled === true) {
+            $sourceItemData['backorders'] = true;
+            $sourceItemData['use_config_backorders'] = false;
+        } elseif ($backorder_enabled === false) {
+            $sourceItemData['backorders'] = false;
+            $sourceItemData['use_config_backorders'] = false;
+        } else {
+            $sourceItemData['use_config_backorders'] = true;
+        }
+
+        $stock_quantity = $sourceItemData['manage_stock'] ? $product_stock_value : null;
+
+        if (!is_null($stock_quantity) && $stock_quantity < 0) {
+            $stock_quantity = 0;
+        }
+
+        $sourceItemData['quantity'] = $stock_quantity;
+
+        return $sourceItemData;
+    }
+
+    /**
+     * @param array $result
+     * @return bool
+     */
+    public function getInStock(array $result): bool
+    {
+        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
+
+        return $in_stock = null === $product_stock_value || $product_stock_value > 0;
     }
 
     /**

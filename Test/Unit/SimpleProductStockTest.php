@@ -2,10 +2,21 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Unit;
 
+use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
+use StoreKeeper\StoreKeeper\Helper\Api\Products;
 
 class SimpleProductStockTest extends TestCase
 {
+    protected \Magento\TestFramework\ObjectManager $_objectManager;
+    /**
+     * Bootstrap application before any test
+     */
+    protected function setUp(): void
+    {
+        $this->_objectManager = Bootstrap::getObjectManager();
+    }
+
     /**
      * @dataProvider dataProviderTestGetStockProperties
      * @param $result
@@ -14,41 +25,13 @@ class SimpleProductStockTest extends TestCase
      */
     public function testStock($result, $expected): void
     {
+        $products = $this->_objectManager->create(Products::class);
         //Calculating stock data
-        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
-        $product_stock_unlimited = $result['product_stock']['unlimited'];
-        $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
-        $in_stock = null === $product_stock_value || $product_stock_value > 0;
-
-        if ($product_stock_unlimited === true && $in_stock) {
-            $sourceItemData['manage_stock'] = 0;
-        } elseif ($product_stock_unlimited === true && !$in_stock) {
-            $sourceItemData['manage_stock'] = 1;
-        } else {
-            $sourceItemData['manage_stock'] = 1;
-        }
-
-        if ($backorder_enabled === true) {
-            $sourceItemData['backorders'] = true;
-            $sourceItemData['use_config_backorders'] = false;
-        } elseif ($backorder_enabled === false) {
-            $sourceItemData['backorders'] = false;
-            $sourceItemData['use_config_backorders'] = false;
-        } else {
-            $sourceItemData['use_config_backorders'] = true;
-        }
-
-        $stock_quantity = $sourceItemData['manage_stock'] ? $product_stock_value : null;
-
-        if (!is_null($stock_quantity) && $stock_quantity < 0) {
-            $stock_quantity = 0;
-        }
-
-        $sourceItemData['quantity'] = $stock_quantity;
+        $sourceItemData = $products->updateSourceItemStock($sourceItemData, $result, $result);
 
         //Formatting output array data
         $output = [
-            'in_stock' => $in_stock,
+            'in_stock' => $products->getInStock($result),
             'manage_stock' => (bool)$sourceItemData['manage_stock'],
             'quantity' => $sourceItemData['quantity'],
 
