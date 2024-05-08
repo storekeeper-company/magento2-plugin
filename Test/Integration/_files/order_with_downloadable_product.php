@@ -6,9 +6,6 @@
 declare(strict_types=1);
 
 use Magento\Sales\Model\Order;
-use Magento\TestFramework\Workaround\Override\Fixture\Resolver;
-
-Resolver::getInstance()->requireDataFixture('Magento/Downloadable/_files/product_downloadable.php');
 
 $billingAddress = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create(
     \Magento\Sales\Model\Order\Address::class,
