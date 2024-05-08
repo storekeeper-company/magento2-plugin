@@ -2,20 +2,12 @@
 
 namespace StoreKeeper\StoreKeeper\Test\Unit;
 
-use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
 
 class SimpleProductStockTest extends TestCase
 {
-    protected \Magento\TestFramework\ObjectManager $_objectManager;
-    /**
-     * Bootstrap application before any test
-     */
-    protected function setUp(): void
-    {
-        $this->_objectManager = Bootstrap::getObjectManager();
-    }
 
     /**
      * @dataProvider dataProviderTestGetStockProperties
@@ -25,7 +17,10 @@ class SimpleProductStockTest extends TestCase
      */
     public function testStock($result, $expected): void
     {
-        $products = $this->_objectManager->create(Products::class);
+        $objectManagerHelper = new ObjectManager($this);
+        $products = $objectManagerHelper->getObject('StoreKeeper\StoreKeeper\Helper\Api\Products');
+        $sourceItemData = [];
+
         //Calculating stock data
         $sourceItemData = $products->updateSourceItemStock($sourceItemData, $result, $result);
 
