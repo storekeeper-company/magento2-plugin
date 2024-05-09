@@ -146,7 +146,7 @@ class Webhook
                 } elseif ($this->configHelper->hasMode($storeId, Config::SYNC_ALL)) {
                     $sync_mode = 'sync-mode-full-sync';
                 } elseif ($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS)) {
-                    $sync_mode = 'sync-mode-products-only';
+                    $sync_mode = 'sync-mode-product-only';
                 } elseif ($this->configHelper->hasMode($storeId, Config::SYNC_ORDERS)) {
                     $sync_mode = 'sync-mode-order-only';
                 }
