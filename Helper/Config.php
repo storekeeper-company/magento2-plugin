@@ -16,6 +16,7 @@ class Config extends AbstractHelper
     const STOREKEEPER_TOKEN = 'storekeeper_general/general/storekeeper_token';
     const IS_DEBUG_LOGS = 'storekeeper_general/general/debug_logs';
     const STOREKEEPER_EXPORT_FEATURED_ATTRIBUTES_MAPPING_SECTION = 'storekeeper_export/featured_attributes_mapping';
+    const STOREKEEPER_STOCK_SOURCE = 'storekeeper_general/general/storekeeper_stock_source';
 
     /**
      * Constructor
@@ -79,5 +80,10 @@ class Config extends AbstractHelper
     public function getFeaturedAttributesMapping()
     {
         return $this->getScopeConfigValue(self::STOREKEEPER_EXPORT_FEATURED_ATTRIBUTES_MAPPING_SECTION);
+    }
+
+    public function getStockSource()
+    {
+        return $this->getScopeConfigValue(self::STOREKEEPER_STOCK_SOURCE);
     }
 }

@@ -16,8 +16,16 @@ class SyncModes implements OptionSourceInterface
                 'label' => __('None')
             ],
             [
+                'value' => Config::SYNC_PRODUCTS,
+                'label' => __('Products Only')
+            ],
+            [
                 'value' => Config::SYNC_ORDERS,
                 'label' => __('Orders Only')
+            ],
+            [
+                'value' => Config::SYNC_ALL,
+                'label' => __('All')
             ]
         ];
     }
