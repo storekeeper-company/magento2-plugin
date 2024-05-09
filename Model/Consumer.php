@@ -6,7 +6,7 @@ use Psr\Log\LoggerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
-
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
@@ -21,17 +21,29 @@ class Consumer
     private Orders $ordersHelper;
     private Config $configHelper;
     private LoggerInterface $logger;
+    private Auth $authHelper;
 
+    /**
+     * Constructor
+     *
+     * @param Products $productsHelper
+     * @param Categories $categoriesHelper
+     * @param Orders $ordersHelper
+     * @param LoggerInterface $logger
+     * @param Auth $authHelper
+     */
     public function __construct(
         Products $productsHelper,
         Categories $categoriesHelper,
         Orders $ordersHelper,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Auth $authHelper
     ) {
         $this->productsHelper = $productsHelper;
         $this->categoriesHelper = $categoriesHelper;
         $this->ordersHelper = $ordersHelper;
         $this->logger = $logger;
+        $this->authHelper = $authHelper;
     }
 
     /**
@@ -40,16 +52,17 @@ class Consumer
      * @param string $request
      * @return void
      */
-    public function process($request)
+    public function process($request): void
     {
+        $data = json_decode($request, true);
+
         try {
-            $data = json_decode($request, true);
             $storeId = $data['storeId'] ?? null;
-            $module = $data['module'];
-            $entity = $data['entity'];
-            $key = $data['key'];
-            $value = $data['value'];
-            $type = $data['type'];
+            $type = $data['type'] ?? null;
+            $module = $data['module'] ?? null;
+            $entity = $data['entity'] ?? null;
+            $key = $data['key'] ?? null;
+            $value = $data['value'] ?? null;
             $refund = $data['refund'] ?? false;
 
             if (is_null($storeId)) {
@@ -89,6 +102,9 @@ class Consumer
                 }
             } elseif ($type == 'stock_change') {
                 $this->productsHelper->updateStock($storeId, $value);
+            } elseif ($type == 'disconnect') {
+                $this->productsHelper->cleanProductStorekeeperId($data['storeId']);
+                $this->authHelper->disconnectStore($data['storeId']);
             }
         } catch (\Exception $e) {
             $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
