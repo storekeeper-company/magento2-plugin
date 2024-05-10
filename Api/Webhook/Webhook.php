@@ -9,8 +9,11 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Backend\Model\UrlInterface;
 use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Api\Data\EventLogInterface;
+use StoreKeeper\StoreKeeper\Api\Data\EventLogInterfaceFactory;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Model\EventLogRepository;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder\CollectionFactory as StoreKeeperFailedSyncOrderCollectionFactory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -31,8 +34,12 @@ class Webhook
     private StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection;
     private JsonResponse $jsonResponse;
     private StoreKeeperFailedSyncOrderCollectionFactory $storeKeeperFailedSyncOrderCollectionFactory;
+    private EventLogInterfaceFactory $eventLogFactory;
+    private EventLogRepository $eventLogRepository;
 
     /**
+     * Constructor
+     *
      * @param Request $request
      * @param Auth $authHelper
      * @param Json $json
@@ -45,6 +52,8 @@ class Webhook
      * @param UrlInterface $backendUrl
      * @param StoreKeeperFailedSyncOrderCollectionFactory $storeKeeperFailedSyncOrderCollectionFactory
      * @param JsonResponse $jsonResponse
+     * @param EventLogInterfaceFactory $eventLogFactory
+     * @param EventLogRepository $eventLogRepository
      */
     public function __construct(
         Request $request,
@@ -58,7 +67,9 @@ class Webhook
         CollectionFactory $orderCollectionFactory,
         UrlInterface $backendUrl,
         StoreKeeperFailedSyncOrderCollectionFactory $storeKeeperFailedSyncOrderCollectionFactory,
-        JsonResponse $jsonResponse
+        JsonResponse $jsonResponse,
+        EventLogInterfaceFactory $eventLogFactory,
+        EventLogRepository $eventLogRepository
     ) {
         $this->request = $request;
         $this->authHelper = $authHelper;
@@ -72,6 +83,8 @@ class Webhook
         $this->backendUrl = $backendUrl;
         $this->storeKeeperFailedSyncOrderCollectionFactory = $storeKeeperFailedSyncOrderCollectionFactory;
         $this->jsonResponse = $jsonResponse;
+        $this->eventLogFactory = $eventLogFactory;
+        $this->eventLogRepository = $eventLogRepository;
     }
 
     /**
@@ -270,6 +283,7 @@ class Webhook
             ];
         }
 
+        $this->addEventLog($action, $status);
         $this->logger->info("Received action {$action}: " . json_encode($response));
 
         return $this->jsonResponse->setData($response);
@@ -399,5 +413,25 @@ class Webhook
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param string $action
+     * @param string $status
+     * @return void
+     */
+    private function addEventLog(string $action, string $status): void
+    {
+        $eventLog = $this->eventLogFactory->create();
+        $eventLog->addData([
+            'request_route' => $this->request->getPathInfo(),
+            'request_body' => $this->request->getContent(),
+            'request_method' => $this->request->getMethod(),
+            'request_action' => $action,
+            'response_code' => $status,
+            'date' => $this->timezone->date()->getTimestamp()
+        ]);
+        
+        $this->eventLogRepository->save($eventLog);
     }
 }

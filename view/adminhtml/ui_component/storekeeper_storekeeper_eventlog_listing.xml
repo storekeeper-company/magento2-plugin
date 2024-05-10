@@ -1,0 +1,88 @@
+<?xml version="1.0" ?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+	<argument name="data" xsi:type="array">
+		<item name="js_config" xsi:type="array">
+			<item name="provider" xsi:type="string">storekeeper_storekeeper_eventlog_listing.storekeeper_storekeeper_eventlog_listing_data_source</item>
+		</item>
+	</argument>
+	<settings>
+		<spinner>storekeeper_storekeeper_eventlog_columns</spinner>
+		<deps>
+			<dep>storekeeper_storekeeper_eventlog_listing.storekeeper_storekeeper_eventlog_listing_data_source</dep>
+		</deps>
+	</settings>
+	<dataSource name="storekeeper_storekeeper_eventlog_listing_data_source" component="Magento_Ui/js/grid/provider">
+		<settings>
+			<storageConfig>
+				<param name="indexField" xsi:type="string">eventlog_id</param>
+			</storageConfig>
+			<updateUrl path="mui/index/render"/>
+		</settings>
+		<aclResource>StoreKeeper_StoreKeeper::EventLog</aclResource>
+		<dataProvider name="storekeeper_storekeeper_eventlog_listing_data_source" class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+			<settings>
+				<requestFieldName>id</requestFieldName>
+				<primaryFieldName>eventlog_id</primaryFieldName>
+			</settings>
+		</dataProvider>
+	</dataSource>
+	<listingToolbar name="listing_top">
+		<settings>
+			<sticky>true</sticky>
+		</settings>
+		<bookmark name="bookmarks"/>
+		<columnsControls name="columns_controls"/>
+		<filters name="listing_filters"/>
+		<paging name="listing_paging"/>
+	</listingToolbar>
+	<columns name="storekeeper_storekeeper_eventlog_columns">
+		<selectionsColumn name="ids">
+			<settings>
+				<indexField>eventlog_id</indexField>
+			</settings>
+		</selectionsColumn>
+		<column name="eventlog_id">
+			<settings>
+				<filter>text</filter>
+				<sorting>asc</sorting>
+				<label translate="true">ID</label>
+			</settings>
+		</column>
+		<column name="request_route">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Request Route</label>
+			</settings>
+		</column>
+		<column name="request_body">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Request Body</label>
+			</settings>
+		</column>
+		<column name="request_method">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Request Method</label>
+			</settings>
+		</column>
+		<column name="request_action">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Request Action</label>
+			</settings>
+		</column>
+		<column name="response_code">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Response Code</label>
+			</settings>
+		</column>
+		<column name="date">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Date</label>
+			</settings>
+		</column>
+	</columns>
+</listing>
