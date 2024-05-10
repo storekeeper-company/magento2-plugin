@@ -4,5 +4,8 @@
         <route id="storekeeper" frontName="storekeeper">
             <module name="StoreKeeper_StoreKeeper" before="Magento_Backend"/>
         </route>
+        <route frontName="storekeeper_storekeeper" id="storekeeper_storekeeper">
+            <module before="Magento_Backend" name="StoreKeeper_StoreKeeper"/>
+        </route>
     </router>
 </config>

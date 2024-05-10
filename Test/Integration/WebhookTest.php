@@ -13,6 +13,24 @@ class WebhookTest extends AbstractTestCase
     const QUEUE_MESSAGE = '{"type":"updated","entity":"Order","storeId":"1","module":"ShopModule","key":"id","value":"55","refund":true}';
     const QUEUE_MESSAGE_STOCK_CHANGE = '{"type":"stock_change","entity":"Product","storeId":"1","module":"ShopModule","key":"id","value":"55"}';
     const SUCCESS_JSON_RESPONSE_MESSAGE = '{"success":true,"message":"Processing entity \u0022Order\u0022"}';
+    const PAYLOAD = [
+        'payload' => [
+            'backref' => 'ShopModule::Order(id=55)',
+            'events' => [
+                659 => [
+                    'id' => 659,
+                    'event' => 'updated',
+                    'details' => [
+                        'order' => [
+                            'paid_value_wt' => '156.0000',
+                            'paid_back_value_wt' => '156.0000'
+                        ]
+                    ]
+                ]
+            ]
+        ],
+        'action' => 'events'
+    ];
 
     protected $webhook;
     protected $requestMock;
@@ -21,6 +39,8 @@ class WebhookTest extends AbstractTestCase
     protected $consumer;
     protected $jsonResponse;
     protected $productsHelper;
+    protected $eventLogFactory;
+    protected $timezoneMock;
 
     protected function setUp(): void
     {
@@ -30,30 +50,20 @@ class WebhookTest extends AbstractTestCase
         $this->json = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\Serializer\Json::class);
         $this->publisher = Bootstrap::getObjectManager()->create(\Magento\Framework\MessageQueue\PublisherInterface::class);
         $this->jsonResponse = Bootstrap::getObjectManager()->create(\Symfony\Component\HttpFoundation\JsonResponse::class);
+        $this->eventLogFactory = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Api\Data\EventLogInterfaceFactory::class);
+        $this->timezoneMock = $this->createMock(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::class);
 
         $this->requestMock->method('getBodyParams')
-            ->willReturn(
-                [
-                    'payload' => [
-                        'backref' => 'ShopModule::Order(id=55)',
-                        'events' => [
-                            659 => [
-                                'id' => 659,
-                                'event' => 'updated',
-                                'details' => [
-                                    'order' => [
-                                        'paid_value_wt' => '156.0000',
-                                        'paid_back_value_wt' => '156.0000'
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ],
-                    'action' => 'events'
-                ]
-            );
+            ->willReturn(self::PAYLOAD);
+        $this->requestMock->method('getPathInfo')
+            ->willReturn('/V1/storekeeper/webhook');
+        $this->requestMock->method('getContent')
+            ->willReturn(json_encode(self::PAYLOAD));
+        $this->requestMock->method('getMethod')
+            ->willReturn('POST');
         $this->productApiClientMock->method('setShopProductObjectSyncStatusForHook')
             ->willReturn(true);
+        $this->timezoneMock->method('date')->willReturn(new \DateTime());
         $this->webhook = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Api\Webhook\Webhook::class,
             [
@@ -62,7 +72,9 @@ class WebhookTest extends AbstractTestCase
                 'configHelper' => $this->configHelper,
                 'json' => $this->json,
                 'publisher' => $this->publisher,
-                'jsonResponse' => $this->jsonResponse
+                'jsonResponse' => $this->jsonResponse,
+                'eventLogFactory' => $this->eventLogFactory,
+                'timezone' => $this->timezoneMock
             ]
         );
         $this->productsHelper = $objectManager->getObject(
