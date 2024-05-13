@@ -11,4 +11,10 @@
                consumerInstance="Magento\Framework\MessageQueue\Consumer"
                handler="StoreKeeper\StoreKeeper\Model\Export\Consumer::process"/>
     </broker>
+    <broker topic="storekeeper.queue.sync.orders" exchange="magento-db" type="db">
+        <queue name="storekeeper.queue.sync.orders"
+               consumer="storekeeper.queue.sync.orders"
+               consumerInstance="Magento\Framework\MessageQueue\Consumer"
+               handler="StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::process"/>
+    </broker>
 </config>
