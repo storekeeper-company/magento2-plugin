@@ -41,6 +41,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\MysqlMq\Model\ResourceModel\Queue">
+        <plugin name="storekeeper_storekeeper_after_save_message" type="StoreKeeper\StoreKeeper\Plugin\Magento\MysqlMq\Model\ResourceModel\Queue" sortOrder="1"/>
+    </type>
 
     <virtualType name="StoreKeeper\StoreKeeper\Logger\Logger" type="Monolog\Logger">
         <arguments>
