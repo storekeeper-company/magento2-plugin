@@ -9,6 +9,7 @@ use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
+use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrder;
 use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory;
 /**
  * Class Consumer used to process OperationInterface messages.
@@ -30,20 +31,32 @@ class Consumer
      * Constructor
      *
      * @param Orders $ordersHelper
+     * @param Config $configHelper
      * @param LoggerInterface $logger
      * @param Auth $authHelper
      * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
      * @param StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder
+     * @param StoreManagerInterface $storeManager
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         Orders $ordersHelper,
+        Config $configHelper,
         LoggerInterface $logger,
         Auth $authHelper,
+        StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
+        StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder,
+        StoreManagerInterface $storeManager,
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->ordersHelper = $ordersHelper;
         $this->logger = $logger;
         $this->authHelper = $authHelper;
+        $this->configHelper = $configHelper;
+        $this->storeKeeperFailedSyncOrderResource = $storeKeeperFailedSyncOrderResource;
+        $this->storeKeeperFailedSyncOrder = $storeKeeperFailedSyncOrder;
+        $this->storeManager = $storeManager;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -59,9 +72,11 @@ class Consumer
         try {
             $orderId = $data['orderId'] ?? null;
 
-            if (is_null($storeId)) {
+            if (is_null($orderId)) {
                 throw new \Exception("Missing order ID");
             }
+            $order = $this->orderRepository->get($orderId);
+            $storeId = $order->getStoreId();
 
             $storeKeeperFailedSyncOrder = $this->getStoreKeeperFailedSyncOrder($orderId);
             try {
@@ -100,7 +115,7 @@ class Consumer
      * @param string $orderId
      * @return StoreKeeperFailedSyncOrder
      */
-    private function getStoreKeeperFailedSyncOrder(string $orderId):StoreKeeperFailedSyncOrder
+    private function getStoreKeeperFailedSyncOrder(string $orderId): StoreKeeperFailedSyncOrder
     {
         $storeKeeperFailedSyncOrder = $this->storeKeeperFailedSyncOrder->create();
         $this->storeKeeperFailedSyncOrderResource->load(
