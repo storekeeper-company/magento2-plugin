@@ -10,6 +10,8 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 abstract class AbstractExportManager
 {
+    const CONSUMER_NAME = 'storekeeper.data.export';
+
     private Resolver $localeResolver;
     private StoreManagerInterface $storeManager;
     private StoreConfigManagerInterface $storeConfigManager;
