@@ -5,4 +5,7 @@
     <topic name="storekeeper.data.export" request="string">
         <handler name="storekeeper.data.export" type="StoreKeeper\StoreKeeper\Model\Export\Consumer" method="process" />
     </topic>
+    <topic name="storekeeper.queue.sync.orders" request="string">
+        <handler name="storekeeper.queue.sync.orders" type="StoreKeeper\StoreKeeper\Model\OrderSync\Consumer" method="process" />
+    </topic>
 </config>

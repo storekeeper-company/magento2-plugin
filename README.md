@@ -49,10 +49,7 @@ bin/magento cache:clean;
 
 ## Check after installation
 
-1. After installation check the results of the cron operations. Cron job name `storekeeper_storekeeper_cron_orders`
-   has to be added to `cron_schedule` DB table. Check `var/log/cron.log` file as well.
-
-2. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
+1. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
 
 ## Payment Methods Configuration
 Payment methods awaylable via Storekeeper Payment Gateway can be activated in two places:
