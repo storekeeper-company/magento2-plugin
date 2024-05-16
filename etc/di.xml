@@ -5,6 +5,9 @@
     <preference for="StoreKeeper\StoreKeeper\Api\EventLogRepositoryInterface" type="StoreKeeper\StoreKeeper\Model\EventLogRepository"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Data\EventLogInterface" type="StoreKeeper\StoreKeeper\Model\EventLog"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Data\EventLogSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
+    <preference for="StoreKeeper\StoreKeeper\Api\TaskLogRepositoryInterface" type="StoreKeeper\StoreKeeper\Model\TaskLogRepository"/>
+    <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface" type="StoreKeeper\StoreKeeper\Model\TaskLog"/>
+    <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
 
     <type name="StoreKeeper\StoreKeeper\Api\Webhook\Webhook">
         <arguments>
@@ -42,7 +45,14 @@
         </arguments>
     </type>
     <type name="Magento\MysqlMq\Model\ResourceModel\Queue">
-        <plugin name="storekeeper_storekeeper_after_save_message" type="StoreKeeper\StoreKeeper\Plugin\Magento\MysqlMq\Model\ResourceModel\Queue" sortOrder="1"/>
+        <plugin name="storekeeper_storekeeper_after_methods_queue" type="StoreKeeper\StoreKeeper\Plugin\Magento\MysqlMq\Model\ResourceModel\Queue" sortOrder="1"/>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="storekeeper_storekeeper_tasklog_listing_data_source" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Grid\Collection</item>
+            </argument>
+        </arguments>
     </type>
 
     <virtualType name="StoreKeeper\StoreKeeper\Logger\Logger" type="Monolog\Logger">
@@ -57,6 +67,12 @@
         <arguments>
             <argument name="mainTable" xsi:type="string">storekeeper_storekeeper_eventlog</argument>
             <argument name="resourceModel" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Collection</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">storekeeper_storekeeper_tasklog</argument>
+            <argument name="resourceModel" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Collection</argument>
         </arguments>
     </virtualType>
 

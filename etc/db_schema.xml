@@ -37,4 +37,16 @@
         <column name="response_code" nullable="true" xsi:type="text" comment="response_code"/>
         <column name="date" nullable="true" xsi:type="timestamp" comment="date"/>
     </table>
+    <table name="storekeeper_storekeeper_tasklog" resource="default" engine="innodb" comment="storekeeper_storekeeper_tasklog Table">
+        <column xsi:type="int" name="tasklog_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Entity Id"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="tasklog_id"/>
+        </constraint>
+        <column name="message_id" nullable="true" xsi:type="int" comment="message_id" identity="false"/>
+        <column name="topic_name" nullable="true" xsi:type="text" comment="topic_name"/>
+        <column name="body" nullable="true" xsi:type="text" comment="body"/>
+        <column name="updated_at" nullable="true" xsi:type="timestamp" comment="updated_at"/>
+        <column name="status" nullable="true" xsi:type="int" comment="status" identity="false"/>
+        <column name="number_of_trials" nullable="true" xsi:type="int" comment="number_of_trials" identity="false"/>
+    </table>
 </schema>

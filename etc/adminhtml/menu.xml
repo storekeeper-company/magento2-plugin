@@ -18,5 +18,13 @@
              parent="Magento_AsynchronousOperations::system_magento_logging"
              action="storekeeper_storekeeper/eventlog/index"
              resource="StoreKeeper_StoreKeeper::EventLog" />
+        <add id="StoreKeeper_StoreKeeper::storekeeper_storekeeper_tasklog"
+             title="StoreKeeper Task Log"
+             translate="title"
+             module="StoreKeeper_StoreKeeper"
+             sortOrder="30"
+             parent="Magento_AsynchronousOperations::system_magento_logging"
+             action="storekeeper_storekeeper/tasklog/index"
+             resource="StoreKeeper_StoreKeeper::TaskLog" />
     </menu>
 </config>

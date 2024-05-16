@@ -10,6 +10,7 @@
                     </resource>
                     <resource id="Magento_Logging::magento_logging">
                         <resource id="StoreKeeper_StoreKeeper::EventLog" title="EventLog" sortOrder="25" />
+                        <resource id="StoreKeeper_StoreKeeper::TaskLog" title="TaskLog" sortOrder="30" />
                     </resource>
                 </resource>
             </resource>
