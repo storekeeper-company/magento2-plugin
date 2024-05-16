@@ -9,13 +9,17 @@ use Magento\MysqlMq\Model\ResourceModel\Queue as subjectQueue;
 use Magento\MysqlMq\Model\ResourceModel\MessageCollectionFactory;
 use Magento\MysqlMq\Model\ResourceModel\MessageStatusCollectionFactory;
 use StoreKeeper\StoreKeeper\Api\Data\TaskLogInterfaceFactory;
-use StoreKeeper\StoreKeeper\Model\Consumer as eventConsumer;
 use StoreKeeper\StoreKeeper\Api\TaskLogRepositoryInterface;
+use StoreKeeper\StoreKeeper\Model\Consumer as eventConsumer;
+use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
+use StoreKeeper\StoreKeeper\Model\OrderSync\Consumer as orderConsumer;
 
 class Queue
 {
     const SK_MESSAGE_QUEUES = [
-        eventConsumer::CONSUMER_NAME
+        eventConsumer::CONSUMER_NAME,
+        orderConsumer::CONSUMER_NAME,
+        AbstractExportManager::CONSUMER_NAME
     ];
 
     private MessageCollectionFactory $messageCollectionFactory;
