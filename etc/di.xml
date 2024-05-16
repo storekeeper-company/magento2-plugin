@@ -54,6 +54,13 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="storekeeperm2plugin_statistics" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Statistics</item>
+            </argument>
+        </arguments>
+    </type>
 
     <virtualType name="StoreKeeper\StoreKeeper\Logger\Logger" type="Monolog\Logger">
         <arguments>
@@ -75,12 +82,4 @@
             <argument name="resourceModel" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Collection</argument>
         </arguments>
     </virtualType>
-
-    <type name="Magento\Framework\Console\CommandListInterface">
-        <arguments>
-            <argument name="commands" xsi:type="array">
-                <item name="storekeeperm2plugin_statistics" xsi:type="object">StoreKeeper\StoreKeeper\Console\Command\Sync\Statistics</item>
-            </argument>
-        </arguments>
-    </type>
 </config>
