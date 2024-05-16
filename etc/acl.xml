@@ -8,6 +8,9 @@
                     <resource id="Magento_Backend::convert">
                         <resource id="StoreKeeper_StoreKeeper::export" title="StoreKeeper Export Data" translate="title" sortOrder="21" />
                     </resource>
+                    <resource id="Magento_Logging::magento_logging">
+                        <resource id="StoreKeeper_StoreKeeper::EventLog" title="EventLog" sortOrder="25" />
+                    </resource>
                 </resource>
             </resource>
         </resources>

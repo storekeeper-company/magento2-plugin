@@ -25,4 +25,16 @@
                     referenceColumn="entity_id"
                     onDelete="CASCADE"/>
     </table>
+    <table name="storekeeper_storekeeper_eventlog" resource="default" engine="innodb" comment="storekeeper_storekeeper_eventlog Table">
+        <column xsi:type="int" name="eventlog_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Entity Id"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="eventlog_id"/>
+        </constraint>
+        <column name="request_route" nullable="true" xsi:type="text" comment="request_route"/>
+        <column name="request_body" nullable="true" xsi:type="text" comment="request_body"/>
+        <column name="request_method" nullable="true" xsi:type="text" comment="request_method"/>
+        <column name="request_action" nullable="true" xsi:type="text" comment="request_action"/>
+        <column name="response_code" nullable="true" xsi:type="text" comment="response_code"/>
+        <column name="date" nullable="true" xsi:type="timestamp" comment="date"/>
+    </table>
 </schema>
