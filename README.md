@@ -49,10 +49,7 @@ bin/magento cache:clean;
 
 ## Check after installation
 
-1. After installation check the results of the cron operations. Cron job name `storekeeper_storekeeper_cron_orders`
-   has to be added to `cron_schedule` DB table. Check `var/log/cron.log` file as well.
-
-2. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
+1. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
 
 ## Payment Methods Configuration
 Payment methods awaylable via Storekeeper Payment Gateway can be activated in two places:
@@ -71,12 +68,23 @@ In this case activated Payment Method(s) will appear as individual Payment Metho
 
 _Payment methods that does not have own logo will receive current store logo set in Content->Design->Configuration area of Magento admin panel_
 
-## Queue
+## Queues
 
-This plugin uses the Magento 2 queue consumer functionality. If you want to run the queue manually you can use the following command:
+This plugin uses the Magento 2 queue consumer functionality. If you want to run queues manually you can use following commands:
 
+Run consumer that handles StoreKeeper webhook events
 ```
 bin/magento queue:consumer:start storekeeper.queue.events
+```
+
+Run consumer that handles Magento entities export for StoreKeeper
+```
+bin/magento queue:consumer:start storekeeper.data.export
+```
+
+Run consumer that orders sync process with StoreKeeper
+```
+bin/magento queue:consumer:start storekeeper.queue.sync.orders
 ```
 
 # Disconnecting

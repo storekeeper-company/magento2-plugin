@@ -58,7 +58,6 @@ abstract class AbstractTestCase extends TestCase
     protected $resultRedirectFactory;
     protected $invoice;
     protected $apiOrders;
-    protected $cronOrders;
     protected $redirect;
     protected $finish;
     protected $guestCartManagement;
@@ -71,6 +70,9 @@ abstract class AbstractTestCase extends TestCase
     protected $productCollectionFactory;
     protected $stockRegistry;
     protected $jsonSerializer;
+    protected $consumer;
+    protected $storeKeeperFailedSyncOrderResource;
+    protected $storeKeeperFailedSyncOrder;
 
     protected function setUp(): void
     {
@@ -108,6 +110,8 @@ abstract class AbstractTestCase extends TestCase
         $this->productCollectionFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ResourceModel\Product\CollectionFactory::class);
         $this->stockRegistry = Bootstrap::getObjectManager()->create(\Magento\CatalogInventory\Api\StockRegistryInterface::class);
         $this->jsonSerializer = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\SerializerInterface::class);
+        $this->storeKeeperFailedSyncOrderResource = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder::class);
+        $this->storeKeeperFailedSyncOrder = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class);
 
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
@@ -184,13 +188,15 @@ abstract class AbstractTestCase extends TestCase
                 'jsonSerializer' => $this->jsonSerializer
             ]
         );
-        $this->cronOrders = $objectManager->getObject(
-            \StoreKeeper\StoreKeeper\Cron\Orders::class,
+        $this->consumer = $objectManager->getObject(
+            \StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::class,
             [
-                'storeManager' => Bootstrap::getObjectManager()->create(\Magento\TestFramework\Store\StoreManager::class),
+                'authHelper' => $this->authHelper,
                 'configHelper' => $this->configHelper,
+                'storeKeeperFailedSyncOrderResource' => $this->storeKeeperFailedSyncOrderResource,
                 'ordersHelper' => $this->apiOrders,
-                'storeKeeperFailedSyncOrder' => Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class)
+                'orderRepository' => $this->orderRepository,
+                'storeKeeperFailedSyncOrder' => $this->storeKeeperFailedSyncOrder
             ]
         );
         $this->redirect = $objectManager->getObject(
@@ -537,7 +543,7 @@ abstract class AbstractTestCase extends TestCase
         $this->orderRepository->save($order);
 
         //Apply order refund
-        $this->cronOrders->execute();
+        $this->consumer->process(json_encode(['orderId' => $order->getId()]));
     }
 
     /**
@@ -627,7 +633,8 @@ abstract class AbstractTestCase extends TestCase
         $this->assertEquals(1, $order->getStorekeeperOrderPendingSync());
         $this->assertEquals(Order::STATE_NEW, $order->getState());
 
-        $this->cronOrders->execute();
+        $this->consumer->process(json_encode(['orderId' => $order->getId()]));
+
         $savedOrder = $this->orderRepository->get($order->getId());
 
         $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
