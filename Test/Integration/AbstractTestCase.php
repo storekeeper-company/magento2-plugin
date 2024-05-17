@@ -112,7 +112,6 @@ abstract class AbstractTestCase extends TestCase
         $this->jsonSerializer = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\SerializerInterface::class);
         $this->storeKeeperFailedSyncOrderResource = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder::class);
         $this->storeKeeperFailedSyncOrder = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class);
-        //$this->consumer = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::class);
 
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
