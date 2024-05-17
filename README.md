@@ -68,12 +68,23 @@ In this case activated Payment Method(s) will appear as individual Payment Metho
 
 _Payment methods that does not have own logo will receive current store logo set in Content->Design->Configuration area of Magento admin panel_
 
-## Queue
+## Queues
 
-This plugin uses the Magento 2 queue consumer functionality. If you want to run the queue manually you can use the following command:
+This plugin uses the Magento 2 queue consumer functionality. If you want to run queues manually you can use following commands:
 
+Run consumer that handles StoreKeeper webhook events
 ```
 bin/magento queue:consumer:start storekeeper.queue.events
+```
+
+Run consumer that handles Magento entities export for StoreKeeper
+```
+bin/magento queue:consumer:start storekeeper.data.export
+```
+
+Run consumer that orders sync process with StoreKeeper
+```
+bin/magento queue:consumer:start storekeeper.queue.sync.orders
 ```
 
 # Disconnecting
