@@ -98,6 +98,7 @@ class Consumer
                 if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
                     $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
                     $storeKeeperFailedSyncOrder->setIsFailed(1);
+                    $storeKeeperFailedSyncOrder->setExceptionMessage($e->getMessage());
                     $order->setStorekeeperOrderLastSync(time());
                     $order->setStorekeeperOrderPendingSync(0);
                     $order->setStorekeeperOrderPendingSyncSkip(true);
