@@ -10,15 +10,15 @@ use Magento\MysqlMq\Model\ResourceModel\MessageCollectionFactory;
 use Magento\MysqlMq\Model\ResourceModel\MessageStatusCollectionFactory;
 use StoreKeeper\StoreKeeper\Api\Data\TaskLogInterfaceFactory;
 use StoreKeeper\StoreKeeper\Api\TaskLogRepositoryInterface;
-use StoreKeeper\StoreKeeper\Model\Consumer as eventConsumer;
+use StoreKeeper\StoreKeeper\Model\Consumer as EventConsumer;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
-use StoreKeeper\StoreKeeper\Model\OrderSync\Consumer as orderConsumer;
+use StoreKeeper\StoreKeeper\Model\OrderSync\Consumer as OrderConsumer;
 
 class Queue
 {
     const SK_MESSAGE_QUEUES = [
-        eventConsumer::CONSUMER_NAME,
-        orderConsumer::CONSUMER_NAME,
+        EventConsumer::CONSUMER_NAME,
+        OrderConsumer::CONSUMER_NAME,
         AbstractExportManager::CONSUMER_NAME
     ];
 
@@ -62,18 +62,19 @@ class Queue
      */
     public function afterLinkQueues(subjectQueue $subject, $result, $messageId, $queueNames)
     {
-        $queueName = reset($queueNames);
-        if (in_array($queueName, self::SK_MESSAGE_QUEUES)) {
-            $collection = $this->getMessagesCollection($messageId);
+        foreach ($queueNames as $queueName) {
+            if (in_array($queueName, self::SK_MESSAGE_QUEUES)) {
+                $collection = $this->getMessagesCollection($messageId);
 
-            if ($collection->count() > 0) {
-                foreach ($collection as $message) {
-                    $taskLog = $this->taskLogFactory->create();
-                    $taskLog->addData($message->getData());
-                    $taskLog->setMessageId($message->getId());
-                    $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
+                if ($collection->count() > 0) {
+                    foreach ($collection as $message) {
+                        $taskLog = $this->taskLogFactory->create();
+                        $taskLog->addData($message->getData());
+                        $taskLog->setMessageId($message->getId());
+                        $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
 
-                    $this->taskLogRepository->save($taskLog);
+                        $this->taskLogRepository->save($taskLog);
+                    }
                 }
             }
         }

@@ -22,19 +22,22 @@ class Status extends Column
     }
 
     /**
-     * @param $status
+     * Match message queue status code to string label
+     * String labels taken from constants in core class Magento\MysqlMq\Model\QueueManagement
+     *
+     * @param int $status
      * @return string
      */
-    private function matchStatus($status)
+    private function matchStatus(int $status): string
     {
-        return match ((int)$status) {
-            2 => 'New',
-            3 => 'In Progress',
-            4 => 'Complete',
-            5 => 'Retry required',
-            6 => 'Error',
-            7 => 'To be deleted',
-            default => '',
+        return match ($status) {
+            2 => __('New'),
+            3 => __('In Progress'),
+            4 => __('Complete'),
+            5 => __('Retry required'),
+            6 => __('Error'),
+            7 => __('To be deleted'),
+            default => __('Unknown status: %1', $status)
         };
     }
 }
