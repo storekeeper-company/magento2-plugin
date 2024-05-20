@@ -3,17 +3,17 @@
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use Magento\Framework\Filesystem;
 
 class Consumer
 {
-    private LoggerInterface $logger;
+    private Logger $logger;
     private Filesystem $filesystem;
     private CsvFileContent $csvFileContent;
 
     public function __construct(
-        LoggerInterface $logger,
+        Logger $logger,
         Filesystem $filesystem,
         CsvFileContent $csvFileContent
     ) {
@@ -39,7 +39,7 @@ class Consumer
                 $this->exportEntityToCsv($exportEntity);
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
             $this->logger->error($e->getTraceAsString());
         }
     }

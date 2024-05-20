@@ -3,7 +3,7 @@
 namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
 use Magento\Framework\App\State;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories as CategoriesHelper;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
@@ -18,7 +18,7 @@ class Categories extends Command
     private State $state;
     private CategoriesHelper $categoriesHelper;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
 
 
     /**
@@ -27,13 +27,13 @@ class Categories extends Command
      * @param State $state
      * @param CategoriesHelper $categoriesHelper
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      */
     public function __construct(
         State $state,
         CategoriesHelper $categoriesHelper,
         Config $configHelper,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         parent::__construct();
 
@@ -121,12 +121,12 @@ class Categories extends Command
                             $category = $this->categoriesHelper->create($storeId, $result);
                         }
                     } catch (\Exception $e) {
-                        $this->logger->error($e->getMessage());
+                        $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                     }
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
         }
     }
 }

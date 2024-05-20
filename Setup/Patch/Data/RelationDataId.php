@@ -12,7 +12,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Setup\SalesSetupFactory;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class RelationDataId implements DataPatchInterface
 {
@@ -21,23 +21,23 @@ class RelationDataId implements DataPatchInterface
     private CustomerSetupFactory $customerSetupFactory;
     private AttributeResource $attributeResource;
     private CustomerSetup $customerSetup;
-    private LoggerInterface $logger;
+    private Logger $logger;
 
-    /***
+    /**
      * Construcor
      *
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param CustomerSetupFactory $customerSetupFactory
      * @param AttributeResource $attributeResource
      * @param SalesSetupFactory $salesSetupFactory
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      */
     public function __construct(
         ModuleDataSetupInterface $moduleDataSetup,
         CustomerSetupFactory $customerSetupFactory,
         AttributeResource $attributeResource,
         SalesSetupFactory $salesSetupFactory,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         $this->moduleDataSetup = $moduleDataSetup;
         $this->customerSetupFactory = $customerSetupFactory;
@@ -98,7 +98,7 @@ class RelationDataId implements DataPatchInterface
 
             $this->attributeResource->save($attribute);
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
         }
 
         $this->moduleDataSetup->getConnection()->endSetup();

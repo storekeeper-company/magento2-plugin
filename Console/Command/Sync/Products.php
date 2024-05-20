@@ -4,7 +4,7 @@ namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 
 use Magento\Framework\App\State;
 use Magento\Store\Model\StoreManagerInterface;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Products as ProductsHelper;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
@@ -20,14 +20,14 @@ class Products extends Command
     private ProductsHelper $productsHelper;
     private StoreManagerInterface $storeManager;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
 
     /**
      * @param State $state
      * @param ProductsHelper $productsHelper
      * @param StoreManagerInterface $storeManager
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param string|null $name
      */
     public function __construct(
@@ -35,7 +35,7 @@ class Products extends Command
         ProductsHelper $productsHelper,
         StoreManagerInterface $storeManager,
         Config $configHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         string $name = null
     ) {
         parent::__construct($name);
@@ -116,12 +116,15 @@ class Products extends Command
                             $product = $this->productsHelper->onCreate($storeId, $result);
                         }
                     } catch (\Exception $e) {
-                        $this->logger->error($e->getMessage());
+                        $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                     }
                 }
             }
         } catch(\Exception $e) {
-            $this->logger->error($e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage());
+            $this->logger->error(
+                $e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage(),
+                $this->logger->buildReportData($e)
+            );
         }
     }
 }

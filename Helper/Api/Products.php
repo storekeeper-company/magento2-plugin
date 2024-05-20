@@ -23,7 +23,7 @@ use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Parsedown;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config;
@@ -51,7 +51,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private File $file;
     private ProductLinkInterfaceFactory $productLinkFactory;
     private StockRegistryInterface $stockRegistry;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private ProductApiClient $productApiClient;
     private OrderApiClient $orderApiClient;
     private SourceItemsProcessorInterface $sourceItemsProcessor;
@@ -76,7 +76,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param File $file
      * @param ProductLinkInterfaceFactory $productLinkFactory
      * @param StockRegistryInterface $stockRegistry
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param ProductApiClient $productApiClient
      * @param OrderApiClient $orderApiClient
      * @param SourceItemsProcessorInterface $sourceItemsProcessor
@@ -99,7 +99,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         File $file,
         ProductLinkInterfaceFactory $productLinkFactory,
         StockRegistryInterface $stockRegistry,
-        LoggerInterface $logger,
+        Logger $logger,
         ProductApiClient $productApiClient,
         OrderApiClient $orderApiClient,
         SourceItemsProcessorInterface $sourceItemsProcessor,
@@ -460,7 +460,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             return false;
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
         }
         return false;
     }
@@ -818,7 +818,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                             );
                         }
                     } catch (\Exception $e) {
-                        $this->logger->error($e->getMessage());
+                        $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                     }
                 }
             }
@@ -903,7 +903,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             try {
                 $target->addImageToMediaGallery($newImage, $imageTypes, true, false);
             } catch (LocalizedException $e) {
-                $this->logger->error($exception->getMessage());
+                $this->logger->error($exception->getMessage(), $this->logger->buildReportData($exception));
             }
         }
     }
@@ -1005,7 +1005,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
             $this->logger->error($e->getTraceAsString());
         }
     }

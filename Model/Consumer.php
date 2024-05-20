@@ -2,7 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Model;
 
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
@@ -20,7 +20,7 @@ class Consumer
     private Categories $categoriesHelper;
     private Orders $ordersHelper;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private Auth $authHelper;
 
     /**
@@ -29,14 +29,14 @@ class Consumer
      * @param Products $productsHelper
      * @param Categories $categoriesHelper
      * @param Orders $ordersHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param Auth $authHelper
      */
     public function __construct(
         Products $productsHelper,
         Categories $categoriesHelper,
         Orders $ordersHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         Auth $authHelper
     ) {
         $this->productsHelper = $productsHelper;
@@ -107,7 +107,10 @@ class Consumer
                 $this->authHelper->disconnectStore($data['storeId']);
             }
         } catch (\Exception $e) {
-            $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
+            $this->logger->error(
+                "[{$type}] {$entity}({$value}): {$e->getMessage()}",
+                $this->logger->buildReportData($e)
+            );
         }
     }
 }

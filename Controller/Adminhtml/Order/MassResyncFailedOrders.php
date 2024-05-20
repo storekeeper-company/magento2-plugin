@@ -10,7 +10,7 @@ use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use StoreKeeper\StoreKeeper\Console\Command\Sync\Orders;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
 
 class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction implements HttpPostActionInterface
@@ -21,7 +21,7 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
 
     private OrdersHelper $ordersHelper;
 
-    private LoggerInterface $logger;
+    private Logger $logger;
 
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
 
@@ -33,7 +33,7 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
      * @param Orders $syncOrders
      * @param Config $configHelper
      * @param OrdersHelper $ordersHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
      */
     public function __construct(
@@ -43,7 +43,7 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
         Orders $syncOrders,
         Config $configHelper,
         OrdersHelper $ordersHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
     ) {
         parent::__construct($context, $filter);
@@ -81,7 +81,7 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
                 $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
             } catch(\Exception $e) {
                 $failedOrderIds[] = $orderId;
-                $this->logger->error($e->getMessage());
+                $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                 $storeKeeperFailedSyncOrder->setUpdatedAt(time());
                 $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
             }

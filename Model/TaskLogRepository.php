@@ -1,8 +1,5 @@
 <?php
-/**
- * Copyright ©  All rights reserved.
- * See COPYING.txt for license details.
- */
+
 declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Model;
@@ -78,7 +75,8 @@ class TaskLogRepository implements TaskLogRepositoryInterface
         } catch (\Exception $exception) {
             throw new CouldNotSaveException(__(
                 'Could not save the taskLog: %1',
-                $exception->getMessage()
+                $exception->getMessage(),
+                $exception
             ));
         }
         return $taskLog;

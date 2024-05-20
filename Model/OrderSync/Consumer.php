@@ -4,13 +4,14 @@ namespace StoreKeeper\StoreKeeper\Model\OrderSync;
 
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
 use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrder;
 use StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory;
+
 /**
  * Class Consumer used to process OperationInterface messages.
  */
@@ -20,7 +21,7 @@ class Consumer
     const QUEUE_NAME = "storekeeper.queue.sync.orders";
     private Orders $ordersHelper;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private Auth $authHelper;
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
     private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
@@ -32,7 +33,7 @@ class Consumer
      *
      * @param Orders $ordersHelper
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param Auth $authHelper
      * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
      * @param StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder
@@ -42,7 +43,7 @@ class Consumer
     public function __construct(
         Orders $ordersHelper,
         Config $configHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         Auth $authHelper,
         StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
         StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder,
@@ -93,7 +94,7 @@ class Consumer
                     $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
                 }
             } catch(\Exception $e) {
-                $this->logger->error($e->getMessage());
+                $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                 if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
                     $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
                     $storeKeeperFailedSyncOrder->setIsFailed(1);
@@ -107,7 +108,7 @@ class Consumer
                 $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
             }
         } catch (\Exception $e) {
-            $this->logger->error("[{$type}] {$entity}({$value}): {$e->getMessage()}");
+            $this->logger->error("[{$orderId}]: {$e->getMessage()}", $this->logger->buildReportData($e));
         }
     }
 

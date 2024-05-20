@@ -9,19 +9,17 @@
     <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface" type="StoreKeeper\StoreKeeper\Model\TaskLog"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
 
-    <type name="StoreKeeper\StoreKeeper\Api\Webhook\Webhook">
-        <arguments>
-            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
-        </arguments>
-    </type>
-    <type name="StoreKeeper\StoreKeeper\Model\Consumer">
-        <arguments>
-            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
-        </arguments>
-    </type>
     <type name="StoreKeeper\StoreKeeper\Logger\Handler">
         <arguments>
             <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="StoreKeeper\StoreKeeper\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">storekeeperLogHandler</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Handler</item>
+            </argument>
         </arguments>
     </type>
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
@@ -55,14 +53,6 @@
         </arguments>
     </type>
 
-    <virtualType name="StoreKeeper\StoreKeeper\Logger\Logger" type="Monolog\Logger">
-        <arguments>
-            <argument name="name" xsi:type="string">StoreKeeper_StoreKeeper_Logger</argument>
-            <argument name="handlers" xsi:type="array">
-                <item name="system" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Handler</item>
-            </argument>
-        </arguments>
-    </virtualType>
     <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">storekeeper_storekeeper_eventlog</argument>

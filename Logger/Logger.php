@@ -2,12 +2,12 @@
 
 namespace StoreKeeper\StoreKeeper\Logger;
 
-class Handler extends \Magento\Framework\Logger\Handler\Base
+class Logger extends \Monolog\Logger
 {
-    protected $loggerType = \Monolog\Logger::DEBUG;
-
-    protected $fileName = "/var/log/storekeeper.log";
-
+    /**
+     * @param \Throwable $e
+     * @return array
+     */
     public function buildReportData(\Throwable $e)
     {
         $data = [];

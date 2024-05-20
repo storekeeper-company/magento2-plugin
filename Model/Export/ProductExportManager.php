@@ -28,7 +28,7 @@ use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class ProductExportManager extends AbstractExportManager
 {
@@ -202,7 +202,7 @@ class ProductExportManager extends AbstractExportManager
     private ImageFactory $imageFactory;
     private Auth $authHelper;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private AttributeCollectionFactory $attributeCollectionFactory;
     private Base36Coder $base36Coder;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
@@ -234,7 +234,7 @@ class ProductExportManager extends AbstractExportManager
      * @param ImageFactory $imageFactory
      * @param Auth $authHelper
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param AttributeCollectionFactory $attributeCollectionFactory
      * @param Base36Coder $base36Coder
      */
@@ -261,7 +261,7 @@ class ProductExportManager extends AbstractExportManager
         ImageFactory $imageFactory,
         Auth $authHelper,
         Config $configHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         AttributeCollectionFactory $attributeCollectionFactory,
         Base36Coder $base36Coder
     ) {
@@ -375,7 +375,7 @@ class ProductExportManager extends AbstractExportManager
                             $this->extendHeaderLabels($key . ' (label)');
                             $this->extendDisallowedAttributes($value);
                         } catch (\Exception $e) {
-                            $this->logger->error($e->getMessage());
+                            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                         }
                     }
                 }

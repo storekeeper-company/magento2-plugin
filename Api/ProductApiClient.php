@@ -11,7 +11,7 @@ use Magento\Catalog\Model\Product\Url as ProductUrl;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth as AuthHelper;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class ProductApiClient extends ApiClient
 {
@@ -34,7 +34,7 @@ class ProductApiClient extends ApiClient
         BackendUrl $backendUrl,
         DateTime $dateTime,
         AuthHelper $authHelper,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         parent::__construct($scopeConfig, $logger);
         $this->orderApiClient = $orderApiClient;
@@ -134,7 +134,7 @@ class ProductApiClient extends ApiClient
         try {
             $this->orderApiClient->getShopModule($storeId)->setShopProductObjectSyncStatusForHook($data);
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
             $result = false;
         }
 

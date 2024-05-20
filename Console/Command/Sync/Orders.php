@@ -5,7 +5,7 @@ namespace StoreKeeper\StoreKeeper\Console\Command\Sync;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\LocalizedException;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
@@ -22,7 +22,7 @@ class Orders extends Command
     private State $state;
     private OrdersHelper $ordersHelper;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
 
@@ -32,7 +32,7 @@ class Orders extends Command
      * @param State $state
      * @param OrdersHelper $ordersHelper
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
      * @param StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder
      * @param string|null $name
@@ -41,7 +41,7 @@ class Orders extends Command
         State $state,
         OrdersHelper $ordersHelper,
         Config $configHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
         StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder,
         string $name = null
@@ -118,7 +118,7 @@ class Orders extends Command
                             $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
                         }
                     } catch(\Exception $e) {
-                        $this->logger->error($e->getMessage());
+                        $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                         if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
                             $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
                             $storeKeeperFailedSyncOrder->setIsFailed(1);
@@ -133,7 +133,7 @@ class Orders extends Command
                 $orders = $this->ordersHelper->getOrders($storeId, $page, $pageSize);
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
         }
     }
 

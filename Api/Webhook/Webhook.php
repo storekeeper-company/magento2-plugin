@@ -8,7 +8,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Backend\Model\UrlInterface;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\Data\EventLogInterface;
 use StoreKeeper\StoreKeeper\Api\Data\EventLogInterfaceFactory;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
@@ -27,7 +27,7 @@ class Webhook
     private PublisherInterface $publisher;
     private ProductMetadataInterface $productMetadata;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private TimezoneInterface $timezone;
     private CollectionFactory $orderCollectionFactory;
     private UrlInterface $backendUrl;
@@ -46,7 +46,7 @@ class Webhook
      * @param PublisherInterface $publisher
      * @param ProductMetadataInterface $productMetadata
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param TimezoneInterface $timezone
      * @param CollectionFactory $orderCollectionFactory
      * @param UrlInterface $backendUrl
@@ -62,7 +62,7 @@ class Webhook
         PublisherInterface $publisher,
         ProductMetadataInterface $productMetadata,
         Config $configHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         TimezoneInterface $timezone,
         CollectionFactory $orderCollectionFactory,
         UrlInterface $backendUrl,
@@ -106,7 +106,7 @@ class Webhook
             $response = $this->postExecuteWithResponse($storeId);
             return $this->response($response->getContent(), $response->getStatusCode());
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
             return $this->response([
                 'success' => false,
                 'message' => "An error occurred: {$e->getMessage()}"
@@ -431,7 +431,7 @@ class Webhook
             'response_code' => $status,
             'date' => $this->timezone->date()->getTimestamp()
         ]);
-        
+
         $this->eventLogRepository->save($eventLog);
     }
 }
