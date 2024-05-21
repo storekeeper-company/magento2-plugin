@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Model;
 
+use Magento\Framework\Api\SearchResultsInterfaceFactory;
 use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -21,20 +22,22 @@ class EventLogRepository implements EventLogRepositoryInterface
     protected CollectionProcessorInterface $collectionProcessor;
     protected ResourceEventLog $resource;
     protected EventLogCollectionFactory $eventLogCollectionFactory;
-    protected EventLog $searchResultsFactory;
+    protected SearchResultsInterfaceFactory $searchResultsFactory;
 
     /**
+     * Constructor
+     *
      * @param ResourceEventLog $resource
      * @param EventLogInterfaceFactory $eventLogFactory
      * @param EventLogCollectionFactory $eventLogCollectionFactory
-     * @param EventLogSearchResultsInterfaceFactory $searchResultsFactory
+     * @param SearchResultsInterfaceFactory $searchResultsFactory
      * @param CollectionProcessorInterface $collectionProcessor
      */
     public function __construct(
         ResourceEventLog $resource,
         EventLogInterfaceFactory $eventLogFactory,
         EventLogCollectionFactory $eventLogCollectionFactory,
-        EventLogSearchResultsInterfaceFactory $searchResultsFactory,
+        SearchResultsInterfaceFactory $searchResultsFactory,
         CollectionProcessorInterface $collectionProcessor
     ) {
         $this->resource = $resource;

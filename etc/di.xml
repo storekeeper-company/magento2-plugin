@@ -4,10 +4,8 @@
     <preference for="StoreKeeper\StoreKeeper\Api\Webhook\InfoWebhookInterface" type="StoreKeeper\StoreKeeper\Api\Webhook\Connectinfo"/>
     <preference for="StoreKeeper\StoreKeeper\Api\EventLogRepositoryInterface" type="StoreKeeper\StoreKeeper\Model\EventLogRepository"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Data\EventLogInterface" type="StoreKeeper\StoreKeeper\Model\EventLog"/>
-    <preference for="StoreKeeper\StoreKeeper\Api\Data\EventLogSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
     <preference for="StoreKeeper\StoreKeeper\Api\TaskLogRepositoryInterface" type="StoreKeeper\StoreKeeper\Model\TaskLogRepository"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface" type="StoreKeeper\StoreKeeper\Model\TaskLog"/>
-    <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
 
     <type name="StoreKeeper\StoreKeeper\Logger\Handler">
         <arguments>

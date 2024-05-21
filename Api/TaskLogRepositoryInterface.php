@@ -33,7 +33,7 @@ interface TaskLogRepositoryInterface
     /**
      * Retrieve TaskLog matching the specified criteria.
      * @param \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
-     * @return \StoreKeeper\StoreKeeper\Api\Data\TaskLogSearchResultsInterface
+     * @return \Magento\Framework\Api\SearchCriteriaInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getList(

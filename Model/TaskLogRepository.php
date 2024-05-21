@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Model;
 
+use Magento\Framework\Api\SearchResultsInterfaceFactory;
 use Magento\Framework\Api\SearchCriteria\CollectionProcessorInterface;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -29,9 +30,9 @@ class TaskLogRepository implements TaskLogRepositoryInterface
     protected $collectionProcessor;
 
     /**
-     * @var TaskLog
+     * @var SearchResultsInterfaceFactory
      */
-    protected $searchResultsFactory;
+    protected  $searchResultsFactory;
 
     /**
      * @var TaskLogCollectionFactory
@@ -45,6 +46,8 @@ class TaskLogRepository implements TaskLogRepositoryInterface
 
 
     /**
+     * Constructor
+     *
      * @param ResourceTaskLog $resource
      * @param TaskLogInterfaceFactory $taskLogFactory
      * @param TaskLogCollectionFactory $taskLogCollectionFactory
@@ -55,7 +58,7 @@ class TaskLogRepository implements TaskLogRepositoryInterface
         ResourceTaskLog $resource,
         TaskLogInterfaceFactory $taskLogFactory,
         TaskLogCollectionFactory $taskLogCollectionFactory,
-        TaskLogSearchResultsInterfaceFactory $searchResultsFactory,
+        SearchResultsInterfaceFactory $searchResultsFactory,
         CollectionProcessorInterface $collectionProcessor
     ) {
         $this->resource = $resource;
