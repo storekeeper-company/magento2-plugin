@@ -353,30 +353,26 @@ class ProductExportManager extends AbstractExportManager
                     if ($value !== Attributes::NOT_MAPPED) {
                         $attributeValue = $product->getData($value);
                         $key = $this->base36Coder->encode($key);
-                        try {
-                            $attribute = $product->getResource()->getAttribute($value);
-                            if ($attributeValue !== null && $attribute->usesSource()) {
-                                $attributeValue = $attribute->getFrontend()->getValue($product);
-                            }
-
-                            if ($attributeValue !== null) {
-                                if ($attributeValue instanceof \Magento\Framework\Phrase) {
-                                    $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue->getText();
-                                } else {
-                                    $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
-                                }
-
-                                $result[$dataKey]['path://content_vars.' . $key . '.value_label'] = $attribute->getDefaultFrontendLabel();
-                            }
-
-                            $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
-                            $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
-                            $this->extendHeaderLabels($key . ' (raw)');
-                            $this->extendHeaderLabels($key . ' (label)');
-                            $this->extendDisallowedAttributes($value);
-                        } catch (\Exception $e) {
-                            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
+                        $attribute = $product->getResource()->getAttribute($value);
+                        if ($attributeValue !== null && $attribute->usesSource()) {
+                            $attributeValue = $attribute->getFrontend()->getValue($product);
                         }
+
+                        if ($attributeValue !== null) {
+                            if ($attributeValue instanceof \Magento\Framework\Phrase) {
+                                $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue->getText();
+                            } else {
+                                $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
+                            }
+
+                            $result[$dataKey]['path://content_vars.' . $key . '.value_label'] = $attribute->getDefaultFrontendLabel();
+                        }
+
+                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
+                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
+                        $this->extendHeaderLabels($key . ' (raw)');
+                        $this->extendHeaderLabels($key . ' (label)');
+                        $this->extendDisallowedAttributes($value);
                     }
                 }
             }

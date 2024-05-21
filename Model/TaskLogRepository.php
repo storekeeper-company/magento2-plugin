@@ -75,9 +75,9 @@ class TaskLogRepository implements TaskLogRepositoryInterface
         } catch (\Exception $exception) {
             throw new CouldNotSaveException(__(
                 'Could not save the taskLog: %1',
-                $exception->getMessage(),
+                $exception->getMessage()),
                 $exception
-            ));
+            );
         }
         return $taskLog;
     }

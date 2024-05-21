@@ -81,7 +81,13 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
                 $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
             } catch(\Exception $e) {
                 $failedOrderIds[] = $orderId;
-                $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
+                $this->logger->error(
+                    'Error processing order durring mass resync',
+                    [
+                        'error' => $this->logger->buildReportData($e),
+                        'orderId' => $orderId
+                    ]
+                );
                 $storeKeeperFailedSyncOrder->setUpdatedAt(time());
                 $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
             }

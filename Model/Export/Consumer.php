@@ -39,7 +39,10 @@ class Consumer
                 $this->exportEntityToCsv($exportEntity);
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
+            $this->logger->error(
+                'Error while processing export',
+                ['error' => $this->logger->buildReportData($e), 'entitty' => $exportEntity]
+            );
             $this->logger->error($e->getTraceAsString());
         }
     }

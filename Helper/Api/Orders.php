@@ -382,7 +382,14 @@ class Orders extends AbstractHelper
                 return $response;
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
+            $this->logger->warning(
+                'Error getting sotrekeeper order',
+                [
+                    'error' => $this->logger->buildReportData($e),
+                    'storeId' => $storeId,
+                    'storekeeperId' => $storeKeeperId
+                ]
+            );
             return null;
         }
     }

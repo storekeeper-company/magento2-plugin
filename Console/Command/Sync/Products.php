@@ -116,13 +116,20 @@ class Products extends Command
                             $product = $this->productsHelper->onCreate($storeId, $result);
                         }
                     } catch (\Exception $e) {
-                        $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
+                        $this->logger->error(
+                            'Error while processing cli product sync',
+                            [
+                            'error' =>  $this->logger->buildReportData($e),
+                            'product' =>  $result,
+                            'storeId' =>  $storeId
+                            ]
+                        );
                     }
                 }
             }
         } catch(\Exception $e) {
             $this->logger->error(
-                $e->getFile() . ' at ' . $e->getLine() . ' : ' . $e->getMessage(),
+                'Error while synchronizing product',
                 $this->logger->buildReportData($e)
             );
         }

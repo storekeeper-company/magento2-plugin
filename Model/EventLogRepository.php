@@ -54,9 +54,9 @@ class EventLogRepository implements EventLogRepositoryInterface
         } catch (\Exception $exception) {
             throw new CouldNotSaveException(__(
                 'Could not save the Event Log: %1',
-                $exception->getMessage(),
+                $exception->getMessage()),
                 $exception
-            ));
+            );
         }
         return $eventLog;
     }
