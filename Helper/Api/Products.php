@@ -450,8 +450,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         try {
             $storekeeper_sku = $this->getResultSku($result);
 
-            if ($result = $this->productRepository->get($storekeeper_sku)) {
-                return $result;
+            if (!is_null($storekeeper_sku)) {
+                return $this->productRepository->get($storekeeper_sku);
             }
         } catch (\Exception $e) {
             // ignoring
