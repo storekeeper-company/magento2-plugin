@@ -1000,8 +1000,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
-            $this->logger->error($e->getTraceAsString());
+            $this->logger->error(
+                'error while cleanProductStorekeeperId',
+                ['error' =>$this->logger->buildReportData($e), 'storeId' => $storeId]
+            );
         }
     }
 }

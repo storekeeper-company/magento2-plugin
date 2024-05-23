@@ -53,53 +53,50 @@ class RelationDataId implements DataPatchInterface
     public function apply()
     {
         $this->moduleDataSetup->getConnection()->startSetup();
-        try {
-            $salesSetup = $this->salesSetupFactory->create(['setup' => $this->moduleDataSetup]);
+        
+        $salesSetup = $this->salesSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
-            $salesSetup->addAttribute(
-                Order::ENTITY,
-                'relation_data_id',
-                [
-                    'type' => 'int',
-                    'visible' => false,
-                    'required' => true
-                ]
-            );
+        $salesSetup->addAttribute(
+            Order::ENTITY,
+            'relation_data_id',
+            [
+                'type' => 'int',
+                'visible' => false,
+                'required' => true
+            ]
+        );
 
-            $this->customerSetup->addAttribute(
-                CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER,
-                'relation_data_id',
-                [
-                    'label' => __('Relation Data ID'),
-                    'required' => 0,
-                    'position' => 200,
-                    'system' => 0,
-                    'user_defined' => 1,
-                    'is_used_in_grid' => 1,
-                    'is_visible_in_grid' => 1,
-                    'is_filterable_in_grid' => 1,
-                    'is_searchable_in_grid' => 1,
-                ]
-            );
+        $this->customerSetup->addAttribute(
+            CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER,
+            'relation_data_id',
+            [
+                'label' => __('Relation Data ID'),
+                'required' => 0,
+                'position' => 200,
+                'system' => 0,
+                'user_defined' => 1,
+                'is_used_in_grid' => 1,
+                'is_visible_in_grid' => 1,
+                'is_filterable_in_grid' => 1,
+                'is_searchable_in_grid' => 1,
+            ]
+        );
 
-            $this->customerSetup->addAttributeSet(
-                CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER,
-                CustomerMetadataInterface::ATTRIBUTE_SET_ID_CUSTOMER,
-                null,
-                'relation_data_id'
-            );
+        $this->customerSetup->addAttributeSet(
+            CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER,
+            CustomerMetadataInterface::ATTRIBUTE_SET_ID_CUSTOMER,
+            null,
+            'relation_data_id'
+        );
 
-            $attribute = $this->customerSetup->getEavConfig()
-                ->getAttribute(CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER, 'relation_data_id');
+        $attribute = $this->customerSetup->getEavConfig()
+            ->getAttribute(CustomerMetadataInterface::ENTITY_TYPE_CUSTOMER, 'relation_data_id');
 
-            $attribute->setData('used_in_forms', [
-                'adminhtml_customer'
-            ]);
+        $attribute->setData('used_in_forms', [
+            'adminhtml_customer'
+        ]);
 
-            $this->attributeResource->save($attribute);
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
-        }
+        $this->attributeResource->save($attribute);
 
         $this->moduleDataSetup->getConnection()->endSetup();
     }

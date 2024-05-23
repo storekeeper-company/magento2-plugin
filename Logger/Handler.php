@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace StoreKeeper\StoreKeeper\Logger;
 
 class Handler extends \Magento\Framework\Logger\Handler\Base
@@ -8,7 +10,11 @@ class Handler extends \Magento\Framework\Logger\Handler\Base
 
     protected $fileName = "/var/log/storekeeper.log";
 
-    public function buildReportData(\Throwable $e)
+    /**
+     * @param \Throwable $e
+     * @return array
+     */
+    public function buildReportData(\Throwable $e): array
     {
         $data = [];
         if (!is_null($e)) {

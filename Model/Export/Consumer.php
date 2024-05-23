@@ -43,7 +43,6 @@ class Consumer
                 'Error while processing export',
                 ['error' => $this->logger->buildReportData($e), 'entitty' => $exportEntity]
             );
-            $this->logger->error($e->getTraceAsString());
         }
     }
 
