@@ -8,15 +8,15 @@ use Magento\Customer\Api\CustomerMetadataInterface;
 use Magento\Customer\Model\ResourceModel\Attribute as AttributeResource;
 use Magento\Customer\Setup\CustomerSetup;
 use Magento\Customer\Setup\CustomerSetupFactory;
-use Magento\Framework\Setup\ModuleDataSetupInterface;
-use Magento\Framework\Setup\Patch\DataPatchInterface;
+use Magento\Framework\Setup\SchemaSetupInterface;
+use Magento\Framework\Setup\Patch\SchemaPatchInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Setup\SalesSetupFactory;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 
-class RelationDataId implements DataPatchInterface
+class RelationDataId implements SchemaPatchInterface
 {
-    private ModuleDataSetupInterface $moduleDataSetup;
+    private SchemaSetupInterface $schemaSetup;
     private SalesSetupFactory $salesSetupFactory;
     private CustomerSetupFactory $customerSetupFactory;
     private AttributeResource $attributeResource;
@@ -24,24 +24,24 @@ class RelationDataId implements DataPatchInterface
     private Logger $logger;
 
     /**
-     * Construcor
+     * Constructor
      *
-     * @param ModuleDataSetupInterface $moduleDataSetup
+     * @param SchemaSetupInterface $schemaSetup
      * @param CustomerSetupFactory $customerSetupFactory
      * @param AttributeResource $attributeResource
      * @param SalesSetupFactory $salesSetupFactory
      * @param Logger $logger
      */
     public function __construct(
-        ModuleDataSetupInterface $moduleDataSetup,
+        SchemaSetupInterface $schemaSetup,
         CustomerSetupFactory $customerSetupFactory,
         AttributeResource $attributeResource,
         SalesSetupFactory $salesSetupFactory,
         Logger $logger
     ) {
-        $this->moduleDataSetup = $moduleDataSetup;
+        $this->schemaSetup = $schemaSetup;
         $this->customerSetupFactory = $customerSetupFactory;
-        $this->customerSetup = $customerSetupFactory->create(['setup' => $moduleDataSetup]);
+        $this->customerSetup = $customerSetupFactory->create(['setup' => $schemaSetup]);
         $this->attributeResource = $attributeResource;
         $this->salesSetupFactory = $salesSetupFactory;
         $this->logger = $logger;
@@ -52,8 +52,8 @@ class RelationDataId implements DataPatchInterface
      */
     public function apply()
     {
-        $this->moduleDataSetup->getConnection()->startSetup();
-        
+        $this->schemaSetup->getConnection()->startSetup();
+
         $salesSetup = $this->salesSetupFactory->create(['setup' => $this->moduleDataSetup]);
 
         $salesSetup->addAttribute(
@@ -98,7 +98,7 @@ class RelationDataId implements DataPatchInterface
 
         $this->attributeResource->save($attribute);
 
-        $this->moduleDataSetup->getConnection()->endSetup();
+        $this->schemaSetup->getConnection()->endSetup();
     }
 
     /**
