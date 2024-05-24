@@ -8,7 +8,7 @@ class Logger extends \Monolog\Logger
      * @param \Throwable $e
      * @return array
      */
-    public function buildReportData(\Throwable $e)
+    public function buildReportData(\Throwable $e): array
     {
         $data = [];
         if (!is_null($e)) {
