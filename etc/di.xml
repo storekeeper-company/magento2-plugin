@@ -4,21 +4,20 @@
     <preference for="StoreKeeper\StoreKeeper\Api\Webhook\InfoWebhookInterface" type="StoreKeeper\StoreKeeper\Api\Webhook\Connectinfo"/>
     <preference for="StoreKeeper\StoreKeeper\Api\EventLogRepositoryInterface" type="StoreKeeper\StoreKeeper\Model\EventLogRepository"/>
     <preference for="StoreKeeper\StoreKeeper\Api\Data\EventLogInterface" type="StoreKeeper\StoreKeeper\Model\EventLog"/>
-    <preference for="StoreKeeper\StoreKeeper\Api\Data\EventLogSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
+    <preference for="StoreKeeper\StoreKeeper\Api\TaskLogRepositoryInterface" type="StoreKeeper\StoreKeeper\Model\TaskLogRepository"/>
+    <preference for="StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface" type="StoreKeeper\StoreKeeper\Model\TaskLog"/>
 
-    <type name="StoreKeeper\StoreKeeper\Api\Webhook\Webhook">
-        <arguments>
-            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
-        </arguments>
-    </type>
-    <type name="StoreKeeper\StoreKeeper\Model\Consumer">
-        <arguments>
-            <argument name="logger" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Logger</argument>
-        </arguments>
-    </type>
     <type name="StoreKeeper\StoreKeeper\Logger\Handler">
         <arguments>
             <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </type>
+    <type name="StoreKeeper\StoreKeeper\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">storekeeperLogHandler</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Handler</item>
+            </argument>
         </arguments>
     </type>
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
@@ -41,19 +40,27 @@
             </argument>
         </arguments>
     </type>
-
-    <virtualType name="StoreKeeper\StoreKeeper\Logger\Logger" type="Monolog\Logger">
+    <type name="Magento\MysqlMq\Model\ResourceModel\Queue">
+        <plugin name="storekeeper_storekeeper_after_methods_queue" type="StoreKeeper\StoreKeeper\Plugin\Magento\MysqlMq\Model\ResourceModel\Queue" sortOrder="1"/>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
-            <argument name="name" xsi:type="string">StoreKeeper_StoreKeeper_Logger</argument>
-            <argument name="handlers" xsi:type="array">
-                <item name="system" xsi:type="object">StoreKeeper\StoreKeeper\Logger\Handler</item>
+            <argument name="collections" xsi:type="array">
+                <item name="storekeeper_storekeeper_tasklog_listing_data_source" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Grid\Collection</item>
             </argument>
         </arguments>
-    </virtualType>
+    </type>
+
     <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
             <argument name="mainTable" xsi:type="string">storekeeper_storekeeper_eventlog</argument>
             <argument name="resourceModel" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Collection</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">storekeeper_storekeeper_tasklog</argument>
+            <argument name="resourceModel" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\TaskLog\Collection</argument>
         </arguments>
     </virtualType>
 

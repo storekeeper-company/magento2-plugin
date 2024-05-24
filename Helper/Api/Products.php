@@ -23,7 +23,7 @@ use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Parsedown;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config;
@@ -51,7 +51,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private File $file;
     private ProductLinkInterfaceFactory $productLinkFactory;
     private StockRegistryInterface $stockRegistry;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private ProductApiClient $productApiClient;
     private OrderApiClient $orderApiClient;
     private SourceItemsProcessorInterface $sourceItemsProcessor;
@@ -76,7 +76,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param File $file
      * @param ProductLinkInterfaceFactory $productLinkFactory
      * @param StockRegistryInterface $stockRegistry
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param ProductApiClient $productApiClient
      * @param OrderApiClient $orderApiClient
      * @param SourceItemsProcessorInterface $sourceItemsProcessor
@@ -99,7 +99,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         File $file,
         ProductLinkInterfaceFactory $productLinkFactory,
         StockRegistryInterface $stockRegistry,
-        LoggerInterface $logger,
+        Logger $logger,
         ProductApiClient $productApiClient,
         OrderApiClient $orderApiClient,
         SourceItemsProcessorInterface $sourceItemsProcessor,
@@ -430,38 +430,33 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     public function exists($storeId, array $result)
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
-        try {
-            $collection = $this->productCollectionFactory->create();
-            $collection
-                ->addAttributeToSelect('*')
-                ->addAttributeToFilter('storekeeper_product_id', $storekeeper_id)
-                ->setFlag('has_stock_status_filter', false);
+        $collection = $this->productCollectionFactory->create();
+        $collection
+            ->addAttributeToSelect('*')
+            ->addAttributeToFilter('storekeeper_product_id', $storekeeper_id)
+            ->setFlag('has_stock_status_filter', false);
 
-            if (is_array($result) && isset($result['flat_product']) && isset($result['flat_product']['product'])) {
-                $collection->addAttributeToFilter(
-                    'sku', $result['flat_product']['product']['sku'] ?? null
-                );
-            }
-
-            if ($collection->count()) {
-                $firstItem = $collection->getFirstItem();
-                return $firstItem;
-            }
-
-            try {
-                $storekeeper_sku = $this->getResultSku($result);
-
-                if ($result = $this->productRepository->get($storekeeper_sku)) {
-                    return $result;
-                }
-            } catch (\Exception $e) {
-                // ignoring
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+        if (is_array($result) && isset($result['flat_product']) && isset($result['flat_product']['product'])) {
+            $collection->addAttributeToFilter(
+                'sku', $result['flat_product']['product']['sku'] ?? null
+            );
         }
+
+        if ($collection->count()) {
+            $firstItem = $collection->getFirstItem();
+            return $firstItem;
+        }
+
+        try {
+            $storekeeper_sku = $this->getResultSku($result);
+
+            if (!is_null($storekeeper_sku)) {
+                return $this->productRepository->get($storekeeper_sku);
+            }
+        } catch (\Exception $e) {
+            // ignoring
+        }
+
         return false;
     }
 
@@ -818,7 +813,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                             );
                         }
                     } catch (\Exception $e) {
-                        $this->logger->error($e->getMessage());
+                        $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                     }
                 }
             }
@@ -903,7 +898,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             try {
                 $target->addImageToMediaGallery($newImage, $imageTypes, true, false);
             } catch (LocalizedException $e) {
-                $this->logger->error($exception->getMessage());
+                $this->logger->error($exception->getMessage(), $this->logger->buildReportData($exception));
             }
         }
     }
@@ -1005,8 +1000,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            $this->logger->error($e->getTraceAsString());
+            $this->logger->error(
+                'error while cleanProductStorekeeperId',
+                ['error' =>$this->logger->buildReportData($e), 'storeId' => $storeId]
+            );
         }
     }
 }

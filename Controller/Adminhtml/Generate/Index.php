@@ -9,25 +9,25 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class Index extends Action implements HttpGetActionInterface
 {
     private PublisherInterface $messagePublisher;
-    private LoggerInterface $logger;
+    private Logger $logger;
 
     /**
      * Products constructor.
      * @param Context $context
      * @param ManagerInterface $messageManager
      * @param PublisherInterface $messagePublisher
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      */
     public function __construct(
         Context $context,
         ManagerInterface $messageManager,
         PublisherInterface $messagePublisher,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         parent::__construct($context);
         $this->messageManager = $messageManager;

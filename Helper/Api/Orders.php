@@ -17,7 +17,7 @@ use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\Shipping\Model\ShipmentNotifier;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Bundle\Model\Product\Type as Bundle;
@@ -44,7 +44,7 @@ class Orders extends AbstractHelper
     private ShipmentRepositoryInterface $shipmentRepository;
     private TrackFactory $trackFactory;
     private TaxItem $taxItem;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private Json $jsonSerializer;
     private Bundle $bundle;
     private $taxClassesDiscounts;
@@ -68,7 +68,7 @@ class Orders extends AbstractHelper
      * @param TrackFactory $trackFactory
      * @param TaxItem $taxItem
      * @param Context $context
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param Json $jsonSerializer
      * @param Bundle $bundle
      * @param OrderApiClient $orderApiClient
@@ -89,7 +89,7 @@ class Orders extends AbstractHelper
         TrackFactory $trackFactory,
         TaxItem $taxItem,
         Context $context,
-        LoggerInterface $logger,
+        Logger $logger,
         Json $jsonSerializer,
         Bundle $bundle,
         OrderApiClient $orderApiClient,
@@ -382,7 +382,14 @@ class Orders extends AbstractHelper
                 return $response;
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->warning(
+                'Error getting sotrekeeper order',
+                [
+                    'error' => $this->logger->buildReportData($e),
+                    'storeId' => $storeId,
+                    'storekeeperId' => $storeKeeperId
+                ]
+            );
             return null;
         }
     }

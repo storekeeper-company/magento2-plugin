@@ -6,7 +6,7 @@ use Magento\Customer\Model\Data\Customer;
 use Magento\Sales\Model\Order;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Customer\Model\Address;
 use Magento\Customer\Model\AddressFactory;
@@ -15,20 +15,20 @@ use Magento\Framework\Model\AbstractExtensibleModel;
 class CustomerApiClient
 {
     private OrderApiClient $orderApiClient;
-    private LoggerInterface $logger;
+    private Logger $logger;
     private CustomerRepositoryInterface $customerRepository;
     private AddressFactory $addressFactory;
 
     /**
      * CustomerApiClient constructor.
      * @param OrderApiClient $orderApiClient
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param CustomerRepositoryInterface $customerRepository
      * @param AddressFactory $addressFactory
      */
     public function __construct(
         OrderApiClient $orderApiClient,
-        LoggerInterface $logger,
+        Logger $logger,
         CustomerRepositoryInterface $customerRepository,
         AddressFactory $addressFactory
     ) {

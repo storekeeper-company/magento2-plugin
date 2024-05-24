@@ -1,34 +1,37 @@
 <?php
-
+/**
+ * Copyright ©  All rights reserved.
+ * See COPYING.txt for license details.
+ */
 declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Api;
 
 use Magento\Framework\Api\SearchCriteriaInterface;
 
-interface EventLogRepositoryInterface
+interface TaskLogRepositoryInterface
 {
 
     /**
-     * Save EventLog
-     * @param \StoreKeeper\StoreKeeper\Api\Data\EventLogInterface $eventLog
-     * @return \StoreKeeper\StoreKeeper\Api\Data\EventLogInterface
+     * Save TaskLog
+     * @param \StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface $taskLog
+     * @return \StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function save(
-        \StoreKeeper\StoreKeeper\Api\Data\EventLogInterface $eventLog
+        \StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface $taskLog
     );
 
     /**
-     * Retrieve EventLog
-     * @param string $eventlogId
-     * @return \StoreKeeper\StoreKeeper\Api\Data\EventLogInterface
+     * Retrieve TaskLog
+     * @param string $tasklogId
+     * @return \StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function get($eventlogId);
+    public function get($tasklogId);
 
     /**
-     * Retrieve EventLog matching the specified criteria.
+     * Retrieve TaskLog matching the specified criteria.
      * @param \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
      * @return \Magento\Framework\Api\SearchCriteriaInterface
      * @throws \Magento\Framework\Exception\LocalizedException
@@ -38,22 +41,21 @@ interface EventLogRepositoryInterface
     );
 
     /**
-     * Delete EventLog
-     * @param \StoreKeeper\StoreKeeper\Api\Data\EventLogInterface $eventLog
+     * Delete TaskLog
+     * @param \StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface $taskLog
      * @return bool true on success
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function delete(
-        \StoreKeeper\StoreKeeper\Api\Data\EventLogInterface $eventLog
+        \StoreKeeper\StoreKeeper\Api\Data\TaskLogInterface $taskLog
     );
 
     /**
-     * Delete EventLog by ID
-     * @param string $eventlogId
+     * Delete TaskLog by ID
+     * @param string $tasklogId
      * @return bool true on success
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function deleteById($eventlogId);
+    public function deleteById($tasklogId);
 }
-

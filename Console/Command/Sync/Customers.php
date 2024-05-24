@@ -6,7 +6,7 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Customers as CustomersHelper;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use Symfony\Component\Console\Command\Command;
@@ -23,7 +23,7 @@ class Customers extends Command
     private CustomerRepositoryInterface $customerRepository;
     private CustomersHelper $customersHelper;
     private Config $configHelper;
-    private LoggerInterface $logger;
+    private Logger $logger;
 
     /**
      * Constructor
@@ -33,7 +33,7 @@ class Customers extends Command
      * @param CustomerRepositoryInterface $customerRepository
      * @param CustomersHelper $customersHelper
      * @param Config $configHelper
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      * @param string|null $name
      */
     public function __construct(
@@ -42,7 +42,7 @@ class Customers extends Command
         CustomerRepositoryInterface $customerRepository,
         CustomersHelper $customersHelper,
         Config $configHelper,
-        LoggerInterface $logger,
+        Logger $logger,
         string $name = null
     ) {
         parent::__construct($name);
@@ -109,11 +109,11 @@ class Customers extends Command
                     $customer->setExtensionAttributes($extensionAttributes);
                     $this->customerRepository->save($customer);
                 } catch (\Exception $e) {
-                    $this->logger->error($e->getMessage());
+                    $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
         }
     }
 

@@ -9,7 +9,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Address;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 
 /**
@@ -22,7 +22,7 @@ class Customers extends AbstractHelper
     private AddressFactory $addressFactory;
     private CustomerRepositoryInterface $customerRepositoryInterface;
     private Context $context;
-    private LoggerInterface $logger;
+    private Logger $logger;
 
     /**
      * Constructor
@@ -31,14 +31,14 @@ class Customers extends AbstractHelper
      * @param AddressFactory $addressFactory
      * @param CustomerRepositoryInterface $customerRepositoryInterface
      * @param Context $context
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      */
     public function __construct(
         Auth $authHelper,
         AddressFactory $addressFactory,
         CustomerRepositoryInterface $customerRepositoryInterface,
         Context $context,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         $this->authHelper = $authHelper;
         $this->addressFactory = $addressFactory;

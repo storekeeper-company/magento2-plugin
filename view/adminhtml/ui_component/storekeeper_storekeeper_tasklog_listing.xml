@@ -1,0 +1,91 @@
+<?xml version="1.0" ?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+	<argument name="data" xsi:type="array">
+		<item name="js_config" xsi:type="array">
+			<item name="provider" xsi:type="string">storekeeper_storekeeper_tasklog_listing.storekeeper_storekeeper_tasklog_listing_data_source</item>
+		</item>
+	</argument>
+	<settings>
+		<spinner>storekeeper_storekeeper_tasklog_columns</spinner>
+		<deps>
+			<dep>storekeeper_storekeeper_tasklog_listing.storekeeper_storekeeper_tasklog_listing_data_source</dep>
+		</deps>
+	</settings>
+	<dataSource name="storekeeper_storekeeper_tasklog_listing_data_source" component="Magento_Ui/js/grid/provider">
+		<settings>
+			<storageConfig>
+				<param name="indexField" xsi:type="string">tasklog_id</param>
+			</storageConfig>
+			<updateUrl path="mui/index/render"/>
+		</settings>
+		<aclResource>StoreKeeper_StoreKeeper::TaskLog</aclResource>
+		<dataProvider name="storekeeper_storekeeper_tasklog_listing_data_source" class="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+			<settings>
+				<requestFieldName>id</requestFieldName>
+				<primaryFieldName>tasklog_id</primaryFieldName>
+			</settings>
+		</dataProvider>
+	</dataSource>
+	<listingToolbar name="listing_top">
+		<settings>
+			<sticky>true</sticky>
+		</settings>
+		<bookmark name="bookmarks"/>
+		<columnsControls name="columns_controls"/>
+		<filters name="listing_filters"/>
+		<paging name="listing_paging"/>
+	</listingToolbar>
+	<columns name="storekeeper_storekeeper_tasklog_columns">
+		<selectionsColumn name="ids">
+			<settings>
+				<indexField>tasklog_id</indexField>
+			</settings>
+		</selectionsColumn>
+		<column name="tasklog_id">
+			<settings>
+				<filter>text</filter>
+				<sorting>asc</sorting>
+				<label translate="true">ID</label>
+			</settings>
+		</column>
+        <column name="message_id">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Message Id</label>
+            </settings>
+        </column>
+		<column name="topic_name">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Topic Name</label>
+			</settings>
+		</column>
+		<column name="body">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Body</label>
+			</settings>
+		</column>
+		<column name="updated_at">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Updated At</label>
+			</settings>
+		</column>
+        <column name="status" class="StoreKeeper\StoreKeeper\Ui\Component\Listing\Column\Status">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="sortable" xsi:type="boolean">true</item>
+                    <item name="filter" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Status</item>
+                </item>
+            </argument>
+        </column>
+		<column name="number_of_trials">
+			<settings>
+				<filter>text</filter>
+				<label translate="true">Number of trials</label>
+			</settings>
+		</column>
+	</columns>
+</listing>

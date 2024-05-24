@@ -7,22 +7,22 @@ use StoreKeeper\ApiWrapper\Wrapper\FullJsonAdapter;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
 use StoreKeeper\ApiWrapper\Auth;
-use Psr\Log\LoggerInterface;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class ApiClient
 {
     private ScopeConfigInterface $scopeConfig;
-    protected LoggerInterface $logger;
+    protected Logger $logger;
     protected ?Auth $auth = null;
 
     /**
      * ApiClient constructor.
      * @param ScopeConfigInterface $scopeConfig
-     * @param LoggerInterface $logger
+     * @param Logger $logger
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
