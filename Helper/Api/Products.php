@@ -57,6 +57,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private SourceItemsProcessorInterface $sourceItemsProcessor;
     private Action $productAction;
     private Config $configHelper;
+    private Attributes $attributes;
 
     /**
      * Constructor
@@ -82,6 +83,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param SourceItemsProcessorInterface $sourceItemsProcessor
      * @param Action $productAction
      * @param Config $configHelper
+     * @param Attributes $attributes
      */
     public function __construct(
         Auth $authHelper,
@@ -104,7 +106,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         OrderApiClient $orderApiClient,
         SourceItemsProcessorInterface $sourceItemsProcessor,
         Action $productAction,
-        Config $configHelper
+        Config $configHelper,
+        Attributes $attributes
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -126,6 +129,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->sourceItemsProcessor = $sourceItemsProcessor;
         $this->productAction = $productAction;
         $this->configHelper = $configHelper;
+        $this->attributes = $attributes;
     }
 
     /**
@@ -763,6 +767,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 'crosssell')
             ) {
                 $shouldUpdate = true;
+            }
+
+            if (array_key_exists('content_vars', $flat_product)) {
+                $target = $this->attributes->processProductAttributes($flat_product, $target, $storeId);
+                if (!$update) {
+                    $shouldUpdate = true;
+                }
             }
 
             if ($shouldUpdate) {
