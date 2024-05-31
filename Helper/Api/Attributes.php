@@ -27,6 +27,8 @@ use Magento\Eav\Api\AttributeOptionManagementInterface;
 
 class Attributes extends AbstractHelper
 {
+    const STOREKEEPER_GROUP_NAME = 'StoreKeeper';
+
     private EavSetupFactory $eavSetupFactory;
     private ModuleDataSetupInterface $moduleDataSetup;
     private SearchCriteriaBuilder $searchCriteriaBuilder;
@@ -162,12 +164,13 @@ class Attributes extends AbstractHelper
                         } else {
                             //Create option for attribute and assign it to product
                             $option = $this->optionFactory->create();
-                            $option->setValue($attribute['value_label']);
+                            $option->setValue($attribute['value']);
                             $this->attributeOptionLabel->setStoreId(0);
                             $this->attributeOptionLabel->setLabel($attribute['value_label']);
                             $option->setLabel($attribute['value_label']);
                             $option->setStoreLabels([$this->attributeOptionLabel]);
-                            $option->setSortOrder(0);
+                            $sortOrder = (array_key_exists('attribute_option_order', $attribute)) ? $attribute['attribute_option_order'] : 0;
+                            $option->setSortOrder($sortOrder);
                             $option->setIsDefault(false);
                             $optionId = $this->attributeOptionManagement->add(
                                 Product::ENTITY,
@@ -277,7 +280,7 @@ class Attributes extends AbstractHelper
 
         $attributeGroups = $this->attributeGroupRepository->getList($searchCriteria);
         foreach ($attributeGroups->getItems() as $group) {
-            if ($group->getAttributeGroupName() == 'StoreKeeper') {
+            if ($group->getAttributeGroupName() == self::STOREKEEPER_GROUP_NAME) {
                 $attributeGroupId = $group->getAttributeGroupId();
                 break;
             }
@@ -292,11 +295,6 @@ class Attributes extends AbstractHelper
         );
 
         $this->moduleDataSetup->getConnection()->endSetup();
-    }
-
-    private function matchProductAttributeType(string $skAttributeType)
-    {
-        return true;
     }
 
     /**

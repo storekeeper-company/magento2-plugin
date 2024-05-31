@@ -31,29 +31,17 @@ class AttributeApiClient extends ApiClient
     /**
      * @param string $storeId
      * @param int $attributeId
-     * @return ModuleApiWrapperInterface
+     * @return array|null
      * @throws \Exception
      */
-    public function getListAttributeOptions(string $storeId, int $attributeId): ModuleApiWrapperInterface
+    public function getAttributeById(string $storeId, int $attributeId): ?array
     {
-        return $this->getShopModule($storeId)->listAttributeOptions(0, 999, null, [[
-            'name' => 'attribute/id__=',
-            'val' => $attributeId
-        ]]);
-    }
-
-    /**
-     * @param string $storeId
-     * @param int $attributeId
-     * @return ModuleApiWrapperInterface
-     * @throws \Exception
-     */
-    public function getAttributeById(string $storeId, int $attributeId): ModuleApiWrapperInterface
-    {
-        return $this->getShopModule($storeId)->listAttributes(0, 20, null, [[
+        $attributes  = $this->getShopModule($storeId)->listAttributesForHook(0, 1, null, [[
             'name' => 'id__=',
             'val' => $attributeId
         ]]);
+
+        return $attributes['data'][0] ?? null;
     }
 
     /**

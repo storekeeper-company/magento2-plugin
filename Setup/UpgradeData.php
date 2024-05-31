@@ -11,8 +11,8 @@ use Magento\Eav\Model\Config as EavConfig;
 use Magento\Eav\Setup\EavSetupFactory;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
-
 use Magento\Framework\Setup\UpgradeDataInterface;
+use StoreKeeper\StoreKeeper\Helper\Api\Attributes;
 
 class UpgradeData implements UpgradeDataInterface
 {
@@ -60,7 +60,7 @@ class UpgradeData implements UpgradeDataInterface
                     'required' => false,
                     'sort_order' => 10000,
                     'global' => 2,
-                    'group' => 'StoreKeeper'
+                    'group' => Attributes::STOREKEEPER_GROUP_NAME
                 ]
             );
         }
@@ -78,7 +78,7 @@ class UpgradeData implements UpgradeDataInterface
                     'required' => false,
                     'sort_order' => 10000,
                     'global' => 2,
-                    'group' => 'StoreKeeper'
+                    'group' => Attributes::STOREKEEPER_GROUP_NAME
                 ]
             );
         }
@@ -96,7 +96,7 @@ class UpgradeData implements UpgradeDataInterface
                     'required' => false,
                     'sort_order' => 10000,
                     'global' => 2,
-                    'group' => 'StoreKeeper'
+                    'group' => Attributes::STOREKEEPER_GROUP_NAME
                 ]
             );
         }
