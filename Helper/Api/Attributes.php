@@ -126,6 +126,10 @@ class Attributes extends AbstractHelper
             ) {
                 try {
                     $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
+                    if (is_null($attributeArray)) {
+                        continue;
+                    }
+
                     $attribute['is_options'] = array_key_exists('is_options', $attributeArray) ? $attributeArray['is_options'] : null;
                     $attribute['type'] = array_key_exists('type', $attributeArray) ? $attributeArray['type'] : null;
                     /**
