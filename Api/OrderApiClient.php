@@ -127,4 +127,26 @@ class OrderApiClient extends ApiClient
             ]
         );
     }
+
+    /**
+     * @param $storeId
+     * @param $storekeeperProductId
+     * @return array
+     * @throws \Exception
+     */
+    public function getUpsellShopProductIds($storeId, $storekeeperProductId): array
+    {
+        return $this->getShopModule($storeId)->getUpsellShopProductIds($storekeeperProductId);
+    }
+
+    /**
+     * @param $storeId
+     * @param $storekeeperProductId
+     * @return array
+     * @throws \Exception
+     */
+    public function getCrossSellShopProductIds($storeId, $storekeeperProductId): array
+    {
+        return $this->getShopModule($storeId)->getCrossSellShopProductIds($storekeeperProductId);
+    }
 }

@@ -380,8 +380,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if (empty($storekeeperProductId)) {
             throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
         }
-        $storekeeperLinkIds = $this->orderApiClient->getShopModule($storeId)
-            ->$storeKeeperEndpoint($storekeeperProductId);
+        $storekeeperLinkIds = $this->orderApiClient->$storeKeeperEndpoint($storeId, $storekeeperProductId);
 
         $storekeeperLinkSkus = [];
 
@@ -657,7 +656,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             $storekeeper_id = $this->getResultStoreKeeperId($result);
 
-            if ($target->getStoreKeeperProductId() != $storekeeper_id) {
+            if ($target->getStorekeeperProductId() != $storekeeper_id) {
                 $target->setStorekeeperProductId($storekeeper_id);
             }
 
