@@ -20,10 +20,12 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
+use Magento\Swatches\Model\Swatch;
 use Magento\Swatches\Model\SwatchFactory;
 use Magento\Eav\Model\Entity\Attribute\OptionFactory;
 use Magento\Eav\Api\Data\AttributeOptionLabelInterface;
 use Magento\Eav\Api\AttributeOptionManagementInterface;
+use StoreKeeper\StoreKeeper\Api\AttributeApiClient;
 
 class Attributes extends AbstractHelper
 {
@@ -44,6 +46,7 @@ class Attributes extends AbstractHelper
     private OptionFactory $optionFactory;
     private AttributeOptionLabelInterface $attributeOptionLabel;
     private AttributeOptionManagementInterface $attributeOptionManagement;
+    private AttributeApiClient $attributeApiClient;
 
     /**
      * Constructor
@@ -62,6 +65,7 @@ class Attributes extends AbstractHelper
      * @param OptionFactory $optionFactory
      * @param AttributeOptionLabelInterface $attributeOptionLabel
      * @param AttributeOptionManagementInterface $attributeOptionManagement
+     * @param AttributeApiClient $attributeApiClient
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -77,7 +81,8 @@ class Attributes extends AbstractHelper
         OptionCollectionFactory $optionCollectionFactory,
         OptionFactory $optionFactory,
         AttributeOptionLabelInterface $attributeOptionLabel,
-        AttributeOptionManagementInterface $attributeOptionManagement
+        AttributeOptionManagementInterface $attributeOptionManagement,
+        AttributeApiClient $attributeApiClient
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -93,6 +98,7 @@ class Attributes extends AbstractHelper
         $this->optionFactory = $optionFactory;
         $this->attributeOptionLabel = $attributeOptionLabel;
         $this->attributeOptionManagement = $attributeOptionManagement;
+        $this->attributeApiClient = $attributeApiClient;
     }
 
     /**
@@ -119,6 +125,9 @@ class Attributes extends AbstractHelper
                 && array_key_exists('attribute_set_name', $flat_product)
             ) {
                 try {
+                    $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
+                    $attribute['is_options'] = array_key_exists('is_options', $attributeArray) ? $attributeArray['is_options'] : null;
+                    $attribute['type'] = array_key_exists('type', $attributeArray) ? $attributeArray['type'] : null;
                     /**
                      * Can cause potential conflicts - SK's attributes might by named as letters and or '-' and/or '_' symbols
                      * Magento allows only letters and/or '_'
@@ -346,11 +355,15 @@ class Attributes extends AbstractHelper
             $attributeData['swatch_input_type'] = Swatch::SWATCH_INPUT_TYPE_VISUAL;
             $attributeData['update_product_preview_image'] = 1;
             $attributeData['use_product_image_for_swatch'] = 0;
+            $attributeData['is_searchable'] = 1;
+            $attributeData['is_filterable'] = 1;
             $attributeData['option'] = ['value' => [$attributeArray['value'] => [$attributeArray['value_label']]]];
         } elseif ($this->attributeIsSelect($attributeArray)) {
             $attributeData['backend_type'] = 'int';
             $attributeData['frontend_input'] = 'select';
             $attributeData['option'] = ['value' => [$attributeArray['value'] => [$attributeArray['value_label']]]];
+            $attributeData['is_searchable'] = 1;
+            $attributeData['is_filterable'] = 1;
         } else {
             $attributeData['backend_type'] = 'varchar';
             $attributeData['frontend_input'] = 'text';
@@ -361,17 +374,13 @@ class Attributes extends AbstractHelper
 
     /**
      * Check if SK attribute is Text ('String' type for SK naming convention)
-     * @todo rework after SK product attribute type will be optainable via SK api
      *
      * @param array $attributeArray
      * @return bool
      */
     private function attributeIsText(array $attributeArray): bool
     {
-        if (
-            array_key_exists('value', $attributeArray)
-            && !array_key_exists('value_label', $attributeArray)
-        ) {
+        if ($attributeArray['type'] == 'string' && $attributeArray['is_options'] == false) {
             return true;
         } else {
             return false;
@@ -380,41 +389,13 @@ class Attributes extends AbstractHelper
 
     /**
      * Check if SK attribute is Text ('Color' type with image options for SK naming convention)
-     * @todo rework after SK product attribute type will be optainable via SK api
      *
      * @param array $attributeArray
      * @return bool
      */
     private function attributeIsVisualColorSwatch(array $attributeArray): bool
     {
-        if (
-            array_key_exists('value', $attributeArray)
-            && array_key_exists('value_label', $attributeArray)
-            && array_key_exists('attribute_option_id', $attributeArray)
-            && array_key_exists('attribute_option_color_hex', $attributeArray)
-        ) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Check if SK attribute is Text ('String' type with image options for SK naming convention)
-     * @todo rework after SK product attribute type will be optainable via SK api
-     *
-     * @param array $attributeArray
-     * @return bool
-     */
-    private function attributeIsVisualImageSwatch(array $attributeArray): bool
-    {
-        if (
-            array_key_exists('value', $attributeArray)
-            && array_key_exists('value_label', $attributeArray)
-            && array_key_exists('attribute_option_id', $attributeArray)
-            && array_key_exists('attribute_option_image_url', $attributeArray)
-            && !array_key_exists('attribute_option_color_hex', $attributeArray)
-        ) {
+        if ($attributeArray['type'] == 'color' && $attributeArray['is_options'] == true) {
             return true;
         } else {
             return false;
@@ -423,20 +404,13 @@ class Attributes extends AbstractHelper
 
     /**
      * Check if SK attribute is Text ('String' type without image options for SK naming convention)
-     * @todo rework after SK product attribute type will be optainable via SK api
      *
      * @param array $attributeArray
      * @return bool
      */
     private function attributeIsSelect(array $attributeArray): bool
     {
-        if (
-            array_key_exists('value', $attributeArray)
-            && array_key_exists('value_label', $attributeArray)
-            && array_key_exists('attribute_option_id', $attributeArray)
-            && !array_key_exists('attribute_option_image_url', $attributeArray)
-            && !array_key_exists('attribute_option_color_hex', $attributeArray)
-        ) {
+        if ($attributeArray['type'] == 'string' && $attributeArray['is_options'] == true) {
             return true;
         } else {
             return false;
