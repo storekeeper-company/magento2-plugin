@@ -16,6 +16,7 @@ use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\Eav\Model\Entity\TypeFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
@@ -58,6 +59,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private Action $productAction;
     private Config $configHelper;
     private Attributes $attributes;
+    private TypeFactory $entityTypeFactory;
 
     /**
      * Constructor
@@ -107,7 +109,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         SourceItemsProcessorInterface $sourceItemsProcessor,
         Action $productAction,
         Config $configHelper,
-        Attributes $attributes
+        Attributes $attributes,
+        TypeFactory $entityTypeFactory,
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -130,6 +133,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productAction = $productAction;
         $this->configHelper = $configHelper;
         $this->attributes = $attributes;
+        $this->entityTypeFactory = $entityTypeFactory;
     }
 
     /**
@@ -282,7 +286,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $product = !$product ? null : $product;
                 $status = ProductApiClient::PRODUCT_UPDATE_STATUS_ERROR;
             }
-            $this->productApiClient->setShopProductObjectSyncStatusForHook($storeId, $storeKeeperId, $product, $status, $exceptionData);
+            $this->productApiClient->setShopProductObjectSyncStatusForHook(
+                $storeId,
+                $storeKeeperId,
+                $product,
+                $status,
+                $exceptionData
+            );
         } else {
             throw new \Exception("Product {$storeKeeperId} does not exist in StoreKeeper");
         }
@@ -587,10 +597,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     public function update($storeId, $target = null, array $result = [])
     {
         $this->storeManager->setCurrentStore($storeId);
-
         $language = $this->authHelper->getLanguageForStore($storeId);
-
         $websiteId = $this->getStoreWebsiteId($storeId);
+        $catalogEntity = $this->entityTypeFactory->create()->loadByCode(Product::ENTITY);
+        $catalogEntityId = $catalogEntity->getId();
 
         $flat_product = $result['flat_product'];
         $productPrice = $result['product_price']['ppu'];
@@ -624,9 +634,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setStoreId(Store::DEFAULT_STORE_ID);
             }
 
-            $newStatus = $product['active'] ?
-                Status::STATUS_ENABLED :
-                Status::STATUS_DISABLED;
+            $newStatus = $product['active'] ? Status::STATUS_ENABLED : Status::STATUS_DISABLED;
 
             if ($target->getStatus() != $newStatus) {
                 $target->setStatus($newStatus);
@@ -768,11 +776,20 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $shouldUpdate = true;
             }
 
-            if (array_key_exists('content_vars', $flat_product)) {
-                $target = $this->attributes->processProductAttributes($flat_product, $target, $storeId);
-                if (!$update) {
+            /**
+             * Load/create attribute set in Magento basned on SK attributes et name
+             * If it differs from currentl product attribute set - assign it
+             */
+            if (array_key_exists('attribute_set_name', $flat_product)) {
+                $attributeSetName = $flat_product['attribute_set_name'];
+                $attributeSetId = $this->attributes->getAttributeSetIdByName($catalogEntityId, $attributeSetName);
+
+                if ($target->getAttributeSetId() != $attributeSetId) {
+                    $target->setAttributeSetId($attributeSetId);
                     $shouldUpdate = true;
                 }
+            } else {
+                $attributeSetId = $target->getAttributeSetId();
             }
 
             if ($shouldUpdate) {
@@ -783,6 +800,21 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                         $this->setProductToUseDefaultValues($target, $storeId);
                     }
                 }
+
+                $target = $this->productRepository->get($target->getSku());
+            }
+
+            /**
+             * Process custom attributes AFTER product save, in case of changed attribute set
+             */
+            if (array_key_exists('content_vars', $flat_product)) {
+                $target = $this->attributes->processProductAttributes(
+                    $flat_product,
+                    $target,
+                    $storeId,
+                    $catalogEntityId,
+                    $attributeSetId
+                );
             }
 
             $sourceItemData = [
@@ -840,7 +872,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function updateSourceItemStock(array $sourceItemData, array $result, array $product): array
     {
-        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
+        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ?
+            $result['orderable_stock_value'] :
+            null;
         $product_stock_unlimited = $product['product_stock']['unlimited'];
         $backorder_enabled = (array_key_exists('backorder_enabled', $result)) ? $result['backorder_enabled'] : null;
         $in_stock = $this->getInStock($result);
@@ -880,7 +914,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getInStock(array $result): bool
     {
-        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ? $result['orderable_stock_value'] : null;
+        $product_stock_value = (array_key_exists('orderable_stock_value', $result)) ?
+            $result['orderable_stock_value'] :
+            null;
 
         return $in_stock = null === $product_stock_value || $product_stock_value > 0;
     }

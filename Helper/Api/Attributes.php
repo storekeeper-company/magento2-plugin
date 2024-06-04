@@ -11,8 +11,9 @@ use Magento\Catalog\Model\ResourceModel\Product\Action as ProductAction;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Api\AttributeSetRepositoryInterface;
 use Magento\Eav\Api\AttributeGroupRepositoryInterface;
+use Magento\Eav\Api\Data\AttributeSetInterface;
 use Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface;
-use Magento\Eav\Model\Entity\TypeFactory;
+use Magento\Eav\Model\Entity\Attribute\SetFactory as AttributeSetFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory as OptionCollectionFactory;
 use Magento\Eav\Setup\EavSetup;
 use Magento\Eav\Setup\EavSetupFactory;
@@ -37,7 +38,6 @@ class Attributes extends AbstractHelper
     private AttributeSetRepositoryInterface $attributeSetRepository;
     private AttributeGroupRepositoryInterface $attributeGroupRepository;
     private AttributeRepositoryInterface $attributeRepository;
-    private TypeFactory $entityTypeFactory;
     private Config $eavConfig;
     private ProductAction $productAction;
     private AttributeFactory $attributeFactory;
@@ -47,6 +47,7 @@ class Attributes extends AbstractHelper
     private AttributeOptionLabelInterface $attributeOptionLabel;
     private AttributeOptionManagementInterface $attributeOptionManagement;
     private AttributeApiClient $attributeApiClient;
+    private AttributeSetFactory $attributeSetFactory;
 
     /**
      * Constructor
@@ -57,7 +58,6 @@ class Attributes extends AbstractHelper
      * @param AttributeSetRepositoryInterface $attributeSetRepository
      * @param AttributeGroupRepositoryInterface $attributeGroupRepository
      * @param AttributeRepositoryInterface $attributeRepository
-     * @param TypeFactory $entityTypeFactory
      * @param ProductAction $productAction
      * @param AttributeFactory $attributeFactory
      * @param SwatchFactory $swatchFactory
@@ -66,6 +66,7 @@ class Attributes extends AbstractHelper
      * @param AttributeOptionLabelInterface $attributeOptionLabel
      * @param AttributeOptionManagementInterface $attributeOptionManagement
      * @param AttributeApiClient $attributeApiClient
+     * @param AttributeSetFactory $attributeSetFactory
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -74,7 +75,6 @@ class Attributes extends AbstractHelper
         AttributeSetRepositoryInterface $attributeSetRepository,
         AttributeGroupRepositoryInterface $attributeGroupRepository,
         AttributeRepositoryInterface $attributeRepository,
-        TypeFactory $entityTypeFactory,
         ProductAction $productAction,
         AttributeFactory $attributeFactory,
         SwatchFactory $swatchFactory,
@@ -82,7 +82,8 @@ class Attributes extends AbstractHelper
         OptionFactory $optionFactory,
         AttributeOptionLabelInterface $attributeOptionLabel,
         AttributeOptionManagementInterface $attributeOptionManagement,
-        AttributeApiClient $attributeApiClient
+        AttributeApiClient $attributeApiClient,
+        AttributeSetFactory $attributeSetFactory
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -90,7 +91,6 @@ class Attributes extends AbstractHelper
         $this->attributeSetRepository = $attributeSetRepository;
         $this->attributeGroupRepository = $attributeGroupRepository;
         $this->attributeRepository = $attributeRepository;
-        $this->entityTypeFactory = $entityTypeFactory;
         $this->productAction = $productAction;
         $this->attributeFactory = $attributeFactory;
         $this->swatchFactory = $swatchFactory;
@@ -99,6 +99,7 @@ class Attributes extends AbstractHelper
         $this->attributeOptionLabel = $attributeOptionLabel;
         $this->attributeOptionManagement = $attributeOptionManagement;
         $this->attributeApiClient = $attributeApiClient;
+        $this->attributeSetFactory = $attributeSetFactory;
     }
 
     /**
@@ -113,8 +114,13 @@ class Attributes extends AbstractHelper
      * @throws NoSuchEntityException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function processProductAttributes(array $flat_product, Product $target, string $storeId): Product
-    {
+    public function processProductAttributes(
+        array $flat_product,
+        Product $target,
+        string $storeId,
+        string $catalogEntityId,
+        string $attributeSetId
+    ): Product{
         $attributesToSave = [];
 
         foreach ($flat_product['content_vars'] as $attribute) {
@@ -122,7 +128,6 @@ class Attributes extends AbstractHelper
                 && array_key_exists('name', $attribute)
                 && array_key_exists('label', $attribute)
                 && array_key_exists('value', $attribute)
-                && array_key_exists('attribute_set_name', $flat_product)
             ) {
                 try {
                     $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
@@ -139,13 +144,9 @@ class Attributes extends AbstractHelper
                     $attributeCode = str_replace('-', '_', $attribute['name']);
                     $attributeLabel = $attribute['label'];
                     $attributeValue = $attribute['value'];
-                    $attributeSetName = $flat_product['attribute_set_name'];
 
                     $attributeEntity = $this->attributeRepository->get('catalog_product', $attributeCode);
                 } catch (NoSuchEntityException $e) {
-                    $catalogEntity = $this->entityTypeFactory->create()->loadByCode(Product::ENTITY);
-                    $catalogEntityId = $catalogEntity->getId();
-
                     $attributeEntity = $this->createAttribute(
                         $catalogEntityId,
                         $attributeCode,
@@ -155,23 +156,21 @@ class Attributes extends AbstractHelper
                     if ($this->attributeIsVisualColorSwatch($attribute)) {
                         $this->attachSwatchesToOptions($attribute, $attributeEntity);
                     }
-                    $this->attachAttributeSet($catalogEntityId, $attributeCode, $attributeSetName);
+                    $this->attachAttributeSet($catalogEntityId, $attributeCode, $attributeSetId);
                 }
 
                 /**
                  * If product is new - set attribute value.
                  * If product exist - populate array with atrribute data, and save all at once later in method
                  */
-                 if ($this->attributeIsVisualColorSwatch($attribute) || $this->attributeIsSelect($attribute)) {
+                if ($this->attributeIsVisualColorSwatch($attribute) || $this->attributeIsSelect($attribute)) {
                     //In case product attribute is Swatch or Select with options - handle options first
                     //then - add/update existing value
                     if ($attributeEntity->usesSource()) {
                         $option_id = $attributeEntity->getSource()->getOptionId($attribute['value_label']);
                         //If option id exist - compare it to existing product attribute value
                         if ($option_id) {
-                            if (!$target->getId()) {
-                                $target->setData($attributeCode, $option_id);
-                            } else if ($target->getData($attributeCode) != $option_id) {
+                            if ($target->getData($attributeCode) != $option_id) {
                                 $attributesToSave[$attributeCode] = $option_id;
                             }
                         } else {
@@ -195,22 +194,18 @@ class Attributes extends AbstractHelper
                                 if ($this->attributeIsVisualColorSwatch($attribute)) {
                                     $this->attachSwatchesToOptions($attribute, $attributeEntity);
                                 }
-                                if (!$target->getId()) {
-                                    $target->setData($attributeCode, $optionId);
-                                } else if ($target->getData($attributeCode) != $optionId) {
+                                if ($target->getData($attributeCode) != $optionId) {
                                     $attributesToSave[$attributeCode] = $optionId;
                                 }
                             }
                         }
                     }
                 } else if ($this->attributeIsText($attribute)) {
-                     //In case product attribute is String/Text - add/update existing value
-                     if (!$target->getId()) {
-                         $target->setData($attributeCode, $attributeValue);
-                     } else if ($target->getData($attributeCode) != $attributeValue) {
-                         $attributesToSave[$attributeCode] = $attributeValue;
-                     }
-                 }
+                    //In case product attribute is String/Text - add/update existing value
+                    if ($target->getData($attributeCode) != $attributeValue) {
+                        $attributesToSave[$attributeCode] = $attributeValue;
+                    }
+                }
             } else {
                 throw new \Exception('Missing attribute name, label, value and/or attribute set');
             }
@@ -254,37 +249,19 @@ class Attributes extends AbstractHelper
     }
 
     /**
-     * Assign M2 attribute to existing attribute set mathcing to SK's attribute set by name
+     * Assign M2 attribute to existing attribute set
      *
      * @param string $catalogEntityId
      * @param string $attributeCode
-     * @param string $attributeSetName
+     * @param string $attributeSetId
      * @return void
      * @throws NoSuchEntityException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function attachAttributeSet(string $catalogEntityId, string $attributeCode, string $attributeSetName): void
+    private function attachAttributeSet(string $catalogEntityId, string $attributeCode, string $attributeSetId): void
     {
         $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
         $this->moduleDataSetup->getConnection()->startSetup();
-
-        $searchCriteria = $this->searchCriteriaBuilder->addFilter(
-            'attribute_set_name',
-            $attributeSetName,
-            'eq'
-        )->addFilter(
-            'entity_type_id',
-            $catalogEntityId,
-            'eq'
-        )->create();
-        $attributeSets = $this->attributeSetRepository->getList($searchCriteria)->getItems();
-
-        if (empty($attributeSets)) {
-            throw new \Exception("Attribute set with name '{$attributeSetName}' not found.");
-        }
-
-        $attributeSet = reset($attributeSets);
-        $attributeSetId = $attributeSet->getAttributeSetId();
 
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter(
@@ -447,5 +424,60 @@ class Attributes extends AbstractHelper
                 $swatch->save();
             }
         }
+    }
+
+    /**
+     * @param string $catalogEntityId
+     * @param string $attributeSetName
+     * @return AttributeSetInterface[]
+     */
+    private function searchAttributeSetByName(string $catalogEntityId, string $attributeSetName): array
+    {
+        $searchCriteria = $this->searchCriteriaBuilder->addFilter(
+            'attribute_set_name',
+            $attributeSetName,
+            'eq'
+        )->addFilter(
+            'entity_type_id',
+            $catalogEntityId,
+            'eq'
+        )->create();
+
+        return $this->attributeSetRepository->getList($searchCriteria)->getItems();
+    }
+
+    /**
+     * @param string $catalogEntityId
+     * @param string $attributeSetName
+     * @return string
+     */
+    public function getAttributeSetIdByName(string $catalogEntityId, string $attributeSetName): string
+    {
+        $attributeSets = $this->searchAttributeSetByName($catalogEntityId, $attributeSetName);
+
+        if (empty($attributeSets)) {
+            $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
+
+            $attributeSetId = $eavSetup->getDefaultAttributeSetId($catalogEntityId);
+
+            $data = [
+                'attribute_set_name' => $attributeSetName,
+                'entity_type_id' => $catalogEntityId,
+                'sort_order' => 99,
+            ];
+            $attributeSet = $this->attributeSetFactory->create();
+            $attributeSet->setData($data);
+            $attributeSet->validate();
+            $attributeSet->save();
+            $attributeSet->initFromSkeleton($attributeSetId);
+            $attributeSet->save();
+
+            $attributeSetId = $attributeSet->getAttributeSetId();
+        } else {
+            $attributeSet = reset($attributeSets);
+            $attributeSetId = $attributeSet->getAttributeSetId();
+        }
+
+        return $attributeSetId;
     }
 }
