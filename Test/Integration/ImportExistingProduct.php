@@ -58,8 +58,8 @@ class ImportExistingProduct extends AbstractTestCase
                     'title' => 'Simple Product 2',
                     'body' => 'Simple Body Description',
                     'slug' => '',
-                    'attribute_set_name' => 'Default',
-                    'attribute_set_alias' => 'default',
+                    'attribute_set_name' => 'New Attribute set',
+                    'attribute_set_alias' => 'new-attribute-set',
                     'product' => [
                         'product_stock' => [
                             'value' => self::UPDATED_STOCK_ITEM_VALUE,
@@ -116,6 +116,7 @@ class ImportExistingProduct extends AbstractTestCase
     protected $optionFactory;
     protected $attributeOptionLabel;
     protected $attributeOptionManagement;
+    protected $attributeSetFactory;
 
     protected function setUp(): void
     {
@@ -146,6 +147,7 @@ class ImportExistingProduct extends AbstractTestCase
         $this->configHelper = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Helper\Config::class);
         $this->sourceItemsProcessor = Bootstrap::getObjectManager()->create(\Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface::class);
         $this->swatchHelper = Bootstrap::getObjectManager()->create(\Magento\Swatches\Helper\Data::class);
+        $this->attributeSetFactory = Bootstrap::getObjectManager()->create(\Magento\Eav\Model\Entity\Attribute\SetFactory::class);
 
         $this->orderApiClientMock->method('getNaturalSearchShopFlatProductForHooks')
             ->willReturn(
@@ -169,7 +171,6 @@ class ImportExistingProduct extends AbstractTestCase
                 'attributeSetRepository' => $this->attributeSetRepository,
                 'attributeGroupRepository' => $this->attributeGroupRepository,
                 'attributeRepository' => $this->attributeRepository,
-                'entityTypeFactory' => $this->entityTypeFactory,
                 'productAction' => $this->productAction,
                 'attributeFactory' => $this->attributeFactory,
                 'swatchFactory' =>  $this->swatchFactory,
@@ -177,7 +178,8 @@ class ImportExistingProduct extends AbstractTestCase
                 'optionFactory' => $this->optionFactory,
                 'attributeOptionLabel' => $this->attributeOptionLabel,
                 'attributeOptionManagement' => $this->attributeOptionManagement,
-                'attributeApiClient' => $this->attributeApiClientMock
+                'attributeApiClient' => $this->attributeApiClientMock,
+                'attributeSetFactory' => $this->attributeSetFactory
             ]);
 
         $this->apiProducts = $objectManager->getObject(
@@ -193,7 +195,8 @@ class ImportExistingProduct extends AbstractTestCase
                 'attributes' => $this->attributes,
                 'productRepository' => $this->productRepository,
                 'configHelper' => $this->configHelper,
-                'sourceItemsProcessor' => $this->sourceItemsProcessor
+                'sourceItemsProcessor' => $this->sourceItemsProcessor,
+                'entityTypeFactory' => $this->entityTypeFactory
             ]
         );
     }
@@ -224,6 +227,10 @@ class ImportExistingProduct extends AbstractTestCase
         $swatchData = $this->swatchHelper->getSwatchesByOptionsId([$product->getColorAttr()]);
         $swatchColor = $swatchData[$product->getColorAttr()]['value'];
         $this->assertEquals($this->getColorAttributeExpectedValue(), $swatchColor);
+
+        //Assert newly created attribute set by name
+        $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
+        $this->assertEquals($this->getAttributeSetExpectedName(), $attributeSet->getAttributeSetName());
     }
 
     private function getStringAttributeExpectedValue(): string
@@ -239,5 +246,10 @@ class ImportExistingProduct extends AbstractTestCase
     private function getSelectAttributeExpectedValue(): string
     {
         return self::PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][2]['value_label'];
+    }
+
+    private function getAttributeSetExpectedName(): string
+    {
+        return self::PRODUCT_RESPONSE['data'][0]['flat_product']['attribute_set_name'];
     }
 }

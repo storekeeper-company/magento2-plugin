@@ -86,6 +86,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param Action $productAction
      * @param Config $configHelper
      * @param Attributes $attributes
+     * @param TypeFactory $entityTypeFactory
      */
     public function __construct(
         Auth $authHelper,
