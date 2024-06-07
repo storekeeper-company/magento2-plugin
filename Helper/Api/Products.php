@@ -791,7 +791,15 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function getResultSku($result)
     {
-        return $result['flat_product']['product']['sku'];
+        if (array_key_exists('flat_product', $result)) {
+            if (array_key_exists('product', $result['flat_product'])) {
+                if (array_key_exists('sku', $result['flat_product']['product'])) {
+                    return $result['flat_product']['product']['sku'];
+                }
+            }
+        }
+
+        return null;
     }
 
 
@@ -1070,7 +1078,11 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             if ($existingImage) {
                 if ($existingImage == 'no_selection'
                     || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)) {
-                    $shouldUpdate = $this->setGalleryImage($flat_product['main_image']['big_url'], $target, true);
+                    $shouldUpdate = $this->setGalleryImage(
+                        $flat_product['main_image']['big_url'],
+                        $target,
+                        true
+                    );
                 }
             }
         }

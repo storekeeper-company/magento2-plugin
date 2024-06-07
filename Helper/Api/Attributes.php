@@ -133,6 +133,15 @@ class Attributes extends AbstractHelper
                 && array_key_exists('value', $attribute)
             ) {
                 try {
+                    $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
+                    if (is_null($attributeArray)) {
+                        continue;
+                    }
+
+                    $attribute['is_options'] = array_key_exists('is_options', $attributeArray) ?
+                        $attributeArray['is_options'] :
+                        null;
+                    $attribute['type'] = array_key_exists('type', $attributeArray) ? $attributeArray['type'] : null;
                     /**
                      * Can cause potential conflicts - SK's attributes might by named as letters and or '-' and/or '_' symbols
                      * Magento allows only letters and/or '_'
@@ -148,14 +157,6 @@ class Attributes extends AbstractHelper
                         $this->attachAttributeSet($catalogEntityId, $attributeCode, $attributeSetId);
                     }
                 } catch (NoSuchEntityException $e) {
-                    $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
-                    if (is_null($attributeArray)) {
-                        continue;
-                    }
-
-                    $attribute['is_options'] = array_key_exists('is_options', $attributeArray) ? $attributeArray['is_options'] : null;
-                    $attribute['type'] = array_key_exists('type', $attributeArray) ? $attributeArray['type'] : null;
-
                     $attributeEntity = $this->createAttribute(
                         $catalogEntityId,
                         $attributeCode,
@@ -192,7 +193,9 @@ class Attributes extends AbstractHelper
                                 $this->attributeOptionLabel->setLabel($attribute['value_label']);
                                 $option->setLabel($attribute['value_label']);
                                 $option->setStoreLabels([$this->attributeOptionLabel]);
-                                $sortOrder = (array_key_exists('attribute_option_order', $attribute)) ? $attribute['attribute_option_order'] : 0;
+                                $sortOrder = (array_key_exists('attribute_option_order', $attribute)) ?
+                                    $attribute['attribute_option_order']
+                                    : 0;
                                 $option->setSortOrder($sortOrder);
                                 $option->setIsDefault(false);
                                 $optionId = $this->attributeOptionManagement->add(
@@ -354,7 +357,8 @@ class Attributes extends AbstractHelper
         } elseif ($this->attributeIsSelect($attributeArray)) {
             $attributeData['backend_type'] = 'int';
             $attributeData['frontend_input'] = 'select';
-            $attributeData['option'] = ['value' => ["option_".$attributeArray['value'] => [$attributeArray['value_label']]]];
+            $option = ['value' => ["option_".$attributeArray['value'] => [$attributeArray['value_label']]]];
+            $attributeData['option'] = $option;
             $attributeData['is_searchable'] = 1;
             $attributeData['is_filterable'] = 1;
         } else {
