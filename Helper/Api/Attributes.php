@@ -8,6 +8,7 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Action as ProductAction;
+use Magento\Eav\Api\AttributeManagementInterface;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Api\AttributeSetRepositoryInterface;
 use Magento\Eav\Api\AttributeGroupRepositoryInterface;
@@ -48,10 +49,9 @@ class Attributes extends AbstractHelper
     private AttributeOptionManagementInterface $attributeOptionManagement;
     private AttributeApiClient $attributeApiClient;
     private AttributeSetFactory $attributeSetFactory;
+    private AttributeManagementInterface $attributeManagement;
 
     /**
-     * Constructor
-     *
      * @param EavSetupFactory $eavSetupFactory
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -67,6 +67,7 @@ class Attributes extends AbstractHelper
      * @param AttributeOptionManagementInterface $attributeOptionManagement
      * @param AttributeApiClient $attributeApiClient
      * @param AttributeSetFactory $attributeSetFactory
+     * @param AttributeManagementInterface $attributeManagement
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -83,7 +84,8 @@ class Attributes extends AbstractHelper
         AttributeOptionLabelInterface $attributeOptionLabel,
         AttributeOptionManagementInterface $attributeOptionManagement,
         AttributeApiClient $attributeApiClient,
-        AttributeSetFactory $attributeSetFactory
+        AttributeSetFactory $attributeSetFactory,
+        AttributeManagementInterface $attributeManagement
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -100,6 +102,7 @@ class Attributes extends AbstractHelper
         $this->attributeOptionManagement = $attributeOptionManagement;
         $this->attributeApiClient = $attributeApiClient;
         $this->attributeSetFactory = $attributeSetFactory;
+        $this->attributeManagement = $attributeManagement;
     }
 
     /**
@@ -130,13 +133,6 @@ class Attributes extends AbstractHelper
                 && array_key_exists('value', $attribute)
             ) {
                 try {
-                    $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
-                    if (is_null($attributeArray)) {
-                        continue;
-                    }
-
-                    $attribute['is_options'] = array_key_exists('is_options', $attributeArray) ? $attributeArray['is_options'] : null;
-                    $attribute['type'] = array_key_exists('type', $attributeArray) ? $attributeArray['type'] : null;
                     /**
                      * Can cause potential conflicts - SK's attributes might by named as letters and or '-' and/or '_' symbols
                      * Magento allows only letters and/or '_'
@@ -146,7 +142,20 @@ class Attributes extends AbstractHelper
                     $attributeValue = $attribute['value'];
 
                     $attributeEntity = $this->attributeRepository->get('catalog_product', $attributeCode);
+
+                    //Verify that attrbite atatched to actual attribute set
+                    if ($this->isAttributeInAttributeSet($attributeSetId, $attributeCode) == false) {
+                        $this->attachAttributeSet($catalogEntityId, $attributeCode, $attributeSetId);
+                    }
                 } catch (NoSuchEntityException $e) {
+                    $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
+                    if (is_null($attributeArray)) {
+                        continue;
+                    }
+
+                    $attribute['is_options'] = array_key_exists('is_options', $attributeArray) ? $attributeArray['is_options'] : null;
+                    $attribute['type'] = array_key_exists('type', $attributeArray) ? $attributeArray['type'] : null;
+
                     $attributeEntity = $this->createAttribute(
                         $catalogEntityId,
                         $attributeCode,
@@ -163,47 +172,50 @@ class Attributes extends AbstractHelper
                  * If product is new - set attribute value.
                  * If product exist - populate array with atrribute data, and save all at once later in method
                  */
-                if ($this->attributeIsVisualColorSwatch($attribute) || $this->attributeIsSelect($attribute)) {
-                    //In case product attribute is Swatch or Select with options - handle options first
-                    //then - add/update existing value
-                    if ($attributeEntity->usesSource()) {
-                        $option_id = $attributeEntity->getSource()->getOptionId($attribute['value_label']);
-                        //If option id exist - compare it to existing product attribute value
-                        if ($option_id) {
-                            if ($target->getData($attributeCode) != $option_id) {
-                                $attributesToSave[$attributeCode] = $option_id;
-                            }
-                        } else {
-                            //Create option for attribute and assign it to product
-                            $option = $this->optionFactory->create();
-                            $option->setValue($attribute['value']);
-                            $this->attributeOptionLabel->setStoreId(0);
-                            $this->attributeOptionLabel->setLabel($attribute['value_label']);
-                            $option->setLabel($attribute['value_label']);
-                            $option->setStoreLabels([$this->attributeOptionLabel]);
-                            $sortOrder = (array_key_exists('attribute_option_order', $attribute)) ? $attribute['attribute_option_order'] : 0;
-                            $option->setSortOrder($sortOrder);
-                            $option->setIsDefault(false);
-                            $optionId = $this->attributeOptionManagement->add(
-                                Product::ENTITY,
-                                $attributeEntity->getAttributeId(),
-                                $option
-                            );
 
-                            if ($optionId) {
-                                if ($this->attributeIsVisualColorSwatch($attribute)) {
-                                    $this->attachSwatchesToOptions($attribute, $attributeEntity);
+                if ($target->getTypeId() != 'configurable') {
+                    if ($this->attributeIsVisualColorSwatch($attribute) || $this->attributeIsSelect($attribute)) {
+                        //In case product attribute is Swatch or Select with options - handle options first
+                        //then - add/update existing value
+                        if ($attributeEntity->usesSource()) {
+                            $option_id = $attributeEntity->getSource()->getOptionId($attribute['value_label']);
+                            //If option id exist - compare it to existing product attribute value
+                            if ($option_id) {
+                                if ($target->getData($attributeCode) != $option_id) {
+                                    $attributesToSave[$attributeCode] = $option_id;
                                 }
-                                if ($target->getData($attributeCode) != $optionId) {
-                                    $attributesToSave[$attributeCode] = $optionId;
+                            } else {
+                                //Create option for attribute and assign it to product
+                                $option = $this->optionFactory->create();
+                                $option->setValue($attribute['value']);
+                                $this->attributeOptionLabel->setStoreId(0);
+                                $this->attributeOptionLabel->setLabel($attribute['value_label']);
+                                $option->setLabel($attribute['value_label']);
+                                $option->setStoreLabels([$this->attributeOptionLabel]);
+                                $sortOrder = (array_key_exists('attribute_option_order', $attribute)) ? $attribute['attribute_option_order'] : 0;
+                                $option->setSortOrder($sortOrder);
+                                $option->setIsDefault(false);
+                                $optionId = $this->attributeOptionManagement->add(
+                                    Product::ENTITY,
+                                    $attributeEntity->getAttributeId(),
+                                    $option
+                                );
+
+                                if ($optionId) {
+                                    if ($this->attributeIsVisualColorSwatch($attribute)) {
+                                        $this->attachSwatchesToOptions($attribute, $attributeEntity);
+                                    }
+                                    if ($target->getData($attributeCode) != $optionId) {
+                                        $attributesToSave[$attributeCode] = $optionId;
+                                    }
                                 }
                             }
                         }
-                    }
-                } else if ($this->attributeIsText($attribute)) {
-                    //In case product attribute is String/Text - add/update existing value
-                    if ($target->getData($attributeCode) != $attributeValue) {
-                        $attributesToSave[$attributeCode] = $attributeValue;
+                    } else if ($this->attributeIsText($attribute)) {
+                        //In case product attribute is String/Text - add/update existing value
+                        if ($target->getData($attributeCode) != $attributeValue) {
+                            $attributesToSave[$attributeCode] = $attributeValue;
+                        }
                     }
                 }
             } else {
@@ -342,7 +354,7 @@ class Attributes extends AbstractHelper
         } elseif ($this->attributeIsSelect($attributeArray)) {
             $attributeData['backend_type'] = 'int';
             $attributeData['frontend_input'] = 'select';
-            $attributeData['option'] = ['value' => [$attributeArray['value'] => [$attributeArray['value_label']]]];
+            $attributeData['option'] = ['value' => ["option_".$attributeArray['value'] => [$attributeArray['value_label']]]];
             $attributeData['is_searchable'] = 1;
             $attributeData['is_filterable'] = 1;
         } else {
@@ -479,5 +491,34 @@ class Attributes extends AbstractHelper
         }
 
         return $attributeSetId;
+    }
+
+    /**
+     * Check if attribute is attached to a certain attribute set
+     *
+     * @param string $attributeSetId
+     * @param string $attributeCode
+     * @param string $entityTypeCode
+     * @return bool
+     */
+    public function isAttributeInAttributeSet(
+        string $attributeSetId, string $attributeCode, string $entityTypeCode = Product::ENTITY
+    ) {
+        try {
+            $attributes = $this->attributeManagement->getAttributes(
+                $entityTypeCode,
+                $attributeSetId
+            );
+
+            foreach ($attributes as $attribute) {
+                if ($attribute->getAttributeCode() == $attributeCode) {
+                    return true;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->_logger->error($e->getMessage());
+        }
+
+        return false;
     }
 }

@@ -149,4 +149,19 @@ class OrderApiClient extends ApiClient
     {
         return $this->getShopModule($storeId)->getCrossSellShopProductIds($storekeeperProductId);
     }
+
+    /**
+     * @param string $language
+     * @param string $storeId
+     * @param string $storeKeeperId
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getConfigurableShopProductOptions(string $language, string $storeId, string $storeKeeperId)
+    {
+        return $this->getShopModule($storeId)->getConfigurableShopProductOptions(
+            $storeKeeperId,
+            ['lang' => $language]
+        );
+    }
 }
