@@ -43,9 +43,10 @@ class AttributeApiClient extends ApiClient
 
         return $attributes['data'][0] ?? null;
     }
+
     /**
      * @param string $storeId
-     * @param int $attributeId
+     * @param array $attributeIds
      * @return array|null
      * @throws \Exception
      */
