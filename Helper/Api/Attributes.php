@@ -510,19 +510,15 @@ class Attributes extends AbstractHelper
     public function isAttributeInAttributeSet(
         string $attributeSetId, string $attributeCode, string $entityTypeCode = Product::ENTITY
     ) {
-        try {
-            $attributes = $this->attributeManagement->getAttributes(
-                $entityTypeCode,
-                $attributeSetId
-            );
+        $attributes = $this->attributeManagement->getAttributes(
+            $entityTypeCode,
+            $attributeSetId
+        );
 
-            foreach ($attributes as $attribute) {
-                if ($attribute->getAttributeCode() == $attributeCode) {
-                    return true;
-                }
+        foreach ($attributes as $attribute) {
+            if ($attribute->getAttributeCode() == $attributeCode) {
+                return true;
             }
-        } catch (\Exception $e) {
-            $this->_logger->error($e->getMessage());
         }
 
         return false;

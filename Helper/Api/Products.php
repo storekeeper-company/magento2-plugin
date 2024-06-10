@@ -920,7 +920,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         if ($create) {
-            $target->setAttributeSetId(4); // default
             $target->setSku($sku);
 
             if ($type == 'configurable') {
@@ -1134,22 +1133,18 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     return $category->getId();
                 }, $categories);
 
-                try {
-                    $diff = array_diff($target->getCategoryIds(), $categoryIds);
-                    if (empty($target->getCategoryIds()) || $diff) {
-                        if ($diff) {
-                            foreach ($diff as $categoryId) {
-                                $this->categoryLinkRepository->deleteByIds($categoryId, $target->getSku());
-                            }
+                $diff = array_diff($target->getCategoryIds(), $categoryIds);
+                if (empty($target->getCategoryIds()) || $diff) {
+                    if ($diff) {
+                        foreach ($diff as $categoryId) {
+                            $this->categoryLinkRepository->deleteByIds($categoryId, $target->getSku());
                         }
-
-                        $this->categoryLinkManagement->assignProductToCategories(
-                            $target->getSku(),
-                            $categoryIds
-                        );
                     }
-                } catch (\Exception $e) {
-                    $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
+
+                    $this->categoryLinkManagement->assignProductToCategories(
+                        $target->getSku(),
+                        $categoryIds
+                    );
                 }
             }
         }
