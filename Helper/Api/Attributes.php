@@ -221,7 +221,7 @@ class Attributes extends AbstractHelper
                     } else if ($this->attributeIsText($attribute)) {
                         //In case product attribute is String/Text - add/update existing value
                         if ($target->getData($attributeCode) != $attributeValue) {
-                            $target->setData($attributeCode, $option_id);
+                            $target->setData($attributeCode, $attributeValue);
                             $attributesToSave[$attributeCode] = $attributeValue;
                         }
                     }

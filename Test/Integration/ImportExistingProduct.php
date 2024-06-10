@@ -79,15 +79,18 @@ class ImportExistingProduct extends AbstractTestCase
     ];
 
     const STRING_ATTR = [
+        'id' => 1,
         'type' => 'string',
         'is_options' => false
     ];
 
     const COLOR_ATTR = [
+        'id' => 2,
         'type' => 'color',
         'is_options' => true
     ];
     const SELECT_ATTR = [
+        'id' => 3,
         'type' => 'string',
         'is_options' => true
     ];
@@ -153,12 +156,14 @@ class ImportExistingProduct extends AbstractTestCase
             ->willReturn(
                 self::PRODUCT_RESPONSE
             );
-        $this->attributeApiClientMock->method('getAttributeById')
-            ->will($this->returnValueMap([
-                ['1', 1, self::STRING_ATTR],
-                ['1', 2, self::COLOR_ATTR],
-                ['1', 3, self::SELECT_ATTR]
-            ]));
+
+        $this->attributeApiClientMock->method('getAttributesByIds')
+            ->willReturn([
+                0 => self::STRING_ATTR,
+                1 => self::COLOR_ATTR,
+                2 => self::SELECT_ATTR
+            ]);
+
         $this->orderApiClientMock->method('getUpsellShopProductIds')->willReturn([]);
         $this->orderApiClientMock->method('getCrossSellShopProductIds')->willReturn([]);
 
