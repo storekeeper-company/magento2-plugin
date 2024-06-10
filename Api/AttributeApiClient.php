@@ -43,6 +43,21 @@ class AttributeApiClient extends ApiClient
 
         return $attributes['data'][0] ?? null;
     }
+    /**
+     * @param string $storeId
+     * @param int $attributeId
+     * @return array|null
+     * @throws \Exception
+     */
+    public function getAttributesByIds(string $storeId, array $attributeIds): ?array
+    {
+        $attributes  = $this->getShopModule($storeId)->listAttributesForHook(0, 999, null, [[
+            'name' => 'id__in_list',
+            'multi_val' => $attributeIds
+        ]]);
+
+        return $attributes['data'] ?? null;
+    }
 
     /**
      * @param string $storeId

@@ -126,6 +126,8 @@ class Attributes extends AbstractHelper
     ): Product{
         $attributesToSave = [];
 
+        $attributeIds = array_column($flat_product['content_vars'], 'attribute_id');
+        $attributesArray = $this->attributeApiClient->getAttributesByIds($storeId, $attributeIds);
         foreach ($flat_product['content_vars'] as $attribute) {
             if (array_key_exists('attribute_id', $attribute)
                 && array_key_exists('name', $attribute)
@@ -133,7 +135,7 @@ class Attributes extends AbstractHelper
                 && array_key_exists('value', $attribute)
             ) {
                 try {
-                    $attributeArray = $this->attributeApiClient->getAttributeById($storeId, $attribute['attribute_id']);
+                    $attributeArray = $this->filterAttributeById($attribute['attribute_id'], $attributesArray);
                     if (is_null($attributeArray)) {
                         continue;
                     }
@@ -183,6 +185,7 @@ class Attributes extends AbstractHelper
                             //If option id exist - compare it to existing product attribute value
                             if ($option_id) {
                                 if ($target->getData($attributeCode) != $option_id) {
+                                    $target->setData($attributeCode, $option_id);
                                     $attributesToSave[$attributeCode] = $option_id;
                                 }
                             } else {
@@ -209,6 +212,7 @@ class Attributes extends AbstractHelper
                                         $this->attachSwatchesToOptions($attribute, $attributeEntity);
                                     }
                                     if ($target->getData($attributeCode) != $optionId) {
+                                        $target->setData($attributeCode, $option_id);
                                         $attributesToSave[$attributeCode] = $optionId;
                                     }
                                 }
@@ -217,6 +221,7 @@ class Attributes extends AbstractHelper
                     } else if ($this->attributeIsText($attribute)) {
                         //In case product attribute is String/Text - add/update existing value
                         if ($target->getData($attributeCode) != $attributeValue) {
+                            $target->setData($attributeCode, $option_id);
                             $attributesToSave[$attributeCode] = $attributeValue;
                         }
                     }
@@ -227,15 +232,12 @@ class Attributes extends AbstractHelper
         }
 
         /**
-         * Save modified attributes as one transaction, without triggering whole model save
+         * Save modified attributes
          */
         if (!empty($attributesToSave)) {
-            $this->productAction->updateAttributes(
-                [$target->getId()],
-                $attributesToSave,
-                0
-            );
+            $target->save();
         }
+
 
         return $target;
     }
@@ -524,5 +526,18 @@ class Attributes extends AbstractHelper
         }
 
         return false;
+    }
+
+    /**
+     * @param string $field
+     * @param int $value
+     * @return array
+     */
+    private function filterAttributeById(int $value, array $attributesArray, string $field = 'id'): array
+    {
+        $array = array_values(array_filter($attributesArray, function($subArray) use ($field, $value) {
+            return isset($subArray[$field]) && $subArray[$field] == $value;
+        }));
+        return reset($array);
     }
 }
