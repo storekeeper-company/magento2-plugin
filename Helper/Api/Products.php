@@ -102,6 +102,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param EavConfig $eavConfig
      * @param OptionFactory $optionFactory
      * @param ConfigurableResourceModel $configurableResourceModel
+     * @param Configurable $configurable
+     * @param OptionsFactory $optionsFactory
      */
     public function __construct(
         Auth $authHelper,
@@ -903,7 +905,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $create = !$update;
 
         if ($update) {
-            $target = $this->productFactory->create()->load($target->getId());
+            $target = $this->productRepository->getById($target->getId());
         } else {
             $shouldUpdate = true;
             $target = $this->productFactory->create();
@@ -1026,8 +1028,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     $this->setProductToUseDefaultValues($target, $storeId);
                 }
             }
-
-            $target = $this->productRepository->get($target->getSku());
         }
 
         /**
