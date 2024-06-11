@@ -8,7 +8,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Serialize\Serializer\Json;
 use StoreKeeper\StoreKeeper\Helper\Api\Products as ApiProducts;
 
-class ImportExistingProduct extends AbstractTestCase
+class ImportNewConfigurableProduct extends AbstractTestCase
 {
     const CONTENT_VARS = [
         0 => [
@@ -45,7 +45,7 @@ class ImportExistingProduct extends AbstractTestCase
         ]
     ];
 
-    const PRODUCT_RESPONSE = [
+    const SIMPLE_PRODUCT_RESPONSE = [
         'data' => [
             0 => [
                 'product_price' => [
@@ -55,8 +55,8 @@ class ImportExistingProduct extends AbstractTestCase
                     'ppu' => 11.00
                 ],
                 'flat_product' => [
-                    'title' => 'Simple Product 2',
-                    'body' => 'Simple Body Description',
+                    'title' => 'Simple Products',
+                    'body' => 'Short description',
                     'slug' => '',
                     'attribute_set_name' => 'New Attribute set',
                     'attribute_set_alias' => 'new-attribute-set',
@@ -66,13 +66,47 @@ class ImportExistingProduct extends AbstractTestCase
                             'unlimited' => true
                         ],
                         'active' => 1,
-                        'sku' => self::SIMPLE_PRODUCT_SKU,
-                        'type' => 'simple'
+                        'sku' => 'simple',
+                        'type' => 'configurable_assign'
                     ],
                     'content_vars' => self::CONTENT_VARS
                 ],
                 'product_id' => 7,
                 'orderable_stock_value' => self::UPDATED_STOCK_ITEM_VALUE
+            ]
+        ]
+    ];
+
+    const CONFIGURABLE_PRODUCT_RESPONSE = [
+        'data' => [
+            0 => [
+                'product_price' => [
+                    'ppu' => 11.00
+                ],
+                'product_default_price' => [
+                    'ppu' => 11.00
+                ],
+                'flat_product' => [
+                    'title' => 'Config Product 2',
+                    'body' => 'Config Body Description',
+                    'slug' => '',
+                    'attribute_set_name' => 'New Attribute set',
+                    'attribute_set_alias' => 'new-attribute-set',
+                    'product' => [
+                        'product_stock' => [
+                            'value' => self::UPDATED_STOCK_ITEM_VALUE,
+                            'unlimited' => true
+                        ],
+                        'active' => 1,
+                        'sku' => 'config-product-sku',
+                        'type' => 'configurable'
+                    ],
+                    'content_vars' => self::CONTENT_VARS
+                ],
+                'product_id' => 113,
+                'id' => 213,
+                'orderable_stock_value' => self::UPDATED_STOCK_ITEM_VALUE
+
             ]
         ]
     ];
@@ -119,6 +153,10 @@ class ImportExistingProduct extends AbstractTestCase
     protected $attributeOptionLabel;
     protected $attributeOptionManagement;
     protected $attributeSetFactory;
+    protected $attributeManagement;
+    protected $eavConfig;
+    protected $optionsFactory;
+    protected $typeConfigurable;
 
     protected function setUp(): void
     {
@@ -142,6 +180,7 @@ class ImportExistingProduct extends AbstractTestCase
         $this->optionFactory = Bootstrap::getObjectManager()->create(\Magento\Eav\Model\Entity\Attribute\OptionFactory::class);
         $this->attributeOptionLabel = Bootstrap::getObjectManager()->create(\Magento\Eav\Api\Data\AttributeOptionLabelInterface::class);
         $this->attributeOptionManagement = Bootstrap::getObjectManager()->create(\Magento\Eav\Api\AttributeOptionManagementInterface::class);
+        $this->attributeManagement = Bootstrap::getObjectManager()->create(\Magento\Eav\Api\AttributeManagementInterface::class);
 
         $this->storeManager = Bootstrap::getObjectManager()->create(\Magento\Store\Model\StoreManagerInterface::class);
         $this->productFactory = Bootstrap::getObjectManager()->create(\Magento\Catalog\Model\ProductFactory::class);
@@ -150,10 +189,35 @@ class ImportExistingProduct extends AbstractTestCase
         $this->sourceItemsProcessor = Bootstrap::getObjectManager()->create(\Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface::class);
         $this->swatchHelper = Bootstrap::getObjectManager()->create(\Magento\Swatches\Helper\Data::class);
         $this->attributeSetFactory = Bootstrap::getObjectManager()->create(\Magento\Eav\Model\Entity\Attribute\SetFactory::class);
+        $this->eavConfig = Bootstrap::getObjectManager()->create(\Magento\Eav\Model\Config::class);
+        $this->optionsFactory = Bootstrap::getObjectManager()->create(\Magento\ConfigurableProduct\Helper\Product\Options\Factory::class);
+        $this->typeConfigurable = Bootstrap::getObjectManager()->get(\Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable::class);
+
 
         $this->orderApiClientMock->method('getNaturalSearchShopFlatProductForHooks')
+            ->will(
+                $this->returnValueMap(
+                    [
+                        ['nl', '1', '7', self::SIMPLE_PRODUCT_RESPONSE],
+                        ['nl', '1', '113', self::CONFIGURABLE_PRODUCT_RESPONSE],
+                    ]
+                )
+            );
+
+        $this->orderApiClientMock->method('getConfigurableShopProductOptions')
             ->willReturn(
-                self::PRODUCT_RESPONSE
+                [
+                    'configurable_associated_shop_products' => [
+                        0 => [
+                            'shop_product_id' => 7
+                        ]
+                    ],
+                    'attributes' => [
+                        0 => [
+                            'name' => 'color-attr'
+                        ]
+                    ]
+                ]
             );
 
         $this->attributeApiClientMock->method('getAttributesByIds')
@@ -183,7 +247,9 @@ class ImportExistingProduct extends AbstractTestCase
                 'attributeOptionLabel' => $this->attributeOptionLabel,
                 'attributeOptionManagement' => $this->attributeOptionManagement,
                 'attributeApiClient' => $this->attributeApiClientMock,
-                'attributeSetFactory' => $this->attributeSetFactory
+                'attributeSetFactory' => $this->attributeSetFactory,
+                'attributeManagement' => $this->attributeManagement,
+                'productRepository' => $this->productRepository
             ]);
 
         $this->apiProducts = $objectManager->getObject(
@@ -200,7 +266,9 @@ class ImportExistingProduct extends AbstractTestCase
                 'productRepository' => $this->productRepository,
                 'configHelper' => $this->configHelper,
                 'sourceItemsProcessor' => $this->sourceItemsProcessor,
-                'entityTypeFactory' => $this->entityTypeFactory
+                'entityTypeFactory' => $this->entityTypeFactory,
+                'eavConfig' => $this->eavConfig,
+                'optionsFactory' => $this->optionsFactory
             ]
         );
     }
@@ -208,52 +276,63 @@ class ImportExistingProduct extends AbstractTestCase
     /**
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_shop_language nl
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_stock_source default
-     * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/product_simple_without_custom_options.php
+     * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/product_simple.php
      *
      * @return void
      */
     public function testUpdateById(): void
     {
-        $this->apiProducts->updateById(1, 7);
+        $this->apiProducts->updateById('1', '113');
 
         //Load product with processed test data
-        $product = $this->getProduct(self::SIMPLE_PRODUCT_SKU);
+        $productSimple = $this->getProduct('simple');
+        $configIds = $this->typeConfigurable->getParentIdsByChild($productSimple->getId());
+
+        //Assert info that simple product attached to parent product
+        $this->assertEquals(true, !empty($configIds));
+
+        //Load newly create config product by child id
+        $productConfig = $this->getProductRepository()->getById(reset($configIds));
+
+        //Assert newly created attribute set tp config product by name
+        $attributeSetConfig = $this->attributeSetRepository->get($productConfig->getAttributeSetId());
+        $this->assertEquals($this->getAttributeSetExpectedName(), $attributeSetConfig->getAttributeSetName());
 
         //Assert 'string' attribute 'attached-attribute'
-        $this->assertEquals($this->getStringAttributeExpectedValue(), $product->getAttachedAttribute());
+        $this->assertEquals($this->getStringAttributeExpectedValue(), $productSimple->getAttachedAttribute());
 
         //Assert 'select' active option from attribute 'string-options-attr'
-        $attribute = $product->getResource()->getAttribute('string_options_attr');
-        $optionText = $attribute->getSource()->getOptionText($product->getStringOptionsAttr());
+        $attribute = $productSimple->getResource()->getAttribute('string_options_attr');
+        $optionText = $attribute->getSource()->getOptionText($productSimple->getStringOptionsAttr());
         $this->assertEquals($this->getSelectAttributeExpectedValue(), $optionText);
 
         //Assert 'color' active option from attribute 'color-attr'
-        $swatchData = $this->swatchHelper->getSwatchesByOptionsId([$product->getColorAttr()]);
-        $swatchColor = $swatchData[$product->getColorAttr()]['value'];
+        $swatchData = $this->swatchHelper->getSwatchesByOptionsId([$productSimple->getColorAttr()]);
+        $swatchColor = $swatchData[$productSimple->getColorAttr()]['value'];
         $this->assertEquals($this->getColorAttributeExpectedValue(), $swatchColor);
 
         //Assert newly created attribute set by name
-        $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
-        $this->assertEquals($this->getAttributeSetExpectedName(), $attributeSet->getAttributeSetName());
+        $attributeSetSimple = $this->attributeSetRepository->get($productSimple->getAttributeSetId());
+        $this->assertEquals($this->getAttributeSetExpectedName(), $attributeSetSimple->getAttributeSetName());
     }
 
     private function getStringAttributeExpectedValue(): string
     {
-        return self::PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][0]['value'];
+        return self::SIMPLE_PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][0]['value'];
     }
 
     private function getColorAttributeExpectedValue(): string
     {
-        return self::PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][1]['attribute_option_color_hex'];
+        return self::SIMPLE_PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][1]['attribute_option_color_hex'];
     }
 
     private function getSelectAttributeExpectedValue(): string
     {
-        return self::PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][2]['value_label'];
+        return self::SIMPLE_PRODUCT_RESPONSE['data'][0]['flat_product']['content_vars'][2]['value_label'];
     }
 
     private function getAttributeSetExpectedName(): string
     {
-        return self::PRODUCT_RESPONSE['data'][0]['flat_product']['attribute_set_name'];
+        return self::SIMPLE_PRODUCT_RESPONSE['data'][0]['flat_product']['attribute_set_name'];
     }
 }

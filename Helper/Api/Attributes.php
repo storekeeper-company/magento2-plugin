@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Helper\Api;
 
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
 use Magento\Catalog\Model\ResourceModel\Eav\AttributeFactory;
@@ -50,8 +51,11 @@ class Attributes extends AbstractHelper
     private AttributeApiClient $attributeApiClient;
     private AttributeSetFactory $attributeSetFactory;
     private AttributeManagementInterface $attributeManagement;
+    private ProductRepositoryInterface $productRepository;
 
     /**
+     * Constructor
+     *
      * @param EavSetupFactory $eavSetupFactory
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -68,6 +72,7 @@ class Attributes extends AbstractHelper
      * @param AttributeApiClient $attributeApiClient
      * @param AttributeSetFactory $attributeSetFactory
      * @param AttributeManagementInterface $attributeManagement
+     * @param ProductRepositoryInterface $productRepository
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -85,7 +90,8 @@ class Attributes extends AbstractHelper
         AttributeOptionManagementInterface $attributeOptionManagement,
         AttributeApiClient $attributeApiClient,
         AttributeSetFactory $attributeSetFactory,
-        AttributeManagementInterface $attributeManagement
+        AttributeManagementInterface $attributeManagement,
+        ProductRepositoryInterface $productRepository
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -103,6 +109,7 @@ class Attributes extends AbstractHelper
         $this->attributeApiClient = $attributeApiClient;
         $this->attributeSetFactory = $attributeSetFactory;
         $this->attributeManagement = $attributeManagement;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -221,7 +228,7 @@ class Attributes extends AbstractHelper
                     } else if ($this->attributeIsText($attribute)) {
                         //In case product attribute is String/Text - add/update existing value
                         if ($target->getData($attributeCode) != $attributeValue) {
-                            $target->setData($attributeCode, $option_id);
+                            $target->setData($attributeCode, $attributeValue);
                             $attributesToSave[$attributeCode] = $attributeValue;
                         }
                     }
@@ -235,7 +242,7 @@ class Attributes extends AbstractHelper
          * Save modified attributes
          */
         if (!empty($attributesToSave)) {
-            $target->save();
+            $this->productRepository->save($target);
         }
 
 
