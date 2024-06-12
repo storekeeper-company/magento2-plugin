@@ -16,6 +16,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
+use Magento\SalesRule\Api\RuleRepositoryInterface;
 use Magento\Shipping\Model\ShipmentNotifier;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
@@ -78,6 +79,7 @@ class Orders extends AbstractHelper
      * @param CreditmemoFactory $creditmemoFactory
      * @param CreditmemoService $creditmemoService
      * @param OrderCollectionFactory $orderCollectionFactory
+     * @param RuleRepositoryInterface $ruleRepository
      */
     public function __construct(
         Auth $authHelper,
@@ -98,7 +100,8 @@ class Orders extends AbstractHelper
         ProductApiClient $productApiClient,
         CreditmemoFactory $creditmemoFactory,
         CreditmemoService $creditmemoService,
-        OrderCollectionFactory $orderCollectionFactory
+        OrderCollectionFactory $orderCollectionFactory,
+        RuleRepositoryInterface $ruleRepository
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -119,6 +122,7 @@ class Orders extends AbstractHelper
         $this->creditmemoFactory = $creditmemoFactory;
         $this->creditmemoService = $creditmemoService;
         $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->ruleRepository = $ruleRepository;
         $this->taxClassesDiscounts = [];
     }
 
@@ -1101,10 +1105,30 @@ class Orders extends AbstractHelper
     {
         foreach ($rates['data'] as $rate) {
             if ($rate['value'] == $taxPercent / 100) {
+                if ($order->getAppliedRuleIds()) {
+                    $ruleIdArray = explode(',', $order->getAppliedRuleIds());
+                }
+                $ruleName = '';
+                $ruleSku = '';
+
+                /**
+                 * Handle possibility of multiple discount rules being applied - combine all names in one string
+                 * and form sku from its combined name
+                 */
+                foreach ($ruleIdArray as $ruleId) {
+                    $rule = $this->ruleRepository->getById($ruleId);
+                    if ($rule->getRuleId()) {
+                        $ruleName .= $rule->getName() . ', ';
+                    }
+                }
+
+                $ruleName = rtrim($ruleName, ', ');
+                $ruleSku = $this->formatRuleSku($ruleName);
+
                 return [
                     'is_discount' => true,
-                    'name' => $order->getDiscountDescription(),
-                    'sku' => $order->getCouponCode(),
+                    'name' => $ruleName,
+                    'sku' => $ruleSku,
                     'ppu_wt' => -$this->getPriceByBrickMoneyObj($taxClassDiscount),
                     'quantity' => 1,
                     'tax_rate_id' => $rate['id']
@@ -1262,5 +1286,21 @@ class Orders extends AbstractHelper
             $creditmemo->setInvoice($invoice);
             $this->creditmemoService->refund($creditmemo);
         }
+    }
+
+    /**
+     * @param string $ruleName
+     * @return string
+     */
+    private function formatRuleSku(string $ruleName): string
+    {
+        $rules = explode(' ', $ruleName);
+        $rules = array_map(function($rule) {
+            return strtolower(str_replace(' ', '_', $rule));
+        }, $rules);
+
+        $ruleSku = implode('_', $rules);
+
+        return $ruleSku;
     }
 }
