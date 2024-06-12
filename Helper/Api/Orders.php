@@ -56,6 +56,7 @@ class Orders extends AbstractHelper
     private CreditmemoFactory $creditmemoFactory;
     private CreditmemoService $creditmemoService;
     private OrderCollectionFactory $orderCollectionFactory;
+    private RuleRepositoryInterface $ruleRepository;
 
     /**
      * Constructor
