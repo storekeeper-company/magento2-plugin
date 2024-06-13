@@ -1145,13 +1145,16 @@ class Orders extends AbstractHelper
                     $rule = $this->ruleRepository->getById($ruleId);
                     if ($rule->getRuleId()) {
                         $ruleName .= $rule->getName() . ', ';
+
+                        $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                        $discountRulesData[] = $ruleData;
                     }
                 }
 
                 $ruleName = rtrim($ruleName, ', ');
                 $ruleSku = $this->formatRuleSku($ruleName);
 
-                return [
+                $discountData = [
                     'is_discount' => true,
                     'name' => $ruleName,
                     'sku' => $ruleSku,
@@ -1159,6 +1162,12 @@ class Orders extends AbstractHelper
                     'quantity' => 1,
                     'tax_rate_id' => $rate['id']
                 ];
+
+                if (!empty($discountRulesData)) {
+                    $discountData['extra']['magneto_discount_rules'] = $discountRulesData;
+                }
+
+                return $discountData;
             }
         }
     }
