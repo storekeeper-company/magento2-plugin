@@ -813,6 +813,19 @@ class Orders extends AbstractHelper
                     'parent_product' => $parentProduct
                 ]
             ];
+
+            if ($bundleItem->getAppliedRuleIds()) {
+                $ruleIdArray = explode(',', $bundleItem->getAppliedRuleIds());
+            }
+
+            foreach ($ruleIdArray as $ruleId) {
+                $rule = $this->ruleRepository->getById($ruleId);
+                if ($rule->getRuleId()) {
+                    $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                    $bundlePayloadItem['extra']['magneto_discount_rules'][] = $ruleData;
+                }
+            }
+
             foreach ($this->getPricePerUnitPayload($item, $bundleItem, $order, $hasDiscount, $bundleItemWithDiscountData) as $key => $value) {
                 $bundlePayloadItem[$key] = $value;
             }
@@ -1015,6 +1028,18 @@ class Orders extends AbstractHelper
                     'parent_product' => $this->getParentProductData($item)
                 ]
             ];
+
+            if ($item->getAppliedRuleIds()) {
+                $ruleIdArray = explode(',', $item->getAppliedRuleIds());
+            }
+
+            foreach ($ruleIdArray as $ruleId) {
+                $rule = $this->ruleRepository->getById($ruleId);
+                if ($rule->getRuleId()) {
+                    $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                    $configurableProductData['extra']['magneto_discount_rules'][] = $ruleData;
+                }
+            }
         }
 
         return $configurableProductData;
