@@ -816,13 +816,13 @@ class Orders extends AbstractHelper
 
             if ($bundleItem->getAppliedRuleIds()) {
                 $ruleIdArray = explode(',', $bundleItem->getAppliedRuleIds());
-            }
 
-            foreach ($ruleIdArray as $ruleId) {
-                $rule = $this->ruleRepository->getById($ruleId);
-                if ($rule->getRuleId()) {
-                    $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
-                    $bundlePayloadItem['extra']['magneto_discount_rules'][] = $ruleData;
+                foreach ($ruleIdArray as $ruleId) {
+                    $rule = $this->ruleRepository->getById($ruleId);
+                    if ($rule->getRuleId()) {
+                        $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                        $bundlePayloadItem['extra']['magneto_discount_rules'][] = $ruleData;
+                    }
                 }
             }
 
@@ -1031,13 +1031,13 @@ class Orders extends AbstractHelper
 
             if ($item->getAppliedRuleIds()) {
                 $ruleIdArray = explode(',', $item->getAppliedRuleIds());
-            }
 
-            foreach ($ruleIdArray as $ruleId) {
-                $rule = $this->ruleRepository->getById($ruleId);
-                if ($rule->getRuleId()) {
-                    $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
-                    $configurableProductData['extra']['magneto_discount_rules'][] = $ruleData;
+                foreach ($ruleIdArray as $ruleId) {
+                    $rule = $this->ruleRepository->getById($ruleId);
+                    if ($rule->getRuleId()) {
+                        $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                        $configurableProductData['extra']['magneto_discount_rules'][] = $ruleData;
+                    }
                 }
             }
         }
