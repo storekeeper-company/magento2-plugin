@@ -16,6 +16,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
+use Magento\SalesRule\Api\RuleRepositoryInterface;
 use Magento\Shipping\Model\ShipmentNotifier;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
@@ -55,6 +56,7 @@ class Orders extends AbstractHelper
     private CreditmemoFactory $creditmemoFactory;
     private CreditmemoService $creditmemoService;
     private OrderCollectionFactory $orderCollectionFactory;
+    private RuleRepositoryInterface $ruleRepository;
 
     /**
      * Constructor
@@ -78,6 +80,7 @@ class Orders extends AbstractHelper
      * @param CreditmemoFactory $creditmemoFactory
      * @param CreditmemoService $creditmemoService
      * @param OrderCollectionFactory $orderCollectionFactory
+     * @param RuleRepositoryInterface $ruleRepository
      */
     public function __construct(
         Auth $authHelper,
@@ -98,7 +101,8 @@ class Orders extends AbstractHelper
         ProductApiClient $productApiClient,
         CreditmemoFactory $creditmemoFactory,
         CreditmemoService $creditmemoService,
-        OrderCollectionFactory $orderCollectionFactory
+        OrderCollectionFactory $orderCollectionFactory,
+        RuleRepositoryInterface $ruleRepository
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -119,6 +123,7 @@ class Orders extends AbstractHelper
         $this->creditmemoFactory = $creditmemoFactory;
         $this->creditmemoService = $creditmemoService;
         $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->ruleRepository = $ruleRepository;
         $this->taxClassesDiscounts = [];
     }
 
@@ -808,6 +813,19 @@ class Orders extends AbstractHelper
                     'parent_product' => $parentProduct
                 ]
             ];
+
+            if ($bundleItem->getAppliedRuleIds()) {
+                $ruleIdArray = explode(',', $bundleItem->getAppliedRuleIds());
+
+                foreach ($ruleIdArray as $ruleId) {
+                    $rule = $this->ruleRepository->getById($ruleId);
+                    if ($rule->getRuleId()) {
+                        $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                        $bundlePayloadItem['extra']['magneto_discount_rules'][] = $ruleData;
+                    }
+                }
+            }
+
             foreach ($this->getPricePerUnitPayload($item, $bundleItem, $order, $hasDiscount, $bundleItemWithDiscountData) as $key => $value) {
                 $bundlePayloadItem[$key] = $value;
             }
@@ -1010,6 +1028,18 @@ class Orders extends AbstractHelper
                     'parent_product' => $this->getParentProductData($item)
                 ]
             ];
+
+            if ($item->getAppliedRuleIds()) {
+                $ruleIdArray = explode(',', $item->getAppliedRuleIds());
+
+                foreach ($ruleIdArray as $ruleId) {
+                    $rule = $this->ruleRepository->getById($ruleId);
+                    if ($rule->getRuleId()) {
+                        $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                        $configurableProductData['extra']['magneto_discount_rules'][] = $ruleData;
+                    }
+                }
+            }
         }
 
         return $configurableProductData;
@@ -1101,14 +1131,43 @@ class Orders extends AbstractHelper
     {
         foreach ($rates['data'] as $rate) {
             if ($rate['value'] == $taxPercent / 100) {
-                return [
+                if ($order->getAppliedRuleIds()) {
+                    $ruleIdArray = explode(',', $order->getAppliedRuleIds());
+                }
+                $ruleName = '';
+                $ruleSku = '';
+
+                /**
+                 * Handle possibility of multiple discount rules being applied - combine all names in one string
+                 * and form sku from its combined name
+                 */
+                foreach ($ruleIdArray as $ruleId) {
+                    $rule = $this->ruleRepository->getById($ruleId);
+                    if ($rule->getRuleId()) {
+                        $ruleName .= $rule->getName() . ', ';
+
+                        $ruleData = ['id'=> $rule->getRuleId(), 'name'=> $rule->getName()];
+                        $discountRulesData[] = $ruleData;
+                    }
+                }
+
+                $ruleName = rtrim($ruleName, ', ');
+                $ruleSku = $this->formatRuleSku($ruleName);
+
+                $discountData = [
                     'is_discount' => true,
-                    'name' => $order->getDiscountDescription(),
-                    'sku' => $order->getCouponCode(),
+                    'name' => $ruleName,
+                    'sku' => $ruleSku,
                     'ppu_wt' => -$this->getPriceByBrickMoneyObj($taxClassDiscount),
                     'quantity' => 1,
                     'tax_rate_id' => $rate['id']
                 ];
+
+                if (!empty($discountRulesData)) {
+                    $discountData['extra']['magneto_discount_rules'] = $discountRulesData;
+                }
+
+                return $discountData;
             }
         }
     }
@@ -1262,5 +1321,21 @@ class Orders extends AbstractHelper
             $creditmemo->setInvoice($invoice);
             $this->creditmemoService->refund($creditmemo);
         }
+    }
+
+    /**
+     * @param string $ruleName
+     * @return string
+     */
+    private function formatRuleSku(string $ruleName): string
+    {
+        $rules = explode(' ', $ruleName);
+        $rules = array_map(function($rule) {
+            return strtolower(str_replace(' ', '_', $rule));
+        }, $rules);
+
+        $ruleSku = implode('_', $rules);
+
+        return $ruleSku;
     }
 }

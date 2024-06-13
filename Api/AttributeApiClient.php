@@ -36,7 +36,7 @@ class AttributeApiClient extends ApiClient
      */
     public function getAttributeById(string $storeId, int $attributeId): ?array
     {
-        $attributes  = $this->getShopModule($storeId)->listAttributesForHook(0, 1, null, [[
+        $attributes = $this->getShopModule($storeId)->listAttributesForHook(0, 1, null, [[
             'name' => 'id__=',
             'val' => $attributeId
         ]]);
@@ -52,7 +52,7 @@ class AttributeApiClient extends ApiClient
      */
     public function getAttributesByIds(string $storeId, array $attributeIds): ?array
     {
-        $attributes  = $this->getShopModule($storeId)->listAttributesForHook(0, 999, null, [[
+        $attributes = $this->getShopModule($storeId)->listAttributesForHook(0, count($attributeIds), null, [[
             'name' => 'id__in_list',
             'multi_val' => $attributeIds
         ]]);

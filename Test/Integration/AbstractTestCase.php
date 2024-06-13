@@ -73,6 +73,7 @@ abstract class AbstractTestCase extends TestCase
     protected $consumer;
     protected $storeKeeperFailedSyncOrderResource;
     protected $storeKeeperFailedSyncOrder;
+    protected $ruleRepository;
 
     protected function setUp(): void
     {
@@ -112,6 +113,7 @@ abstract class AbstractTestCase extends TestCase
         $this->jsonSerializer = Bootstrap::getObjectManager()->create(\Magento\Framework\Serialize\SerializerInterface::class);
         $this->storeKeeperFailedSyncOrderResource = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder::class);
         $this->storeKeeperFailedSyncOrder = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class);
+        $this->ruleRepository = Bootstrap::getObjectManager()->create(\Magento\SalesRule\Api\RuleRepositoryInterface::class);
 
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
@@ -185,7 +187,8 @@ abstract class AbstractTestCase extends TestCase
                 'orderCollectionFactory' => $this->orderCollectionFactory,
                 'creditmemoFactory' => $this->creditmemoFactory,
                 'creditmemoService' => $this->creditmemoService,
-                'jsonSerializer' => $this->jsonSerializer
+                'jsonSerializer' => $this->jsonSerializer,
+                'ruleRepository' => $this->ruleRepository
             ]
         );
         $this->consumer = $objectManager->getObject(
