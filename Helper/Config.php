@@ -86,4 +86,9 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfigValue(self::STOREKEEPER_STOCK_SOURCE);
     }
+
+    public function getLocaleCode($storeId)
+    {
+        return $this->getScopeConfigValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
+    }
 }
