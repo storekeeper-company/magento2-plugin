@@ -52,7 +52,7 @@ class AttributeApiClient extends ApiClient
      */
     public function getAttributesByIds(string $storeId, array $attributeIds): ?array
     {
-        $attributes = $this->getShopModule($storeId)->listAttributesForHook(0, 999, null, [[
+        $attributes = $this->getShopModule($storeId)->listAttributesForHook(0, count($attributeIds), null, [[
             'name' => 'id__in_list',
             'multi_val' => $attributeIds
         ]]);
