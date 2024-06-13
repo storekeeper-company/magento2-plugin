@@ -139,7 +139,7 @@ class Info
      */
     public function getCurrentThemeTitle()
     {
-        return $this->design->getConfigurationDesignTheme('frontend');
+        return ['Name' => $this->design->getConfigurationDesignTheme('frontend')];
     }
 
     /**
