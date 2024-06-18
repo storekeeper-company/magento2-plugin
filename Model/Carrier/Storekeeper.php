@@ -11,6 +11,7 @@ use Magento\Shipping\Model\Rate\Result;
 use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config as ConfigHelper;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class Storekeeper extends AbstractCarrier implements CarrierInterface
 {
@@ -21,6 +22,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
     protected OrderApiClient $orderApiClient;
     protected ConfigHelper $configHelper;
     protected StoreManagerInterface $storeManager;
+    protected Logger $logger;
 
     /**
      * Constructor
@@ -38,7 +40,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
-        \Psr\Log\LoggerInterface $logger,
+        Logger $logger,
         \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
         OrderApiClient $orderApiClient,
@@ -98,6 +100,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
                 }
             }
         } catch (\Exception $e) {
+            $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
             return $result;
         }
 
