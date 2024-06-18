@@ -91,4 +91,9 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfigValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
     }
+
+    public function getShippingTaxCalculation($storeId)
+    {
+        return $this->getScopeConfigValue('tax/calculation/shipping_includes_tax', ScopeInterface::SCOPE_STORE, $storeId);
+    }
 }

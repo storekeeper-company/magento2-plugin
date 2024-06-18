@@ -164,4 +164,14 @@ class OrderApiClient extends ApiClient
             ['lang' => $language]
         );
     }
+
+    /**
+     * @param int $storeId
+     * @return array
+     * @throws \Exception
+     */
+    public function getListShippingMethodsForHooks(int $storeId): array
+    {
+        return $this->getShopModule($storeId)->listShippingMethodsForHooks(0, 999, null, null);
+    }
 }

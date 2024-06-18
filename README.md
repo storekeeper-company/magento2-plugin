@@ -51,10 +51,16 @@ bin/magento cache:clean;
 
 1. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
 
+## Delivery Methods Configuration
+In order to use **StoreKeeper Multi-Carrier Shipping** delivery option activate it under:<br/>
+_Stores -> Configuration -> Sales -> Delivery Methods -> **StoreKeeper Multi-Carrier Shipping**_<br/>
+
+After that all Shipping offers configured on your StoreKeeper backoffice will be available on Magento checout
+
 ## Payment Methods Configuration
-Payment methods awaylable via Storekeeper Payment Gateway can be activated in two places:
+Payment methods avaliable via Storekeeper Payment Gateway can be activated in two places:
 1. As an option of **StoreKeeper Payments** payment method, available under:<br/>
-   _Stores->Configuration->Sales->Payment Methods->Other Payment Methods->**StoreKeeper Payments** (Yes/No)_
+   _Stores -> Configuration -> Sales -> Payment Methods -> Other Payment Methods -> **StoreKeeper Payments** (Yes/No)_
 
 In this case customer will see all Payment options activated on their storekeeper account.
 ![Storekeeper Payments available in Magento as single Payment option](docs/storekeeper_payments.png)
