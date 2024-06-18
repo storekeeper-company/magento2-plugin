@@ -64,33 +64,41 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
         }
 
         $result = $this->_rateResultFactory->create();
-        $apiRates = $this->orderApiClient->getListShippingMethodsForHooks($request->getStoreId());
 
-        if (array_key_exists('data', $apiRates) && array_key_exists('count', $apiRates)) {
-            if ($apiRates['count'] > 0) {
-                $orderTotal = $request->getBaseSubtotalInclTax();
-                $storeId = $request->getStoreId();
-                $storeCurrency = $this->storeManager->getStore()->getBaseCurrencyCode();;
-                foreach ($apiRates['data'] as $apiRate) {
-                    if ($apiRate['enabled'] === true) {
-                        $apiRateCurrency = $apiRate['shipping_method_price_flat_strategy']['currency_iso3'];
-                        if ($apiRateCurrency === $storeCurrency) {
-                            $method = $this->_rateMethodFactory->create();
-                            $carrierCode = $apiRate['shipping_type']['alias'];
-                            $shippingPrice = $this->getShippingPrice($storeId, $apiRate, $orderTotal);
+        try {
+            $apiRates = $this->orderApiClient->getListShippingMethodsForHooks($request->getStoreId());
 
-                            $method->setCarrier($this->_code);
-                            $method->setCarrierTitle($apiRate['name']);
-                            $method->setMethod($carrierCode);
-                            $method->setMethodTitle(__($carrierCode));
-                            $method->setPrice($shippingPrice);
-                            $method->setCost($shippingPrice);
+            if (array_key_exists('data', $apiRates) && array_key_exists('count', $apiRates)) {
+                if ($apiRates['count'] > 0) {
+                    $orderTotal = $request->getBaseSubtotalInclTax();
+                    $storeId = $request->getStoreId();
+                    $storeCurrency = $this->storeManager->getStore()->getBaseCurrencyCode();;
+                    foreach ($apiRates['data'] as $apiRate) {
+                        if ($apiRate['enabled'] === true) {
+                            if (!$this->validateCountry($apiRate, $request->getDestCountryId())) {
+                                continue;
+                            }
+                            $apiRateCurrency = $apiRate['shipping_method_price_flat_strategy']['currency_iso3'];
+                            if ($apiRateCurrency === $storeCurrency) {
+                                $method = $this->_rateMethodFactory->create();
+                                $carrierCode = $apiRate['shipping_type']['alias'];
+                                $shippingPrice = $this->getShippingPrice($storeId, $apiRate, $orderTotal);
 
-                            $result->append($method);
+                                $method->setCarrier($this->_code);
+                                $method->setCarrierTitle($apiRate['name']);
+                                $method->setMethod($carrierCode);
+                                $method->setMethodTitle(__($carrierCode));
+                                $method->setPrice($shippingPrice);
+                                $method->setCost($shippingPrice);
+
+                                $result->append($method);
+                            }
                         }
                     }
                 }
             }
+        } catch (\Exception $e) {
+            return $result;
         }
 
         return $result;
@@ -132,5 +140,21 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
         }
 
         return $shippingPrice;
+    }
+
+    /**
+     * @param array $apiRate
+     * @return bool
+     */
+    private function validateCountry(array $apiRate, string $countryCode): bool
+    {
+        $valid = true;
+        if (array_key_exists('country_iso2s', $apiRate)) {
+            if (array_search($countryCode, $apiRate['country_iso2s']) === false) {
+                $valid = false;
+            }
+        }
+
+        return $valid;
     }
 }
