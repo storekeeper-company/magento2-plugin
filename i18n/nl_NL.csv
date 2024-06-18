@@ -1,25 +1,28 @@
-"Enabled","Ingeschakeld"
-"Sync Auth","Sync Auth"
-"Guest Auth","Guest Auth"
-"Store Information","Winkelinformatie"
-"Store ID","Winkel ID"
-"Store Name","Winkel naam"
-"Shop Language","Winkel taal"
-"Sync Mode","Synchronisatie modus"
-"Store","Winkel"
-"Refresh store information","Winkelinformatie bijwerken"
-"Auth Key","Auth Key"
-"General","Algemeen"
-"Products","Producten"
-"Payment Methods","Betaalmethoden"
-"Show More","Laat meer zien"
-"Show Less","Laat minder zien"
-"Yes","Ja"
-"No","Nee"
-"New", "Nieuw"
-"In Progress", "Bezig"
-"Complete", "Compleet"
-"Retry required", "Opnieuw proberen vereist"
-"Error", "Fout"
-"To be deleted", "Wordt verwijderd"
-"Unknown status: %1", "Onbekende status: %1"
+Enabled,Ingeschakeld
+Sync Auth,Sync Auth
+Guest Auth,Guest Auth
+Store Information,Winkelinformatie
+Store ID,Winkel ID
+Store Name,Winkel naam
+Shop Language,Winkel taal
+Sync Mode,Synchronisatie modus
+Store,Winkel
+Refresh store information,Winkelinformatie bijwerken
+Auth Key,Auth Key
+General,Algemeen
+Products,Producten
+Payment Methods,Betaalmethoden
+Show More,Laat meer zien
+Show Less,Laat minder zien
+Yes,Ja
+No,Nee
+New," ""Nieuw"""
+In Progress," ""Bezig"""
+Complete," ""Compleet"""
+Retry required," ""Opnieuw proberen vereist"""
+Error," ""Fout"""
+To be deleted," ""Wordt verwijderd"""
+Unknown status: %1," ""Onbekende status: %1"""
+Parcel,Parcel
+PickupAtStore,Pickup At Store
+TruckDelivery,Truck Delivery

@@ -220,5 +220,13 @@
                 <order_status>pending_payment</order_status>
             </storekeeper_payment>
         </payment>
+        <carriers>
+            <storekeeper>
+                <model>StoreKeeper\StoreKeeper\Model\Carrier\Storekeeper</model>
+                <active>1</active>
+                <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
+                <sallowspecific>0</sallowspecific>
+            </storekeeper>
+        </carriers>
     </default>
 </config>

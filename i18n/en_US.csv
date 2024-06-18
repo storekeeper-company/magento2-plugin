@@ -19,3 +19,6 @@
 "Error", "Error"
 "To be deleted", "To be deleted"
 "Unknown status: %1", "Unknown status: %1"
+Parcel,Parcel
+PickupAtStore,Pickup At Store
+TruckDelivery,Truck Delivery
