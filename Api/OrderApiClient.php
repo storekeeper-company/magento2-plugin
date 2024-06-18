@@ -172,6 +172,6 @@ class OrderApiClient extends ApiClient
      */
     public function getListShippingMethodsForHooks(int $storeId): array
     {
-        return $this->getShopModule($storeId)->listShippingMethodsForHooks(0, 20, null, null);
+        return $this->getShopModule($storeId)->listShippingMethodsForHooks(0, 999, null, null);
     }
 }
