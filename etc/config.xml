@@ -223,7 +223,7 @@
         <carriers>
             <storekeeper>
                 <model>StoreKeeper\StoreKeeper\Model\Carrier\Storekeeper</model>
-                <active>1</active>
+                <active>0</active>
                 <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
                 <sallowspecific>0</sallowspecific>
             </storekeeper>
