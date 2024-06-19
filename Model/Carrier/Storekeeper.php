@@ -40,12 +40,13 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
-        Logger $logger,
+        \Psr\Log\LoggerInterface $logger,
         \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
         OrderApiClient $orderApiClient,
         ConfigHelper $configHelper,
         StoreManagerInterface $storeManager,
+        Logger $skLogger,
         array $data = []
     ) {
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
@@ -54,6 +55,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
         $this->orderApiClient = $orderApiClient;
         $this->configHelper = $configHelper;
         $this->storeManager = $storeManager;
+        $this->logger = $skLogger;
     }
 
     /**
@@ -61,7 +63,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
      */
     public function collectRates(RateRequest $request)
     {
-        if (!$this->getConfigFlag('active')) {
+        if (!$this->configHelper->isShippingCarrierActive($request->getStoreId())) {
             return false;
         }
 
@@ -74,7 +76,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
                 if ($apiRates['count'] > 0) {
                     $orderTotal = $request->getBaseSubtotalInclTax();
                     $storeId = $request->getStoreId();
-                    $storeCurrency = $this->storeManager->getStore()->getBaseCurrencyCode();;
+                    $storeCurrency = $this->storeManager->getStore()->getBaseCurrencyCode();
                     foreach ($apiRates['data'] as $apiRate) {
                         if ($apiRate['enabled'] === true) {
                             if (!$this->validateCountry($apiRate, $request->getDestCountryId())) {

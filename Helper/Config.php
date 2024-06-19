@@ -96,4 +96,9 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfigValue('tax/calculation/shipping_includes_tax', ScopeInterface::SCOPE_STORE, $storeId);
     }
+
+    public function isShippingCarrierActive($storeId)
+    {
+        return $this->getScopeConfigValue('carriers/storekeeper/active', ScopeInterface::SCOPE_STORE, $storeId);
+    }
 }
