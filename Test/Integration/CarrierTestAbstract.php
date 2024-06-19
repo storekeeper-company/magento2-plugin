@@ -19,7 +19,6 @@ use StoreKeeper\StoreKeeper\Model\Carrier\Storekeeper as StorekeeperCarrier;
 abstract class CarrierTestAbstract extends \PHPUnit\Framework\TestCase
 {
     protected $carrier = 'storekeeper';
-    protected $errorMessage = 'This shipping method is not available. To use this shipping method, please contact us.';
     protected $storekeeperCarrier;
     protected $orderApiClientMock;
     protected $scopeConfig;
