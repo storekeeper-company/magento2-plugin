@@ -74,6 +74,7 @@ abstract class AbstractTestCase extends TestCase
     protected $storeKeeperFailedSyncOrderResource;
     protected $storeKeeperFailedSyncOrder;
     protected $ruleRepository;
+    protected $orderFactory;
 
     protected function setUp(): void
     {
@@ -114,7 +115,7 @@ abstract class AbstractTestCase extends TestCase
         $this->storeKeeperFailedSyncOrderResource = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder::class);
         $this->storeKeeperFailedSyncOrder = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class);
         $this->ruleRepository = Bootstrap::getObjectManager()->create(\Magento\SalesRule\Api\RuleRepositoryInterface::class);
-
+        $this->orderFactory = Bootstrap::getObjectManager()->create(\Magento\Sales\Api\Data\OrderInterfaceFactory::class);
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
                 [
@@ -199,7 +200,8 @@ abstract class AbstractTestCase extends TestCase
                 'storeKeeperFailedSyncOrderResource' => $this->storeKeeperFailedSyncOrderResource,
                 'ordersHelper' => $this->apiOrders,
                 'orderRepository' => $this->orderRepository,
-                'storeKeeperFailedSyncOrder' => $this->storeKeeperFailedSyncOrder
+                'storeKeeperFailedSyncOrder' => $this->storeKeeperFailedSyncOrder,
+                'orderFactory' => $this->orderFactory
             ]
         );
         $this->redirect = $objectManager->getObject(
@@ -546,7 +548,7 @@ abstract class AbstractTestCase extends TestCase
         $this->orderRepository->save($order);
 
         //Apply order refund
-        $this->consumer->process(json_encode(['orderId' => $order->getId()]));
+        $this->consumer->process(json_encode(['orderId' => $order->getIncrementId()]));
     }
 
     /**
@@ -636,7 +638,7 @@ abstract class AbstractTestCase extends TestCase
         $this->assertEquals(1, $order->getStorekeeperOrderPendingSync());
         $this->assertEquals(Order::STATE_NEW, $order->getState());
 
-        $this->consumer->process(json_encode(['orderId' => $order->getId()]));
+        $this->consumer->process(json_encode(['orderId' => $order->getIncrementId()]));
 
         $savedOrder = $this->orderRepository->get($order->getId());
 
