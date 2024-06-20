@@ -62,17 +62,14 @@ abstract class CarrierTestAbstract extends \PHPUnit\Framework\TestCase
     public function testCollectRatesWhenShippingCarrierIsAvailableAndApplicable()
     {
         $request = $this->createRequest();
-        $expectedRates = $this->getExpectedRates();
-
         $actualRates = $this->storekeeperCarrier->collectRates($request)->getAllRates();
 
-        //Assert equal amount of expected and acual collected rates
-        self::assertEquals(count($expectedRates), count($actualRates));
         foreach ($actualRates as $i => $actualRate) {
-            $actualRate = $actualRate->getData();
-            //Assert carrier code, title, method, method title, cost and price
-            self::assertEquals($expectedRates[$i], $actualRate);
+            $actualRatesData[$i] = $actualRate->getData();
         }
+
+        //Assert carrier code, title, method, method title, cost and price
+        self::assertEquals($this->getExpectedRates(), $actualRatesData);
     }
 
     /**
@@ -113,11 +110,13 @@ abstract class CarrierTestAbstract extends \PHPUnit\Framework\TestCase
         $request = $this->createRequest();
         $request->setBaseSubtotalInclTax(205);
         $actualRates = $this->storekeeperCarrier->collectRates($request)->getAllRates();
+
         foreach ($actualRates as $i => $actualRate) {
-            //Assert carrier 0 cost and price
-            self::assertEquals(0, $actualRate->getPrice());
-            self::assertEquals(0, $actualRate->getCost());
+            $actualRatesData[$i] = $actualRate->getData();
         }
+
+        //Assert carrier 0 cost and price
+        self::assertEquals($this->getExpectedRatesFreeShipping(), $actualRatesData);
     }
 
     /**
@@ -130,7 +129,6 @@ abstract class CarrierTestAbstract extends \PHPUnit\Framework\TestCase
         $ex = new \Exception('Api connection error', 0);
         $this->orderApiClientMock->method('getListShippingMethodsForHooks')->willThrowException($ex);
         $request = $this->createRequest();
-        $request->setBaseSubtotalInclTax(205);
         $actualRates = $this->storekeeperCarrier->collectRates($request)->getAllRates();
         //Assert empty list of rates due to exception during collectRates
         static::assertEmpty($actualRates);
@@ -227,6 +225,18 @@ abstract class CarrierTestAbstract extends \PHPUnit\Framework\TestCase
         return [
             ['carrier' => 'storekeeper', 'carrier_title' => 'Afhalen', 'cost' => 0, 'method' => 'PickupAtStore', 'method_title' => __('PickupAtStore'), 'price' => 0],
             ['carrier' => 'storekeeper', 'carrier_title' => 'Pakket', 'cost' => 5, 'method' => 'Parcel', 'method_title' => __('Parcel'), 'price' => 5]
+        ];
+    }
+
+    /**
+     * Expected rates with free shipping array
+     * @return array[]
+     */
+    private function getExpectedRatesFreeShipping(): array
+    {
+        return [
+            ['carrier' => 'storekeeper', 'carrier_title' => 'Afhalen', 'cost' => 0, 'method' => 'PickupAtStore', 'method_title' => __('PickupAtStore'), 'price' => 0],
+            ['carrier' => 'storekeeper', 'carrier_title' => 'Pakket', 'cost' => 0, 'method' => 'Parcel', 'method_title' => __('Parcel'), 'price' => 0]
         ];
     }
 }
