@@ -42,7 +42,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
 
             $this->publisher->publish(
                 \StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::CONSUMER_NAME,
-                $this->json->serialize(['orderId' => $order->getId()])
+                $this->json->serialize(['orderId' => $order->getIncrementId()])
             );
 
             $order->setStorekeeperOrderPendingSync(1);

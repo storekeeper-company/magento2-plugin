@@ -25,31 +25,28 @@ bin/magento cache:clean;
 
 # Configuration
 
-1. Log into your Magento 2 backend and go to `Stores` > `Configuration` > `StoreKeeper` > `General`
+1. Log into your Magento 2 backend and go to `Stores` -> `Configuration` -> `StoreKeeper` -> `General`
 
 2. Select your store by navigating to the deepest level in the top left store navigation
 
 3. Enable the plugin by setting the field `Enabled` to `Yes`
 
-6. Copy your `Auth Key`
+4. Click button `StoreKeeper Connect` next to `Enabled`, and you will be redirected to StoreKeeper Connection page
 
-7. Press the `Save` button
+5. Follow the onscreen instructions and enter your StoreKeeper account name
 
-8. Log into your StoreKeeper account
+6. If it is valid - click `Connect` and you will be redirected to your StoreKeeper account Dashboard
 
-9. Select the StoreKeeper Sales Channel you want to connect with
+7. Get back to Magento admin `Stores` -> `Configuration` -> `StoreKeeper` -> `General` and click `Refresh store information` in order to receive Store ID and Store Name reserved by StoreKeeper for current integration
 
-10. Go to `Settings`
+## Sync Modes clarification
+Current extension operates in one of 4 modes: 
+ - **None** - No data exchange between M2 and Storekeeper systems 
+ - **Products** - Only product related data will be synced (products creation, activation, deactivation and stock updates)
+ - **Orders** - Only orders related data will be synced (order body, statuses, items, payments, shipments) **and** products stock
+ - **All** - Combination of two methods described above
 
-11. Scroll down to the `Synchronisation` button and click it
-
-12. Paste the `Auth Key` you previously copied from Magento 2 into the `Api Key` field and click `Connect`
-
-13. Once succesfully connected, the fields in your Magento 2 backend should be filled with data
-
-## Check after installation
-
-1. Check `queue_message` DB table. Topic `storekeeper.queue.events` with correct JSON body has to be added in it.
+Sync mode can be adjusted under `Stores` -> `Configuration` -> `StoreKeeper` -> `General` -> `Sync Mode` section
 
 ## Delivery Methods Configuration
 In order to use **StoreKeeper Multi-Carrier Shipping** delivery option activate it under:<br/>
@@ -111,17 +108,26 @@ Disconnecting your Magento 2 store can be done in two ways
 
 1. Log into your Magento 2 backend
 
-2. Log into your Magento 2 backend and go to `Stores` > `Configuration` > `StoreKeeper` > `General`
+2. Log into your Magento 2 backend and go to `Stores` -> `Configuration` -> `StoreKeeper` -> `General`
 
 3. Select your store by navigating to the deepest level in the top left store navigation
 
-4. Empty the value in the `Token` field
+4. Click on `Disconnect from StoreKeeper` button at the bottom of current config section
 
-5. Press the `Save` button
-
-# Debugging
+# Troubleshooting
+## Debugging
 
 If you're having any issues using the plugin, the first thing to do would be checking the `magento2/var/log/storekeeper.log` for any errors.
+
+## Tasks and Events Logging
+Every incoming webhook event data are logged and can be reviewed under:<br/>
+**_System -> Action Logs -> StoreKeeper Event Log_** tab.<br/>
+This grid collects info about request route, body, method, action, response code and timesteamp of every incoming webhook.
+
+Every StoreKeeper related task from mesage queue are logged under:<br/>
+**_System -> Action Logs -> StoreKeeper Task Log_** tab.<br/>
+This grid collects info about topic name, json-formatted request body, update time, status and number of trials made by Magento core queue managed in order to complete task.<br/>
+Task log registers every addition of order to sync queue, its processing, as well as every operation with product sync (import, export, updates)
 
 # Running integration tests
 

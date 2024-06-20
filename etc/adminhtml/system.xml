@@ -15,7 +15,7 @@
                     id="storekeeper_additional_data"
                     type="StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field\AdditionalData"
                     translate="label" sortOrder="1" showInDefault="0" showInWebsite="1" showInStore="1">
-                    <label>Additional information</label>
+                    <label>Version Info</label>
                 </field>
                 <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enabled</label>

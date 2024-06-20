@@ -4,7 +4,7 @@
     "require": {
         "php": "^8.2",
         "symfony/polyfill-uuid": "*",
-        "magento/product-community-edition": "^2.4.7",
+        "magento/product-community-edition": "^2.4.6",
         "brick/money": "0.9.*",
         "storekeeper/api-wrapper": "^6.2",
         "erusev/parsedown": "v1.7.4"
@@ -12,7 +12,7 @@
     "suggest": {
     },
     "type": "magento2-module",
-    "version": "2.0.3",
+    "version": "2.1.4",
     "license": [
         "LGPL-3.0-only"
     ],

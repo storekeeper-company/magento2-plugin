@@ -2,6 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Model\OrderSync;
 
+use Magento\Sales\Api\Data\OrderInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Logger\Logger;
@@ -27,6 +28,7 @@ class Consumer
     private StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder;
     private StoreManagerInterface $storeManager;
     private OrderRepositoryInterface $orderRepository;
+    private OrderInterfaceFactory $orderFactory;
 
     /**
      * Constructor
@@ -48,7 +50,8 @@ class Consumer
         StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
         StoreKeeperFailedSyncOrderFactory $storeKeeperFailedSyncOrder,
         StoreManagerInterface $storeManager,
-        OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterface $orderRepository,
+        OrderInterfaceFactory $orderFactory
     ) {
         $this->ordersHelper = $ordersHelper;
         $this->logger = $logger;
@@ -58,6 +61,7 @@ class Consumer
         $this->storeKeeperFailedSyncOrder = $storeKeeperFailedSyncOrder;
         $this->storeManager = $storeManager;
         $this->orderRepository = $orderRepository;
+        $this->orderFactory = $orderFactory;
     }
 
     /**
@@ -76,7 +80,7 @@ class Consumer
             if (is_null($orderId)) {
                 throw new \Exception("Missing order ID");
             }
-            $order = $this->orderRepository->get($orderId);
+            $order = $this->orderFactory->create()->loadByIncrementId($orderId);
             $storeId = $order->getStoreId();
 
             $storeKeeperFailedSyncOrder = $this->getStoreKeeperFailedSyncOrder($orderId);

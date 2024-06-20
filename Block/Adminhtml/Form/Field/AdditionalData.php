@@ -60,8 +60,6 @@ class AdditionalData extends AbstractElement
                 $version = $composerJson['version'];
             }
         }
-        return "
-            Version: {$version}
-        ";
+        return $version;
     }
 }
