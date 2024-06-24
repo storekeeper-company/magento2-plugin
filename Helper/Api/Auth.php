@@ -10,6 +10,7 @@ use Magento\Framework\Module\ModuleList;
 use Magento\Store\Model\StoreManagerInterface;
 use Ramsey\Uuid\Generator\PeclUuidRandomGenerator;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Auth extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -29,6 +30,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     private ProductMetadataInterface $productMetadata;
     private ModuleList $moduleList;
     private OrderApiClient $orderApiClient;
+    private Config $configHelper;
 
     /**
      * Constructor
@@ -42,6 +44,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
      * @param ProductMetadataInterface $productMetadata
      * @param ModuleList $moduleList
      * @param OrderApiClient $orderApiClient
+     * @param Config $configHelper
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
@@ -52,7 +55,8 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         PeclUuidRandomGenerator $uuidRandomGenerator,
         ProductMetadataInterface $productMetadata,
         ModuleList $moduleList,
-        OrderApiClient $orderApiClient
+        OrderApiClient $orderApiClient,
+        Config $configHelper
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
@@ -63,6 +67,7 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productMetadata = $productMetadata;
         $this->moduleList = $moduleList;
         $this->orderApiClient = $orderApiClient;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -578,5 +583,14 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
             "software_name" => $this->getSoftwareName(),
             "software_version" => $module['setup_version']
         ];
+    }
+
+    /**
+     * @param $storeId
+     * @return bool
+     */
+    public function isOrderSyncEnabled($storeId): bool
+    {
+        return $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL);
     }
 }
