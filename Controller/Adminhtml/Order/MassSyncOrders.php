@@ -6,6 +6,7 @@ use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterf
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Backend\App\Action\Context;
 use Magento\Ui\Component\MassAction\Filter;
+use Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use StoreKeeper\StoreKeeper\Console\Command\Sync\Orders;
 use StoreKeeper\StoreKeeper\Helper\Config;
@@ -13,7 +14,7 @@ use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
 
-class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\AbstractMassAction implements HttpPostActionInterface
+class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterface
 {
     private Orders $syncOrders;
 
@@ -26,7 +27,8 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
 
     /**
-     * MassResyncFailedOrders constructor.
+     * MassSyncOrders constructor
+     *
      * @param Context $context
      * @param Filter $filter
      * @param CollectionFactory $collectionFactory
@@ -76,9 +78,11 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
                     $this->ordersHelper->onCreate($order);
                 }
                 $syncedOrderIds[] = $orderId;
-                $storeKeeperFailedSyncOrder->setIsFailed(0);
-                $storeKeeperFailedSyncOrder->setUpdatedAt(time());
-                $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
+                if ($storeKeeperFailedSyncOrder->isObjectNew() === false) {
+                    $storeKeeperFailedSyncOrder->setIsFailed(0);
+                    $storeKeeperFailedSyncOrder->setUpdatedAt(time());
+                    $this->storeKeeperFailedSyncOrderResource->save($storeKeeperFailedSyncOrder);
+                }
             } catch(\Exception $e) {
                 $failedOrderIds[] = $orderId;
                 $this->logger->error(
@@ -108,7 +112,6 @@ class MassResyncFailedOrders extends \Magento\Sales\Controller\Adminhtml\Order\A
                 : 'Order ID ' . $syncedOrderIdsString . ' was synced.';
             $this->messageManager->addSuccessMessage($syncedMessage);
         }
-
 
         $resultRedirect = $this->resultRedirectFactory->create();
         $resultRedirect->setPath($this->getComponentRefererUrl());
