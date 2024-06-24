@@ -46,7 +46,23 @@ class AttributeExportManager extends AbstractExportManager
     private Base36Coder $base36Coder;
     private AttributeSetCollectionFactory $attributeSetCollectionFactory;
     private Auth $authHelper;
+    private ProductExportManager $productExportManager;
 
+    /**
+     * Constructor
+     *
+     * @param Resolver $localeResolver
+     * @param StoreManagerInterface $storeManager
+     * @param StoreConfigManagerInterface $storeConfigManager
+     * @param AttributeSetRepositoryInterface $attributeSetRepository
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param AttributeCollectionFactory $attributeCollectionFactory
+     * @param AttributeRepositoryInterface $attributeRepository
+     * @param Base36Coder $base36Coder
+     * @param AttributeSetCollectionFactory $attributeSetCollectionFactory
+     * @param Auth $authHelper
+     * @param ProductExportManager $productExportManager
+     */
     public function __construct(
         Resolver $localeResolver,
         StoreManagerInterface $storeManager,
@@ -57,7 +73,8 @@ class AttributeExportManager extends AbstractExportManager
         AttributeRepositoryInterface $attributeRepository,
         Base36Coder $base36Coder,
         AttributeSetCollectionFactory $attributeSetCollectionFactory,
-    Auth $authHelper
+        Auth $authHelper,
+        ProductExportManager $productExportManager
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->attributeSetRepository = $attributeSetRepository;
@@ -66,6 +83,7 @@ class AttributeExportManager extends AbstractExportManager
         $this->attributeRepository = $attributeRepository;
         $this->base36Coder = $base36Coder;
         $this->attributeSetCollectionFactory = $attributeSetCollectionFactory;
+        $this->productExportManager = $productExportManager;
     }
 
     /**
@@ -76,19 +94,22 @@ class AttributeExportManager extends AbstractExportManager
     {
         $result = [];
         foreach ($attributes as $attribute) {
-            $hasOption = $attribute->usesSource();
-            $data = [
-                $attribute->getAttributeCode(), //'path://name'
-                $attribute->getFrontendLabel(), //'path://label'
-                $this->getCurrentLocale(), //'path://translatable.lang'
-                'yes', //'path://is_main_lang'
-                $hasOption ? 'yes' : 'no', //'path://is_options'
-                $hasOption ? 'string' : null, //'path://type'
-                $attribute->getIsRequired() ? 'yes' : 'no', //'path://required'
-                'true', //'path://published'
-                $attribute->getIsUnique() ? 'yes' : 'no' //'path://unique'
-            ];
-            $result[] = array_combine(self::HEADERS_PATHS, $data);
+            $attributeCode = $attribute->getAttributeCode();
+            if (array_search($attributeCode, $this->productExportManager->getDisallowedAttributesExtended()) === false) {
+                $hasOption = $attribute->usesSource();
+                $data = [
+                    $attributeCode, //'path://name'
+                    $attribute->getFrontendLabel(), //'path://label'
+                    $this->getCurrentLocale(), //'path://translatable.lang'
+                    'yes', //'path://is_main_lang'
+                    $hasOption ? 'yes' : 'no', //'path://is_options'
+                    $hasOption ? 'string' : null, //'path://type'
+                    $attribute->getIsRequired() ? 'yes' : 'no', //'path://required'
+                    'true', //'path://published'
+                    $attribute->getIsUnique() ? 'yes' : 'no' //'path://unique'
+                ];
+                $result[] = array_combine(self::HEADERS_PATHS, $data);
+            }
         }
 
         return $result;
