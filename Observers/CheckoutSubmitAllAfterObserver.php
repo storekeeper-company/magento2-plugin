@@ -39,7 +39,11 @@ class CheckoutSubmitAllAfterObserver implements ObserverInterface
     ) {
         $order = $observer->getEvent()->getOrder();
 
-        if ($this->authHelper->isConnected($order->getStoreId()) && $order->getStorekeeperOrderPendingSync() == 0) {
+        if (
+            $this->authHelper->isConnected($order->getStoreId())
+            && $order->getStorekeeperOrderPendingSync() == 0
+            && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
+        ) {
             $order = $observer->getEvent()->getOrder();
 
             $this->publisher->publish(
