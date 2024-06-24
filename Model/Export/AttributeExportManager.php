@@ -104,7 +104,7 @@ class AttributeExportManager extends AbstractExportManager
                     'yes', //'path://is_main_lang'
                     $hasOption ? 'yes' : 'no', //'path://is_options'
                     $hasOption ? 'string' : null, //'path://type'
-                    $attribute->getIsRequired() ? 'yes' : 'no', //'path://required'
+                    'no', //'path://required'
                     'true', //'path://published'
                     $attribute->getIsUnique() ? 'yes' : 'no' //'path://unique'
                 ];
