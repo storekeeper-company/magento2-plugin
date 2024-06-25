@@ -1,5 +1,5 @@
 .PHONY: format test test-build test-clean test-unit test-integration test-bash
-PHP_VERSION?=8.2
+PHP_VERSION?=8.1
 
 DOCKER_COMPOSE_CMD=PHP_VERSION=$(PHP_VERSION)  docker compose
 
