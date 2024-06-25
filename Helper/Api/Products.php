@@ -742,9 +742,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $tmpDir = $this->getMediaTmpDir();
         //remove image id GET param from url, because Magento's file reader count that as invalid file format
-        $url = $this->cleanGetParams($imageUrl);
-        $newImage = $tmpDir . baseName($url);
-        $result = $this->file->read($url, $newImage);
+        $newImage = $tmpDir . $this->getImageName($imageUrl);
+        $result = $this->file->read($imageUrl, $newImage);
         $imageTypes = [];
 
         if ($mainImage) {
@@ -769,16 +768,11 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param string $imageUrl
      * @return string
      */
-    private function cleanGetParams(string $imageUrl): string
+    private function getImageName(string $imageUrl): string
     {
-        $urlParts = parse_url($imageUrl);
+        $path = parse_url($imageUrl, PHP_URL_PATH);
 
-        $cleanUrl = $urlParts['scheme'] . '://' . $urlParts['host'];
-        if (isset($urlParts['path'])) {
-            $cleanUrl .= $urlParts['path'];
-        }
-
-        return $cleanUrl;
+        return basename($path);
     }
 
     /**
