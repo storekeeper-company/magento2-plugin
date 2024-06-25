@@ -741,7 +741,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private function setGalleryImage(string $imageUrl, Product $target, bool $mainImage): bool
     {
         $tmpDir = $this->getMediaTmpDir();
-        //remove image id GET param from url, because Magento's file reader count that as invalid file format
         $newImage = $tmpDir . $this->getImageName($imageUrl);
         $result = $this->file->read($imageUrl, $newImage);
         $imageTypes = [];
