@@ -2,10 +2,10 @@
     "name": "storekeeper/magento2-plugin",
     "description": "Storekeeper plugin",
     "require": {
-        "php": "^8.2",
+        "php": "^8.1 | ^8.2",
         "symfony/polyfill-uuid": "*",
         "magento/product-community-edition": "^2.4.6",
-        "brick/money": "0.9.*",
+        "brick/money": "0.5.* | 0.6.* | 0.7.* | 0.9.*",
         "storekeeper/api-wrapper": "^6.2",
         "erusev/parsedown": "v1.7.4"
     },
