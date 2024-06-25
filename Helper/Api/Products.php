@@ -730,16 +730,19 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Set gallery image
      *
-     * @param $image
-     * @param $target Product
-     * @param $mainImage
+     * @param string $imageUrl
+     * @param Product $target
+     * @param bool $mainImage
+     * @return bool
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
-    private function setGalleryImage($image, Product $target, $mainImage)
+
+    private function setGalleryImage(string $imageUrl, Product $target, bool $mainImage): bool
     {
         $tmpDir = $this->getMediaTmpDir();
-        $url = self::API_URL . parse_url($image, PHP_URL_PATH);
-        $newImage = $tmpDir . baseName($url);
-        $result = $this->file->read($url, $newImage);
+        $newImage = $tmpDir . $this->getImageName($imageUrl);
+        $result = $this->file->read($imageUrl, $newImage);
         $imageTypes = [];
 
         if ($mainImage) {
@@ -753,10 +756,22 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 return true;
             } catch (LocalizedException $e) {
                 $this->logger->error($exception->getMessage(), $this->logger->buildReportData($exception));
+                return false;
             }
         } else {
             return false;
         }
+    }
+
+    /**
+     * @param string $imageUrl
+     * @return string
+     */
+    private function getImageName(string $imageUrl): string
+    {
+        $path = parse_url($imageUrl, PHP_URL_PATH);
+
+        return basename($path);
     }
 
     /**
@@ -1063,49 +1078,51 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if (isset($flat_product['main_image'])) {
             $existingImage = null;
-            $newImagePath = explode(
-                '/',
-                parse_url($flat_product['main_image']['big_url'], PHP_URL_PATH)
-            );
-            $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
 
             if ($target->getImage()) {
-                $existingImagePath = explode('/', $target->getImage());
-                $existingImage = pathinfo(end($existingImagePath), PATHINFO_FILENAME);
+                $existingImage = $this->getImageName($target->getImage());
             }
 
             if ($existingImage) {
-                if ($existingImage == 'no_selection'
-                    || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)) {
+                $newImageName = $this->getImageName($flat_product['main_image']['big_url']);
+
+                if (
+                    $existingImage == 'no_selection'
+                    || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)
+                ) {
                     $shouldUpdate = $this->setGalleryImage(
                         $flat_product['main_image']['big_url'],
                         $target,
                         true
                     );
                 }
+            } else {
+                $shouldUpdate = $this->setGalleryImage(
+                    $flat_product['main_image']['big_url'],
+                    $target,
+                    true
+                );
             }
         }
 
         $galleryImages = $target->getMediaGalleryImages()->getItems();
         $existingImagesArray = [];
         foreach ($galleryImages as $image) {
-            $imagePath = explode('/', parse_url($image->getFile(), PHP_URL_PATH));
-            $imageName = pathinfo(end($imagePath), PATHINFO_FILENAME);
+            $imageName = pathinfo($this->getImageName($image->getFile()));
             $existingImagesArray[] = $imageName;
         }
 
         if (isset($flat_product['product_images'])) {
-            $mainImage = explode('/', $flat_product['main_image']['big_url']);
-            $mainImageName = pathinfo(end($mainImage), PATHINFO_FILENAME);
+            $mainImageName = $this->getImageName($flat_product['main_image']['big_url']);
             foreach ($flat_product['product_images'] as $product_image) {
-                $newImagePath = explode('/', parse_url($product_image['big_url'], PHP_URL_PATH));
-                $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
+                $newImageName = pathinfo($this->getImageName($product_image['big_url']));
 
                 $countDuplicates = count(preg_grep("/^{$newImageName}\_[0-9]+/", $existingImagesArray));
 
-                if ($newImageName
-                    !== $mainImageName
-                    && !preg_match("/^{$newImageName}\_[0-9]+/", $mainImageName)) {
+                if (
+                    $newImageName !== $mainImageName
+                    && !preg_match("/^{$newImageName}\_[0-9]+/", $mainImageName)
+                ) {
                     if (!in_array($newImageName, $existingImagesArray) && $countDuplicates <= 0) {
                         $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, false);
                     }
