@@ -1080,16 +1080,11 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $existingImage = null;
 
             if ($target->getImage()) {
-                $existingImagePath = explode('/', $target->getImage());
-                $existingImage = pathinfo(end($existingImagePath), PATHINFO_FILENAME);
+                $existingImage = $this->getImageName($target->getImage());
             }
 
             if ($existingImage) {
-                $newImagePath = explode(
-                    '/',
-                    parse_url($flat_product['main_image']['big_url'], PHP_URL_PATH)
-                );
-                $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
+                $newImageName = $this->getImageName($flat_product['main_image']['big_url']);
 
                 if (
                     $existingImage == 'no_selection'
@@ -1113,17 +1108,14 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $galleryImages = $target->getMediaGalleryImages()->getItems();
         $existingImagesArray = [];
         foreach ($galleryImages as $image) {
-            $imagePath = explode('/', parse_url($image->getFile(), PHP_URL_PATH));
-            $imageName = pathinfo(end($imagePath), PATHINFO_FILENAME);
+            $imageName = pathinfo($this->getImageName($image->getFile()));
             $existingImagesArray[] = $imageName;
         }
 
         if (isset($flat_product['product_images'])) {
-            $mainImage = explode('/', $flat_product['main_image']['big_url']);
-            $mainImageName = pathinfo(end($mainImage), PATHINFO_FILENAME);
+            $mainImageName = $this->getImageName($flat_product['main_image']['big_url']);
             foreach ($flat_product['product_images'] as $product_image) {
-                $newImagePath = explode('/', parse_url($product_image['big_url'], PHP_URL_PATH));
-                $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
+                $newImageName = pathinfo($this->getImageName($product_image['big_url']));
 
                 $countDuplicates = count(preg_grep("/^{$newImageName}\_[0-9]+/", $existingImagesArray));
 
