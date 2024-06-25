@@ -730,14 +730,19 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Set gallery image
      *
-     * @param $image
-     * @param $target Product
-     * @param $mainImage
+     * @param string $imageUrl
+     * @param Product $target
+     * @param bool $mainImage
+     * @return bool
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
-    private function setGalleryImage($image, Product $target, $mainImage)
+
+    private function setGalleryImage(string $imageUrl, Product $target, bool $mainImage): bool
     {
         $tmpDir = $this->getMediaTmpDir();
-        $url = self::API_URL . parse_url($image, PHP_URL_PATH);
+        //remove image id GET param from url, because Magento's file reader count that as invalid file format
+        $url = $this->cleanGetParams($imageUrl);
         $newImage = $tmpDir . baseName($url);
         $result = $this->file->read($url, $newImage);
         $imageTypes = [];
@@ -753,10 +758,27 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 return true;
             } catch (LocalizedException $e) {
                 $this->logger->error($exception->getMessage(), $this->logger->buildReportData($exception));
+                return false;
             }
         } else {
             return false;
         }
+    }
+
+    /**
+     * @param string $imageUrl
+     * @return string
+     */
+    private function cleanGetParams(string $imageUrl): string
+    {
+        $urlParts = parse_url($imageUrl);
+
+        $cleanUrl = $urlParts['scheme'] . '://' . $urlParts['host'];
+        if (isset($urlParts['path'])) {
+            $cleanUrl .= $urlParts['path'];
+        }
+
+        return $cleanUrl;
     }
 
     /**
@@ -1063,11 +1085,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if (isset($flat_product['main_image'])) {
             $existingImage = null;
-            $newImagePath = explode(
-                '/',
-                parse_url($flat_product['main_image']['big_url'], PHP_URL_PATH)
-            );
-            $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
 
             if ($target->getImage()) {
                 $existingImagePath = explode('/', $target->getImage());
@@ -1075,14 +1092,28 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
             if ($existingImage) {
-                if ($existingImage == 'no_selection'
-                    || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)) {
+                $newImagePath = explode(
+                    '/',
+                    parse_url($flat_product['main_image']['big_url'], PHP_URL_PATH)
+                );
+                $newImageName = pathinfo(end($newImagePath), PATHINFO_FILENAME);
+
+                if (
+                    $existingImage == 'no_selection'
+                    || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)
+                ) {
                     $shouldUpdate = $this->setGalleryImage(
                         $flat_product['main_image']['big_url'],
                         $target,
                         true
                     );
                 }
+            } else {
+                $shouldUpdate = $this->setGalleryImage(
+                    $flat_product['main_image']['big_url'],
+                    $target,
+                    true
+                );
             }
         }
 
@@ -1103,9 +1134,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
                 $countDuplicates = count(preg_grep("/^{$newImageName}\_[0-9]+/", $existingImagesArray));
 
-                if ($newImageName
-                    !== $mainImageName
-                    && !preg_match("/^{$newImageName}\_[0-9]+/", $mainImageName)) {
+                if (
+                    $newImageName !== $mainImageName
+                    && !preg_match("/^{$newImageName}\_[0-9]+/", $mainImageName)
+                ) {
                     if (!in_array($newImageName, $existingImagesArray) && $countDuplicates <= 0) {
                         $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, false);
                     }
