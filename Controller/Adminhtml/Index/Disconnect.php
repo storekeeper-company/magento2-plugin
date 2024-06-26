@@ -5,45 +5,45 @@ namespace StoreKeeper\StoreKeeper\Controller\Adminhtml\Index;
 use Magento\Backend\App\Action;
 use Magento\Backend\Model\Url;
 use Magento\Backend\App\Action\Context;
-use Magento\Framework\App\Request\Http;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use Magento\Framework\MessageQueue\PublisherInterface;
 
 class Disconnect extends Action implements HttpGetActionInterface
 {
-    private Http $request;
     private Auth $authHelper;
     private Url $url;
     private PublisherInterface $publisher;
+    private StoreManagerInterface $storeManager;
 
     /**
      * Constructor
      *
      * @param Context $context
-     * @param Http $request
      * @param Auth $authHelper
      * @param ManagerInterface $messageManager
      * @param Url $url
      * @param PublisherInterface $publisher
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Context $context,
-        Http $request,
         Auth $authHelper,
         ManagerInterface $messageManager,
         Url $url,
-        PublisherInterface $publisher
+        PublisherInterface $publisher,
+        StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
-        $this->request = $request;
         $this->authHelper = $authHelper;
         $this->messageManager = $messageManager;
         $this->url = $url;
         $this->publisher = $publisher;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -76,12 +76,12 @@ class Disconnect extends Action implements HttpGetActionInterface
     public function execute()
     {
         try {
-            $storeId = $this->request->getParam('storeId');
+            $storeId = $this->storeManager->getStore()->getId();
             $message = [
                 "type" => "disconnect",
                 "storeId" => $storeId
             ];
-            
+
             $this->publisher->publish('storekeeper.queue.events', json_encode($message));
             $this->authHelper->disconnectStore($storeId);
             $this->messageManager->addSuccess(__("Store {$storeId} has been disconnected from StoreKeeper"));

@@ -3,19 +3,18 @@
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Request\Http;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\Data\Form\Element\CollectionFactory;
 use Magento\Framework\Data\Form\Element\Factory;
 use Magento\Framework\Escaper;
 use Magento\Framework\Math\Random;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
+use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class StoreName extends AbstractElement
 {
     private Auth $authHelper;
-    private Http $request;
     private ScopeConfigInterface $scopeConfig;
 
     /**
@@ -27,8 +26,8 @@ class StoreName extends AbstractElement
      * @param SecureHtmlRenderer|null $secureRenderer
      * @param Random|null $random
      * @param Auth $authHelper
-     * @param Http $request
      * @param ScopeConfigInterface $scopeConfig
+     * @param StoreManagerInterface $storeManager
      * @param $data
      */
     public function __construct(
@@ -38,14 +37,14 @@ class StoreName extends AbstractElement
         ?SecureHtmlRenderer $secureRenderer,
         ?Random $random,
         Auth $authHelper,
-        Http $request,
         ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
-        $this->request = $request;
         $this->scopeConfig = $scopeConfig;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -60,7 +59,7 @@ class StoreName extends AbstractElement
         if ($storekeeperStoreInformation = $this->scopeConfig->getValue(
             'storekeeper_general/general/storekeeper_store_information',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORES,
-            $this->request->getParam('store')
+            $this->storeManager->getStore()->getId()
         )) {
             if ($storekeeperStoreInformation = json_decode($storekeeperStoreInformation, true)) {
                 $storeName = $storekeeperStoreInformation['shop']['site']['title'] ?? null;

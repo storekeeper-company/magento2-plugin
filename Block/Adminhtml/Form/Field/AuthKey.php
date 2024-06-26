@@ -2,20 +2,19 @@
 
 namespace StoreKeeper\StoreKeeper\Block\Adminhtml\Form\Field;
 
-use Magento\Framework\App\Request\Http;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\Data\Form\Element\CollectionFactory;
 use Magento\Framework\Data\Form\Element\Factory;
 use Magento\Framework\Escaper;
 use Magento\Framework\Math\Random;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
-
+use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
 class AuthKey extends AbstractElement
 {
     private Auth $authHelper;
-    private Http $request;
+    private StoreManagerInterface $storeManager;
 
     /**
      * Constructor
@@ -26,7 +25,7 @@ class AuthKey extends AbstractElement
      * @param SecureHtmlRenderer|null $secureRenderer
      * @param Random|null $random
      * @param Auth $authHelper
-     * @param Http $request
+     * @param StoreManagerInterface $storeManager
      * @param $data
      */
     public function __construct(
@@ -36,12 +35,12 @@ class AuthKey extends AbstractElement
         ?SecureHtmlRenderer $secureRenderer,
         ?Random $random,
         Auth $authHelper,
-        Http $request,
+        StoreManagerInterface $storeManager,
         $data = []
     ) {
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
         $this->authHelper = $authHelper;
-        $this->request = $request;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -49,10 +48,10 @@ class AuthKey extends AbstractElement
      *
      * @return string
      */
-    public function getElementHtml()
+    public function getElementHtml(): string
     {
-        return "
-            <span style='word-break: break-all'>" . $this->authHelper->authCheck($this->request->getParam('store')) . "</span>
-        ";
+        $storeId = $this->storeManager->getStore()->getId();
+
+        return "<span style='word-break: break-all'>" . $this->authHelper->authCheck($storeId) . "</span>";
     }
 }
