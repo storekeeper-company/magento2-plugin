@@ -5,46 +5,46 @@ namespace StoreKeeper\StoreKeeper\Controller\Adminhtml\Index;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\Url;
-use Magento\Framework\App\Request\Http;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Request\InvalidRequestException;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 
 class Index extends Action implements HttpGetActionInterface
 {
-    private Http $request;
     private Auth $authHelper;
     private Url $url;
     private OrderApiClient $orderApiClient;
+    private StoreManagerInterface $storeManager;
 
     /**
      * Constructor
      *
      * @param Context $context
-     * @param Http $request
      * @param Auth $authHelper
      * @param ManagerInterface $messageManager
      * @param Url $url
      * @param OrderApiClient $orderApiClient
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Context $context,
-        Http $request,
         Auth $authHelper,
         ManagerInterface $messageManager,
         Url $url,
-        OrderApiClient $orderApiClient
+        OrderApiClient $orderApiClient,
+        StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
 
-        $this->request = $request;
         $this->authHelper = $authHelper;
         $this->messageManager = $messageManager;
         $this->url = $url;
         $this->orderApiClient = $orderApiClient;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -76,7 +76,7 @@ class Index extends Action implements HttpGetActionInterface
      */
     public function execute()
     {
-        $storeId = $this->request->getParam('storeId');
+        $storeId = $this->storeManager->getStore()->getId();
         if ($this->authHelper->isConnected($storeId)) {
             try {
                 $storeInformation = $this->orderApiClient->getStoreInformation($storeId);
