@@ -31,6 +31,7 @@ class Redirect extends Action
     private PaymentApiClient $paymentApiClient;
     private Json $json;
     private PublisherInterface $publisher;
+    private Logger $logger;
 
     /**
      * Redirect constructor

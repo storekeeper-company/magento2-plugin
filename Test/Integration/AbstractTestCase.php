@@ -75,6 +75,7 @@ abstract class AbstractTestCase extends TestCase
     protected $storeKeeperFailedSyncOrder;
     protected $ruleRepository;
     protected $orderFactory;
+    protected $orderResource;
 
     protected function setUp(): void
     {
@@ -116,6 +117,8 @@ abstract class AbstractTestCase extends TestCase
         $this->storeKeeperFailedSyncOrder = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Model\StoreKeeperFailedSyncOrderFactory::class);
         $this->ruleRepository = Bootstrap::getObjectManager()->create(\Magento\SalesRule\Api\RuleRepositoryInterface::class);
         $this->orderFactory = Bootstrap::getObjectManager()->create(\Magento\Sales\Api\Data\OrderInterfaceFactory::class);
+        $this->orderResource = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\ResourceModel\Order::class);
+
         $this->customerApiClientMock->method('findShopCustomerBySubuserEmail')
             ->willReturn(
                 [
@@ -189,7 +192,8 @@ abstract class AbstractTestCase extends TestCase
                 'creditmemoFactory' => $this->creditmemoFactory,
                 'creditmemoService' => $this->creditmemoService,
                 'jsonSerializer' => $this->jsonSerializer,
-                'ruleRepository' => $this->ruleRepository
+                'ruleRepository' => $this->ruleRepository,
+                'orderResource' => $this->orderResource
             ]
         );
         $this->consumer = $objectManager->getObject(
@@ -640,7 +644,7 @@ abstract class AbstractTestCase extends TestCase
 
         $this->consumer->process(json_encode(['orderId' => $order->getIncrementId()]));
 
-        $savedOrder = $this->orderRepository->get($order->getId());
+        $savedOrder = $this->orderFactory->create()->loadByIncrementId($order->getIncrementId());
 
         $this->assertEquals(self::STORE_KEEPER_ORDER_ID, $savedOrder->getStorekeeperId());
         $this->assertEquals(self::STORE_KEEPER_ORDER_NUMBER, $savedOrder->getStorekeeperOrderNumber());
