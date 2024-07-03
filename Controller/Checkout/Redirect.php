@@ -31,6 +31,7 @@ class Redirect extends Action
     private Json $json;
     private PublisherInterface $publisher;
     private OrderResource  $orderResource;
+    private Logger $logger;
 
     /**
      * Redirect constructor
@@ -55,6 +56,7 @@ class Redirect extends Action
         OrdersHelper $ordersHelper,
         OrderApiClient $orderApiClient,
         PaymentApiClient $paymentApiClient,
+        Logger $logger,
         Json $json,
         PublisherInterface $publisher,
         OrderResource  $orderResource
