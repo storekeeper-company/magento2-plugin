@@ -8,7 +8,7 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Quote\Model\QuoteRepository;
-use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Model\ResourceModel\Order as OrderResource;
 use Magento\Sales\Api\Data\OrderInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
@@ -24,13 +24,13 @@ class Redirect extends Action
     private const FINISH_PAGE_ROUTE = 'storekeeper_payment/checkout/finish';
     private Session $checkoutSession;
     private QuoteRepository $quoteRepository;
-    private OrderRepository $orderRepository;
     private Auth $authHelper;
     private OrdersHelper $ordersHelper;
     private OrderApiClient $orderApiClient;
     private PaymentApiClient $paymentApiClient;
     private Json $json;
     private PublisherInterface $publisher;
+    private OrderResource  $orderResource;
 
     /**
      * Redirect constructor
@@ -38,7 +38,6 @@ class Redirect extends Action
      * @param Context $context
      * @param Session $checkoutSession
      * @param QuoteRepository $quoteRepository
-     * @param OrderRepository $orderRepository
      * @param Auth $authHelper
      * @param OrdersHelper $ordersHelper
      * @param OrderApiClient $orderApiClient
@@ -46,23 +45,23 @@ class Redirect extends Action
      * @param Logger $logger
      * @param Json $json
      * @param PublisherInterface $publisher
+     * @param OrderResource $orderResource
      */
     public function __construct(
         Context $context,
         Session $checkoutSession,
         QuoteRepository $quoteRepository,
-        OrderRepository $orderRepository,
         Auth $authHelper,
         OrdersHelper $ordersHelper,
         OrderApiClient $orderApiClient,
         PaymentApiClient $paymentApiClient,
         Logger $logger,
         Json $json,
-        PublisherInterface $publisher
+        PublisherInterface $publisher,
+        OrderResource  $orderResource
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteRepository = $quoteRepository;
-        $this->orderRepository = $orderRepository;
         $this->authHelper = $authHelper;
         $this->ordersHelper = $ordersHelper;
         $this->orderApiClient = $orderApiClient;
@@ -70,6 +69,7 @@ class Redirect extends Action
         $this->logger = $logger;
         $this->json = $json;
         $this->publisher = $publisher;
+        $this->orderResource = $orderResource;
         parent::__construct($context);
     }
 
@@ -107,8 +107,8 @@ class Redirect extends Action
             );
 
             if (array_key_exists('id', $payment)) {
-                $order->setStorekeeperPaymentId($payment['id']);
-                $this->orderRepository->save($order);
+                $order->setData('storekeeper_payment_id', $payment['id']);
+                $this->orderResource->saveAttribute($order, 'storekeeper_payment_id');
 
                 $this->publisher->publish(
                     \StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::CONSUMER_NAME,
