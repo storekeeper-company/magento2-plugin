@@ -217,8 +217,8 @@ abstract class AbstractTestCase extends TestCase
                 '_url' => $this->url,
                 'paymentApiClient' => $this->paymentApiClientMock,
                 'quoteRepository' => $this->quoteRepository,
-                'orderRepository' => $this->orderRepository,
-                '_response' => $this->response
+                '_response' => $this->response,
+                'orderResource' => $this->orderResource
             ]
         );
         $this->finish = $objectManager->getObject(
