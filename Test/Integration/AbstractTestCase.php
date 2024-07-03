@@ -638,6 +638,7 @@ abstract class AbstractTestCase extends TestCase
      */
     protected function assertOrderCreation(Order $order): void
     {
+        $this->orderRepository->save($order);
         $this->consumer->process(json_encode(['orderId' => $order->getIncrementId()]));
 
         $savedOrder = $this->orderFactory->create()->loadByIncrementId($order->getIncrementId());
