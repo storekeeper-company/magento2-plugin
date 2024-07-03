@@ -2,19 +2,22 @@
 
 namespace StoreKeeper\StoreKeeper\Controller\Checkout;
 
+use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Quote\Model\QuoteRepository;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Api\Data\OrderInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Model\OrderItems;
 use StoreKeeper\StoreKeeper\Model\CustomerInfo;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
-use Magento\Checkout\Model\Session;
-use Magento\Framework\App\Action\Context;
-use StoreKeeper\StoreKeeper\Api\OrderApiClient;
-use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 
 class Redirect extends Action
 {
@@ -26,6 +29,8 @@ class Redirect extends Action
     private OrdersHelper $ordersHelper;
     private OrderApiClient $orderApiClient;
     private PaymentApiClient $paymentApiClient;
+    private Json $json;
+    private PublisherInterface $publisher;
 
     /**
      * Redirect constructor
@@ -38,6 +43,9 @@ class Redirect extends Action
      * @param OrdersHelper $ordersHelper
      * @param OrderApiClient $orderApiClient
      * @param PaymentApiClient $paymentApiClient
+     * @param Logger $logger
+     * @param Json $json
+     * @param PublisherInterface $publisher
      */
     public function __construct(
         Context $context,
@@ -47,7 +55,10 @@ class Redirect extends Action
         Auth $authHelper,
         OrdersHelper $ordersHelper,
         OrderApiClient $orderApiClient,
-        PaymentApiClient $paymentApiClient
+        PaymentApiClient $paymentApiClient,
+        Logger $logger,
+        Json $json,
+        PublisherInterface $publisher
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteRepository = $quoteRepository;
@@ -56,6 +67,9 @@ class Redirect extends Action
         $this->ordersHelper = $ordersHelper;
         $this->orderApiClient = $orderApiClient;
         $this->paymentApiClient = $paymentApiClient;
+        $this->logger = $logger;
+        $this->json = $json;
+        $this->publisher = $publisher;
         parent::__construct($context);
     }
 
@@ -69,26 +83,37 @@ class Redirect extends Action
         try {
             $storeKeeperPaymentMethodId = (int)$this->getRequest()->getParam('storekeeper_payment_method_id');
             $order = $this->checkoutSession->getLastRealOrder();
+            $this->logger->error('SK Order ID: ' . $order->getStorekeeperId() );
+            $this->logger->error('Order Number: ' . $order->getStorekeepperOrderNumber() );
+
+            if (empty($order)) {
+                throw new Error('No order found in session, please try again');
+            }
+
             $payload = $this->ordersHelper->prepareOrder($order, false);
             $redirect_url =  $this->_url->getUrl(self::FINISH_PAGE_ROUTE);
             $shopModule = $this->orderApiClient->getShopModule($order->getStoreid());
             $products = $this->getPaymentProductFromOrderItems($payload['order_items']);
-            $billingInfo = $this->applyAddressName($payload['billing_address'] ?? $payload['shipping_address']);
+            $billingInfo = $this->applyAddressName(
+                $payload['billing_address'] ?? $payload['shipping_address']
+            );
+            $payment = $this->paymentApiClient->getStoreKeeperPayment(
+                $storeKeeperPaymentMethodId,
+                $redirect_url,
+                $order,
+                $payload,
+                $billingInfo,
+                $products
+            );
 
-            $payment = $this->paymentApiClient->getStoreKeeperPayment($storeKeeperPaymentMethodId, $redirect_url, $order, $payload, $billingInfo, $products);
-
-            $order->setStorekeeperPaymentId($payment['id']);
-
-            try {
+            if (array_key_exists('id', $payment)) {
+                $order->setStorekeeperPaymentId($payment['id']);
                 $this->orderRepository->save($order);
-            } catch (GeneralException $e) {
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __($e->getMessage())
-                );
-            }
 
-            if (empty($order)) {
-                throw new Error('No order found in session, please try again');
+                $this->publisher->publish(
+                    \StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::CONSUMER_NAME,
+                    $this->json->serialize(['orderId' => $order->getIncrementId()])
+                );
             }
 
             # Restore the quote
@@ -103,7 +128,14 @@ class Redirect extends Action
         } catch (\Exception $e) {
             $this->_getCheckoutSession()->restoreQuote();
             $this->messageManager->addExceptionMessage($e, __('Something went wrong, please try again later'));
-            $this->messageManager->addExceptionMessage($e, $e->getMessage());
+            $this->logger->error(
+                'Error while processing payment info during order sync',
+                [
+                    'error' =>  $this->logger->buildReportData($e),
+                    'payload' =>  $payload,
+                    'storeId' =>  $storeId
+                ]
+            );
 
             $this->_redirect('checkout/cart');
         }

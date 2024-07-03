@@ -51,9 +51,6 @@ class SalesOrderCreditMemoSaveAfterObserver implements ObserverInterface
                 \StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::CONSUMER_NAME,
                 $this->json->serialize(['orderId' => $order->getIncrementId()])
             );
-
-            $order->setStorekeeperOrderPendingSync(1);
-            $order->save();
         }
     }
 }

@@ -73,7 +73,7 @@ class Finish extends Action
         if ($payment['status'] == self::STOREKEEPER_PAYMENT_STATUS_PAID) {
             $this->invoice->create($order);
             $order->setState(Order::STATE_PROCESSING)->setStatus(Order::STATE_PROCESSING);
-            $order->save();
+            $this->orderRepository->save($order);
             $this->deactivateCart();
             $resultRedirect->setPath(self::SUCCESS_PAYMENT_PATH);
         }
