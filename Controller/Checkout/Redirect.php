@@ -55,7 +55,6 @@ class Redirect extends Action
         OrdersHelper $ordersHelper,
         OrderApiClient $orderApiClient,
         PaymentApiClient $paymentApiClient,
-        Logger $logger,
         Json $json,
         PublisherInterface $publisher,
         OrderResource  $orderResource
@@ -83,8 +82,6 @@ class Redirect extends Action
         try {
             $storeKeeperPaymentMethodId = (int)$this->getRequest()->getParam('storekeeper_payment_method_id');
             $order = $this->checkoutSession->getLastRealOrder();
-            $this->logger->error('SK Order ID: ' . $order->getStorekeeperId() );
-            $this->logger->error('Order Number: ' . $order->getStorekeepperOrderNumber() );
 
             if (empty($order)) {
                 throw new Error('No order found in session, please try again');
