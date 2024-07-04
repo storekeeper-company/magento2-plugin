@@ -523,9 +523,9 @@ class Orders extends AbstractHelper
      * If SK order exist
      *
      * @param Order $order
-     * @retrun string|int|null
+     * @retrun ?string
      */
-    public function exists(Order $order): string|int|null
+    public function exists(Order $order): ?string
     {
         $storeKeeperId = $order->getStorekeeperId();
 
@@ -571,7 +571,7 @@ class Orders extends AbstractHelper
                 }
 
                 $paymentId = $order->getStorekeeperPaymentId();
-                if ($order->getStorekeeperPaymentId() && $order->getStatus() !== 'canceled') {
+                if ($order->getStorekeeperPaymentId()) {
                     $this->paymentApiClient->attachPaymentIdsToOrder($order->getStoreId(), $storeKeeperId, [$paymentId]);
                 }
 
@@ -687,14 +687,14 @@ class Orders extends AbstractHelper
             $this->orderResource->saveAttribute($order, 'storekeeper_order_number');
 
             $paymentId = $order->getStorekeeperPaymentId();
-            if ($order->getStorekeeperPaymentId() && $order->getStatus() !== 'canceled') {
+            if ($order->getStorekeeperPaymentId()) {
                 $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, [$paymentId]);
             }
 
             if ($this->hasRefund($order)) {
                 $this->applyRefund($order);
             }
-        } catch (GeneralException $e) {
+        } catch (\Throwable $e) {
             $this->logger->error(
                 'Error while onCreate order sync method',
                 [
