@@ -79,7 +79,7 @@ class OrderApiClient extends ApiClient
      */
     public function updateOrderStatus(string $storeId, array $status, string $storeKeeperId): void
     {
-        $this->getShopModule($storeId)->updateOrderStatus(['status' => $status], $storeKeeperId);
+        $this->getShopModule($storeId)->updateOrderStatus($status, $storeKeeperId);
     }
 
     /**

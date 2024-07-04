@@ -48,7 +48,6 @@ class Invoice
                     ->addObject($invoice)
                     ->addObject($invoice->getOrder());
             $transactionSave->save();
-            $this->invoiceSender->send($invoice);
 
             $order->addCommentToStatusHistory(
                 __('Notified customer about invoice creation #%1.', $invoice->getId())

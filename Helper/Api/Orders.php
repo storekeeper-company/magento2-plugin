@@ -15,6 +15,7 @@ use Magento\Sales\Model\Convert\Order as ConvertOrder;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Item;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
+use Magento\Sales\Model\ResourceModel\Order as OrderResource;
 use Magento\Sales\Model\ResourceModel\Order\Tax\Item as TaxItem;
 use Magento\SalesRule\Api\RuleRepositoryInterface;
 use Magento\Shipping\Model\ShipmentNotifier;
@@ -57,6 +58,7 @@ class Orders extends AbstractHelper
     private CreditmemoService $creditmemoService;
     private OrderCollectionFactory $orderCollectionFactory;
     private RuleRepositoryInterface $ruleRepository;
+    private OrderResource  $orderResource;
 
     /**
      * Constructor
@@ -102,7 +104,8 @@ class Orders extends AbstractHelper
         CreditmemoFactory $creditmemoFactory,
         CreditmemoService $creditmemoService,
         OrderCollectionFactory $orderCollectionFactory,
-        RuleRepositoryInterface $ruleRepository
+        RuleRepositoryInterface $ruleRepository,
+        OrderResource $orderResource
     ) {
         parent::__construct($context);
         $this->authHelper = $authHelper;
@@ -125,6 +128,7 @@ class Orders extends AbstractHelper
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->ruleRepository = $ruleRepository;
         $this->taxClassesDiscounts = [];
+        $this->orderResource = $orderResource;
     }
 
     /**
@@ -556,33 +560,43 @@ class Orders extends AbstractHelper
             return;
         }
 
-        if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
-            if (isset($statusMapping[$storeKeeperOrder['status']])) {
-                if ($statusMapping[$storeKeeperOrder['status']]
-                    !== $order->getStatus() && $storeKeeperOrder['status']
-                    !== 'complete') {
-                    $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+        try {
+            if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
+                if (isset($statusMapping[$storeKeeperOrder['status']])) {
+                    if ($statusMapping[$storeKeeperOrder['status']]
+                        !== $order->getStatus() && $storeKeeperOrder['status']
+                        !== 'complete') {
+                        $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+                    }
                 }
+
+                $paymentId = $order->getStorekeeperPaymentId();
+                if ($order->getStorekeeperPaymentId()) {
+                    $this->paymentApiClient->attachPaymentIdsToOrder($order->getStoreId(), $storeKeeperId, [$paymentId]);
+                }
+
+                $this->updateStoreKeeperOrder($order, $storeKeeperId);
+                $this->createShipment($order, $storeKeeperId);
             }
 
-            $this->updateStoreKeeperOrder($order, $storeKeeperId);
-            $this->createShipment($order, $storeKeeperId);
-        }
+            if ($this->hasRefund($order)) {
+                $this->applyRefund($order);
+            }
 
-        if ($this->hasRefund($order)) {
-            $this->applyRefund($order);
-        }
-
-        $order->setStorekeeperOrderLastSync(time());
-        $order->setStorekeeperOrderPendingSync(0);
-        $order->setStorekeeperOrderPendingSyncSkip(true);
-        $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
-
-        try {
-            $this->orderRepository->save($order);
+            $order->setData('storekeeper_order_last_sync', time());
+            $this->orderResource->saveAttribute($order, 'storekeeper_order_last_sync');
+            $order->setData('storekeeper_order_pending_sync', 0);
+            $this->orderResource->saveAttribute($order, 'storekeeper_order_pending_sync');
+            $order->setData('storekeeper_order_number', $storeKeeperOrder['number']);
+            $this->orderResource->saveAttribute($order, 'storekeeper_order_number');
         } catch (GeneralException $e) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __($e->getMessage())
+            $this->logger->error(
+                'Error while onCreate order sync method',
+                [
+                    'error' =>  $this->logger->buildReportData($e),
+                    'payload' =>  $payload,
+                    'storeId' =>  $storeId
+                ]
             );
         }
     }
@@ -592,7 +606,7 @@ class Orders extends AbstractHelper
      *
      * @return array
      */
-    private function statusMapping(): array
+    public static function statusMapping(): array
     {
         return [
             'complete' => 'complete',
@@ -655,43 +669,40 @@ class Orders extends AbstractHelper
      */
     public function onCreate(Order $order): void
     {
-        $storeId = $order->getStoreid();
-        $payload = $this->prepareOrder($order, false);
-        $this->logger->info(
-            'Order #' . $order->getId() . ' payload: ' . $this->jsonSerializer->serialize($payload)
-        );
-        $storeKeeperOrder = $this->orderApiClient->getNewOrderWithReturn($storeId, $payload);
-        $storeKeeperId = $storeKeeperOrder['id'];
-        $order->setStorekeeperId($storeKeeperId);
-        $order->setStorekeeperOrderLastSync(time());
-        $order->setStorekeeperOrderPendingSync(0);
-        $order->setStorekeeperOrderPendingSyncSkip(true);
-        $order->setStorekeeperOrderNumber($storeKeeperOrder['number']);
-
         try {
-            $this->orderRepository->save($order);
-        } catch (GeneralException $e) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __($e->getMessage())
+            $storeId = $order->getStoreid();
+            $payload = $this->prepareOrder($order, false);
+            $this->logger->info(
+                'Order #' . $order->getId() . ' payload: ' . $this->jsonSerializer->serialize($payload)
             );
-        }
+            $storeKeeperOrder = $this->orderApiClient->getNewOrderWithReturn($storeId, $payload);
+            $storeKeeperId = $storeKeeperOrder['id'];
+            $order->setData('storekeeper_id', $storeKeeperId);
+            $this->orderResource->saveAttribute($order, 'storekeeper_id');
+            $order->setData('storekeeper_order_last_sync', time());
+            $this->orderResource->saveAttribute($order, 'storekeeper_order_last_sync');
+            $order->setData('storekeeper_order_pending_sync', 0);
+            $this->orderResource->saveAttribute($order, 'storekeeper_order_pending_sync');
+            $order->setData('storekeeper_order_number', $storeKeeperOrder['number']);
+            $this->orderResource->saveAttribute($order, 'storekeeper_order_number');
 
-        if ($order->getPaymentsCollection()->count() && $order->getStatus() !== 'canceled') {
             $paymentId = $order->getStorekeeperPaymentId();
-
-            if ($paymentId) {
-                try {
-                    $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, [$paymentId]);
-                } catch (GeneralException $e) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __($e->getMessage())
-                    );
-                }
+            if ($order->getStorekeeperPaymentId()) {
+                $this->paymentApiClient->attachPaymentIdsToOrder($storeId, $storeKeeperId, [$paymentId]);
             }
-        }
 
-        if ($this->hasRefund($order)) {
-            $this->applyRefund($order);
+            if ($this->hasRefund($order)) {
+                $this->applyRefund($order);
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'Error while onCreate order sync method',
+                [
+                    'error' =>  $this->logger->buildReportData($e),
+                    'payload' =>  $payload,
+                    'storeId' =>  $storeId
+                ]
+            );
         }
     }
 
