@@ -8,6 +8,7 @@
         <column xsi:type="varchar" name="storekeeper_order_last_sync" comment="StoreKeeper Order Last Sync"/>
         <column xsi:type="int" name="storekeeper_relation_data_id" comment="StoreKeeper relation data ID"/>
         <column xsi:type="int" name="storekeeper_payment_id" comment="StoreKeeper Payment ID"/>
+        <column xsi:type="int" name="storekeeper_shipment_id" comment="StoreKeeper Shipment ID"/>
     </table>
     <table name="storekeeper_failed_sync_order">
         <column xsi:type="int" name="order_id" unsigned="true" nullable="false" identity="false" comment="Order ID"/>

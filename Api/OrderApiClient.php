@@ -174,4 +174,41 @@ class OrderApiClient extends ApiClient
     {
         return $this->getShopModule($storeId)->listShippingMethodsForHooks(0, 999, null, null);
     }
+
+    /**
+     * @param int $storekeeperId
+     * @param array $items
+     * @param string $storeId
+     * @param string|null $parcelNumber
+     * @param string|null $parcelTrackTraceUrl
+     * @return int
+     * @throws \Exception
+     */
+    public function newOrderShipment(string $storekeeperId, array $items, string $storeId, ?string $parcelNumber = null,  ?string $parcelTrackTraceUrl = null): int
+    {
+        $shipment = [
+            'order_id' => $storekeeperId,
+            'order_items' => $items,
+            'force_negative_stock_if_missing' => true, // retailer need to fix it manually later
+        ];
+
+        if (!empty($parcelNumber)){
+            $shipment['parcel'] = [
+                'eid' => $parcelNumber,
+                'parcels_in_group' => [[
+                    'weight_g' => '1000',
+                    'tracking_number' => $parcelNumber,
+                    'tracking_url' => $parcelTrackTraceUrl,
+                ]],
+            ];
+        }
+        $shipmentId = $this->getShopModule($storeId)->newOrderShipmentForHook($shipment);
+
+        return $shipmentId;
+    }
+
+    public function markOrderShipmentDelivered(string $storeId, int $shipmentId): void
+    {
+        $this->getShopModule($storeId)->markOrderShipmentAsDeliveredForHook($shipmentId);
+    }
 }
