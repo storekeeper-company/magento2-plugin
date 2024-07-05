@@ -71,6 +71,7 @@ class Queue
                 if ($collection->count() > 0) {
                     foreach ($collection as $message) {
                         $taskLog = $this->taskLogFactory->create();
+                        $message->setData('body', json_decode($message->getBody(), true));
                         $taskLog->addData($message->getData());
                         $taskLog->setMessageId($message->getId());
                         $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
