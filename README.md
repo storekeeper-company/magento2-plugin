@@ -48,6 +48,7 @@ Current extension operates in one of 4 modes:
 
 Sync mode can be adjusted under `Stores` -> `Configuration` -> `StoreKeeper` -> `General` -> `Sync Mode` section
 
+**_Notice:_** Order shipments created from Magento admin will be synced into StoreKeeper backoffice as **Fully Delivered** due to lack of shpimnet statuses between dispatched and delivered in Magento 
 ## Delivery Methods Configuration
 In order to use **StoreKeeper Multi-Carrier Shipping** delivery option activate it under:<br/>
 _Stores -> Configuration -> Sales -> Delivery Methods -> **StoreKeeper Multi-Carrier Shipping**_<br/>
