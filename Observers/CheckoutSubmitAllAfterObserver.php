@@ -43,6 +43,7 @@ class CheckoutSubmitAllAfterObserver implements ObserverInterface
             $this->authHelper->isConnected($order->getStoreId())
             && $order->getStorekeeperOrderPendingSync() == 0
             && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
+            && !$order->getOrderDetached()
         ) {
             $order = $observer->getEvent()->getOrder();
 

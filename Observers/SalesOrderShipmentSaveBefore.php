@@ -6,31 +6,36 @@ namespace StoreKeeper\StoreKeeper\Observers;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as ApiOrders;
+use StoreKeeper\StoreKeeper\Logger\Logger;
+use StoreKeeper\StoreKeeper\Model\OrderSync\Shipment;
 
-class SalesOrderShipmentSaveAfter implements ObserverInterface
+class SalesOrderShipmentSaveBefore implements ObserverInterface
 {
     private Json $json;
-    private PublisherInterface $publisher;
     private ApiOrders $apiOrders;
+    private Shipment $shipment;
+    private Logger $logger;
 
     /**
      * Constructor
      *
      * @param Json $json
-     * @param PublisherInterface $publisher
      * @param ApiOrders $apiOrders
+     * @param Shipment $shipment
+     * @param Logger $logger
      */
     public function __construct(
         Json $json,
-        PublisherInterface $publisher,
-        ApiOrders $apiOrders
+        ApiOrders $apiOrders,
+        Shipment $shipment,
+        Logger $logger
     ) {
         $this->json = $json;
-        $this->publisher = $publisher;
         $this->apiOrders = $apiOrders;
+        $this->shipment = $shipment;
+        $this->logger = $logger;
     }
 
     /**
@@ -45,7 +50,7 @@ class SalesOrderShipmentSaveAfter implements ObserverInterface
         $order = $shipment->getOrder();
         $storekeeperId = $order->getStorekeeperId();
 
-        if ($order->getStorekeeperId() && !$order->getStorekeeperShipmentId()) {
+        if ($order->getStorekeeperId() && !$order->getStorekeeperShipmentId() && !$order->getOrderDetached()) {
             $shipmentData = [
                 'order_id' => $order->getId(),
                 'storekeeper_id' => $storekeeperId,
@@ -53,10 +58,22 @@ class SalesOrderShipmentSaveAfter implements ObserverInterface
                 'items' => $this->getShipmentsItems($order->getStoreId(), $storekeeperId)
             ];
 
-            $this->publisher->publish(
-                \StoreKeeper\StoreKeeper\Model\OrderSync\ShipmentConsumer::CONSUMER_NAME,
-                $this->json->serialize($shipmentData)
-            );
+            try{
+                $serializedData = $this->json->serialize($shipmentData);
+                $this->shipment->process($serializedData);
+            } catch (\Exception $e) {
+                $message = 'Error while creating shipment, storekeeper order number: ' . $storekeeperId;
+                $this->logger->error(
+                    $message,
+                    [
+                        'error' =>  $this->logger->buildReportData($e),
+                        'request' =>  $serializedData
+                    ]
+                );
+
+                //Trigger exception in order to stop shipment creation and display message to admin
+                throw new \Magento\Framework\Exception\LocalizedException(__($message));
+            }
         }
     }
 

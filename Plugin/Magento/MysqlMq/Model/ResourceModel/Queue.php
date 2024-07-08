@@ -13,15 +13,13 @@ use StoreKeeper\StoreKeeper\Api\TaskLogRepositoryInterface;
 use StoreKeeper\StoreKeeper\Model\Consumer as EventConsumer;
 use StoreKeeper\StoreKeeper\Model\Export\AbstractExportManager;
 use StoreKeeper\StoreKeeper\Model\OrderSync\Consumer as OrderConsumer;
-use StoreKeeper\StoreKeeper\Model\OrderSync\ShipmentConsumer;
 
 class Queue
 {
     const SK_MESSAGE_QUEUES = [
         EventConsumer::CONSUMER_NAME,
         OrderConsumer::CONSUMER_NAME,
-        AbstractExportManager::CONSUMER_NAME,
-        ShipmentConsumer::CONSUMER_NAME
+        AbstractExportManager::CONSUMER_NAME
     ];
 
     private MessageCollectionFactory $messageCollectionFactory;

@@ -3,6 +3,5 @@
         <binding id="updateBindingvendor" topic="storekeeper.queue.events" destinationType="queue" destination="storekeeper.queue.events"/>
         <binding id="storekeeperDataExport" topic="storekeeper.data.export" destinationType="queue" destination="storekeeper.data.export"/>
         <binding id="storekeeperSyncOrders" topic="storekeeper.queue.sync.orders" destinationType="queue" destination="storekeeper.queue.sync.orders"/>
-        <binding id="storekeeperSyncShipments" topic="storekeeper.queue.sync.shipments" destinationType="queue" destination="storekeeper.queue.sync.shipments"/>
     </exchange>
 </config>

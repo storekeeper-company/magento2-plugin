@@ -78,6 +78,23 @@ class StoreKeeper extends Template implements TabInterface
         return $this->getOrder()->getIncrementId();
     }
 
+
+    /**
+     * @return bool
+     */
+    public function getOrderDetached(): bool
+    {
+        return $this->getOrder()->getOrderDetached();
+    }
+
+    /**
+     * @return string
+     */
+    public function getSaveUrl(): string
+    {
+        return $this->getUrl('storekeeper/order/save', ['order_id' => $this->getOrder()->getId()]);
+    }
+
     /**
      * Get SK label
      *

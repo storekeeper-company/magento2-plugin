@@ -8,7 +8,4 @@
     <topic name="storekeeper.queue.sync.orders" request="string">
         <handler name="storekeeper.queue.sync.orders" type="StoreKeeper\StoreKeeper\Model\OrderSync\Consumer" method="process" />
     </topic>
-    <topic name="storekeeper.queue.sync.shipments" request="string">
-        <handler name="storekeeper.queue.sync.shipments" type="StoreKeeper\StoreKeeper\Model\OrderSync\ShipmentConsumer" method="process" />
-    </topic>
 </config>

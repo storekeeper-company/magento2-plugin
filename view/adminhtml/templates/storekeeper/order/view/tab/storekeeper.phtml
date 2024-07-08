@@ -1,6 +1,8 @@
 <div class="fieldset-wrapper order-information">
     <?php
+        /** @var \StoreKeeper\StoreKeeper\Block\Adminhtml\Order\View\Tab\StoreKeeper $block */
         $order = $block->getOrder();
+        $orderDetached = $block->getOrderDetached();
     ?>
 
     <p>
@@ -33,5 +35,40 @@
             <?= $storekeeperOrderNumber ?>
         </p>
     <?php endif ?>
+
+    <?php
+    /** @var \StoreKeeper\StoreKeeper\Block\Adminhtml\Order\View\Tab\StoreKeeper $block */
+    $orderDetached = $block->getOrderDetached();
+    ?>
+
+    <div>
+        <label for="order_detached"><?php echo __('Order Detached'); ?></label>
+        <select id="order_detached" name="order_detached">
+            <option value="1" <?php echo $orderDetached ? 'selected' : ''; ?>><?php echo __('Yes'); ?></option>
+            <option value="0" <?php echo !$orderDetached ? 'selected' : ''; ?>><?php echo __('No'); ?></option>
+        </select>
+        <button type="button" id="save_order_detached"><?php echo __('Save'); ?></button>
+    </div>
+
+    <script>
+        require(['jquery'], function($) {
+            $('#save_order_detached').on('click', function() {
+                $.ajax({
+                    url: '<?php echo $block->getSaveUrl(); ?>',
+                    type: 'POST',
+                    data: {
+                        order_detached: $('#order_detached').val(),
+                        form_key: window.FORM_KEY
+                    },
+                    success: function(response) {
+                        alert('<?php echo __('Saved successfully'); ?>');
+                    },
+                    error: function(response) {
+                        alert('<?php echo __('Error saving the field'); ?>');
+                    }
+                });
+            });
+        });
+    </script>
 
 </div>

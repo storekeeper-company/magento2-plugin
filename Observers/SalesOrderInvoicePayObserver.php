@@ -45,6 +45,7 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
             $this->authHelper->isConnected($order->getStoreId())
             && $order->getStorekeeperOrderPendingSync() == 0
             && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
+            && !$order->getOrderDetached()
         ) {
 
             $this->publisher->publish(

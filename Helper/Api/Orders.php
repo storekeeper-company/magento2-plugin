@@ -725,6 +725,11 @@ class Orders extends AbstractHelper
                 1,
                 'eq'
             )
+            ->addFilter(
+                'order_detached',
+                false,
+                'eq'
+            )
             ->setPageSize(
                 $pageSize
             )

@@ -8,7 +8,4 @@
     <publisher topic="storekeeper.queue.sync.orders">
         <connection name="db" exchange="magento-db" />
     </publisher>
-    <publisher topic="storekeeper.queue.sync.shipments">
-        <connection name="db" exchange="magento-db" />
-    </publisher>
 </config>

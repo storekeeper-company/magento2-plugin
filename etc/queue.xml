@@ -17,10 +17,4 @@
                consumerInstance="Magento\Framework\MessageQueue\Consumer"
                handler="StoreKeeper\StoreKeeper\Model\OrderSync\Consumer::process"/>
     </broker>
-    <broker topic="storekeeper.queue.sync.shipments" exchange="magento-db" type="db">
-        <queue name="storekeeper.queue.sync.shipments"
-               consumer="storekeeper.queue.sync.shipments"
-               consumerInstance="Magento\Framework\MessageQueue\Consumer"
-               handler="StoreKeeper\StoreKeeper\Model\OrderSync\ShipmentConsumer::process"/>
-    </broker>
 </config>
