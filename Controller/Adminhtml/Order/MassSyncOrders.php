@@ -66,6 +66,10 @@ class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterfa
         $syncedOrderIds = [];
         $failedOrderIds = [];
         foreach ($collection->getItems() as $order) {
+            if ($order->getOrderDetached()) {
+                continue;
+            }
+
             $orderId = $order->getId();
             $storeKeeperFailedSyncOrder = $this->syncOrders->getStoreKeeperFailedSyncOrder($orderId);
             try {

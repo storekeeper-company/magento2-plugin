@@ -468,12 +468,10 @@ class Orders extends AbstractHelper
                 }
 
                 $track = $this->trackFactory->create();
-                $statusUrl = $statusUrl = $this->orderApiClient->getOrderStatusPageUrl($order->getStoreId(), $storeKeeperId);
                 $track->setNumber($storeKeeperId);
                 $track->setCarrierCode($storeKeeperOrder['shipping_name']);
                 $track->setTitle('StoreKeeper Shipment Tracking Number');
                 $track->setDescription('Shipping ');
-                $track->setUrl($statusUrl);
 
                 $shipment->addTrack($track);
 
@@ -725,6 +723,11 @@ class Orders extends AbstractHelper
             ->addFilter(
                 'storekeeper_order_pending_sync',
                 1,
+                'eq'
+            )
+            ->addFilter(
+                'order_detached',
+                false,
                 'eq'
             )
             ->setPageSize(
