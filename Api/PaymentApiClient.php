@@ -2,12 +2,14 @@
 
 namespace StoreKeeper\StoreKeeper\Api;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use StoreKeeper\ApiWrapper\ModuleApiWrapper;
 use StoreKeeper\StoreKeeper\Api\ApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class PaymentApiClient extends ApiClient
 {
@@ -20,8 +22,11 @@ class PaymentApiClient extends ApiClient
      * @param OrderApiClient $orderApiClient
      */
     public function __construct(
+        ScopeConfigInterface $scopeConfig,
+        Logger $logger,
         OrderApiClient $orderApiClient
     ) {
+        parent::__construct($scopeConfig, $logger);
         $this->orderApiClient = $orderApiClient;
     }
 
@@ -41,7 +46,7 @@ class PaymentApiClient extends ApiClient
      * @return int
      * @throws \Exception
      */
-    public function getNewWebPayment(string $storeId, array $parameters = []): int
+    public function newWebPayment(string $storeId, array $parameters = []): int
     {
         return $this->getPaymentModule($storeId)->newWebPayment($parameters);
     }
@@ -133,6 +138,19 @@ class PaymentApiClient extends ApiClient
                     'products' => $products,
                 ]
             );
+        }
+    }
+
+    /**
+     * @param string $paymentMethodCode
+     * @return bool
+     */
+    public function isStorekeeperPayment(string $paymentMethodCode)
+    {
+        if (is_int(strpos($paymentMethodCode, 'storekeeper'))) {
+            return true;
+        } else {
+            return false;
         }
     }
 

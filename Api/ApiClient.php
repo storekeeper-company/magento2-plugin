@@ -11,7 +11,7 @@ use StoreKeeper\StoreKeeper\Logger\Logger;
 
 class ApiClient
 {
-    private ScopeConfigInterface $scopeConfig;
+    protected ScopeConfigInterface $scopeConfig;
     protected Logger $logger;
     protected ?Auth $auth = null;
 

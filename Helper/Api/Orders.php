@@ -263,7 +263,7 @@ class Orders extends AbstractHelper
             // 90             - 70                 = 20
             // in this above example we'll have to refund 20
             if ($diff > 0) {
-                $storekeeperRefundId = $this->paymentApiClient->getNewWebPayment(
+                $storekeeperRefundId = $this->paymentApiClient->newWebPayment(
                     $order->getStoreId(),
                     [
                         'amount' => round(-abs($diff), 2),
