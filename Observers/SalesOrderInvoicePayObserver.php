@@ -75,7 +75,7 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
                     ]
                 );
 
-                $order->setData('storekeeper_payment_id', $payment['id']);
+                $order->setData('storekeeper_payment_id', $storekeeperPaymentId);
                 $this->orderResource->saveAttribute($order, 'storekeeper_payment_id');
             }
         }
