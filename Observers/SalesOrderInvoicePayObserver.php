@@ -5,6 +5,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Sales\Model\ResourceModel\Order as OrderResource;
 use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 
@@ -14,6 +15,7 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
     private Json $json;
     private PublisherInterface $publisher;
     private PaymentApiClient $paymentApiClient;
+    private OrderResource $orderResource;
 
     /**
      * Constructor
@@ -22,17 +24,20 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
      * @param Json $json
      * @param PublisherInterface $publisher
      * @param PaymentApiClient $paymentApiClient
+     * @param OrderResource $orderResource
      */
     public function __construct(
         Auth $authHelper,
         Json $json,
         PublisherInterface $publisher,
-        PaymentApiClient $paymentApiClient
+        PaymentApiClient $paymentApiClient,
+        OrderResource $orderResource
     ) {
         $this->authHelper = $authHelper;
         $this->json = $json;
         $this->publisher = $publisher;
         $this->paymentApiClient = $paymentApiClient;
+        $this->orderResource = $orderResource;
     }
 
     /**
@@ -69,6 +74,9 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
                         $storekeeperPaymentId
                     ]
                 );
+
+                $order->setData('storekeeper_payment_id', $payment['id']);
+                $this->orderResource->saveAttribute($order, 'storekeeper_payment_id');
             }
         }
     }
