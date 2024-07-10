@@ -740,6 +740,19 @@ class Orders extends AbstractHelper
     }
 
     /**
+     * @param $order
+     * @return bool
+     */
+    public function allowShipmnetCreation(\Magento\Sales\Api\Data\OrderInterface $order): bool
+    {
+        if ($order->getStorekeeperId() && !$order->getStorekeeperShipmentId() && !$order->getOrderDetached()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Get Order Item price
      *
      * @param Item $item

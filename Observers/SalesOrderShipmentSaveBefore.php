@@ -50,7 +50,7 @@ class SalesOrderShipmentSaveBefore implements ObserverInterface
         $order = $shipment->getOrder();
         $storekeeperId = $order->getStorekeeperId();
 
-        if ($order->getStorekeeperId() && !$order->getStorekeeperShipmentId() && !$order->getOrderDetached()) {
+        if ($this->apiOrders->allowShipmnetCreation($order)) {
             $shipmentData = [
                 'order_id' => $order->getId(),
                 'storekeeper_id' => $storekeeperId,
