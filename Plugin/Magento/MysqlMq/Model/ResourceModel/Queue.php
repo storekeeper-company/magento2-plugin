@@ -71,7 +71,8 @@ class Queue
                         $taskLog = $this->taskLogFactory->create();
                         $taskLog->addData($message->getData());
                         $taskLog->setMessageId($message->getId());
-                        $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
+                        $time = $this->timezone->date(new \DateTime($message->getUpdatedAt()));
+                        $taskLog->setUpdatedAt($time->format('Y-m-d H:i:s'));
 
                         $this->taskLogRepository->save($taskLog);
                     }
@@ -129,7 +130,8 @@ class Queue
                 $taskLog = $this->taskLogRepository->getByMessageId($messageId);
                 $taskLog->setTopicName($message->getTopicName());
                 $taskLog->setBody($message->getBody());
-                $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
+                $time = $this->timezone->date(new \DateTime($message->getUpdatedAt()));
+                $taskLog->setUpdatedAt($time->format('Y-m-d H:i:s'));
                 $taskLog->setStatus($message->getStatus());
                 $taskLog->setNumberOfTrials($message->getNumberOfTrials());
 

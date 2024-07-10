@@ -283,13 +283,14 @@ class Webhook
     private function addEventLog(string $action, string $status): void
     {
         $eventLog = $this->eventLogFactory->create();
+        $time = $this->timezone->date(new \DateTime());
         $eventLog->addData([
             'request_route' => $this->request->getPathInfo(),
             'request_body' => $this->request->getContent(),
             'request_method' => $this->request->getMethod(),
             'request_action' => $action,
             'response_code' => $status,
-            'date' => $this->timezone->date()->getTimestamp()
+            'date' => $time->format('Y-m-d H:i:s')
         ]);
 
         $this->eventLogRepository->save($eventLog);
