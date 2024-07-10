@@ -57,7 +57,6 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
                 && !$this->paymentApiClient->isStorekeeperPayment($order->getPayment()->getMethod())
                 && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
                 && !$order->getOrderDetached()
-                && $storekeeperId
             ) {
                 $storekeeperPaymentId = $this->paymentApiClient->newWebPayment(
                     $order->getStoreId(),
@@ -67,13 +66,15 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
                     ]
                 );
 
-                $this->paymentApiClient->attachPaymentIdsToOrder(
-                    $order->getStoreId(),
-                    $storekeeperId,
-                    [
-                        $storekeeperPaymentId
-                    ]
-                );
+                if ($storekeeperId) {
+                    $this->paymentApiClient->attachPaymentIdsToOrder(
+                        $order->getStoreId(),
+                        $storekeeperId,
+                        [
+                            $storekeeperPaymentId
+                        ]
+                    );
+                }
 
                 $order->setData('storekeeper_payment_id', $storekeeperPaymentId);
                 $this->orderResource->saveAttribute($order, 'storekeeper_payment_id');
