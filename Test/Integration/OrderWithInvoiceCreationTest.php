@@ -14,6 +14,7 @@ class OrderWithInvoiceCreationTest extends AbstractTestCase
     protected $invoice;
     protected $orderResource;
     protected $invoiceObserver;
+    protected $eventManager;
 
     protected function setUp(): void
     {
@@ -22,12 +23,16 @@ class OrderWithInvoiceCreationTest extends AbstractTestCase
         $this->invoice = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Service\InvoiceService::class);
         $this->orderResource = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\ResourceModel\Order::class);
         $this->paymentApiClientMock->method('isStorekeeperPayment')->willReturn(false);
+
+        // Disable the observer during setup in order not to trigger observer before data is mocked
+        $this->disableObserver();
+
         $this->invoiceObserver = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Observers\SalesOrderInvoicePayObserver::class,
             [
                 'orderResource' => $this->orderResource,
                 'paymentApiClient' => $this->paymentApiClientMock,
-                'authHelper' => $this->authHelper,
+                'authHelper' => $this->authHelper
             ]
         );
     }
@@ -46,6 +51,10 @@ class OrderWithInvoiceCreationTest extends AbstractTestCase
         $invoice->save();
         $order->setData('storekeeper_id', '17')->save();
 
+        // Re-enable the observer after data setup
+        $this->enableObserver();
+
+        // Manually trigger the observer event
         //Mock observer run with freshly created invoice
         $observer = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
@@ -54,9 +63,28 @@ class OrderWithInvoiceCreationTest extends AbstractTestCase
         $observer->getEvent()->setData('invoice', $invoice);
         $this->invoiceObserver->execute($observer);
 
-        //Reload order with fresh data
+        // Reload order with fresh data
         $existingOrder = $this->orderFactory->create()->loadByIncrementId('100000001');
-        //Assert that storekeeper_payment_id was populated during 'storekeeper_sales_order_invoice_pay' event
+
+        // Assert that storekeeper_payment_id was populated during 'storekeeper_sales_order_invoice_pay' event
         $this->assertNotEmpty($existingOrder->getStorekeeperPaymentId());
+    }
+
+    protected function disableObserver()
+    {
+        Bootstrap::getObjectManager()->configure([
+            'preferences' => [
+                \StoreKeeper\StoreKeeper\Observers\SalesOrderInvoicePayObserver::class => \StoreKeeper\StoreKeeper\Test\Integration\Mock\InvoiceObserverMock::class,
+            ],
+        ]);
+    }
+
+    protected function enableObserver()
+    {
+        Bootstrap::getObjectManager()->configure([
+            'preferences' => [
+                \StoreKeeper\StoreKeeper\Test\Integration\Mock\InvoiceObserverMock::class => \StoreKeeper\StoreKeeper\Observers\SalesOrderInvoicePayObserver::class,
+            ],
+        ]);
     }
 }
