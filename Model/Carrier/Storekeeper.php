@@ -7,7 +7,8 @@ namespace StoreKeeper\StoreKeeper\Model\Carrier;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
-use Magento\Shipping\Model\Rate\Result;
+use Magento\Shipping\Model\Tracking\ResultFactory;
+use Magento\Shipping\Model\Tracking\Result\StatusFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config as ConfigHelper;
@@ -23,6 +24,8 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
     protected ConfigHelper $configHelper;
     protected StoreManagerInterface $storeManager;
     protected Logger $logger;
+    protected ResultFactory $trackFactory;
+    protected StatusFactory $trackStatusFactory;
 
     /**
      * Constructor
@@ -47,6 +50,8 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
         ConfigHelper $configHelper,
         StoreManagerInterface $storeManager,
         Logger $skLogger,
+        ResultFactory $trackFactory,
+        StatusFactory $trackStatusFactory,
         array $data = []
     ) {
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
@@ -56,6 +61,8 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
         $this->configHelper = $configHelper;
         $this->storeManager = $storeManager;
         $this->logger = $skLogger;
+        $this->trackFactory = $trackFactory;
+        $this->trackStatusFactory = $trackStatusFactory;
     }
 
     /**
@@ -161,5 +168,52 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
         }
 
         return $valid;
+    }
+
+    /**
+     * Check if carrier has shipping tracking option available
+     *
+     * @return boolean
+     */
+    public function isTrackingAvailable()
+    {
+        return true;
+    }
+
+    /**
+     * Get tracking information
+     *
+     * @param string $tracking
+     * @return string|false
+     */
+    public function getTrackingInfo(string $tracking)
+    {
+        try {
+            $statusUrl = $this->orderApiClient->getOrderStatusPageUrl($this->getStore()->getId(), $tracking);
+        } catch (\Exception $e) {
+            $statusUrl = '';
+        }
+
+        $result = $this->trackFactory->create();
+        $status = $this->trackStatusFactory->create();
+        $status->setCarrier('storekeeper');
+        $status->setCarrierTitle($this->getConfigData('title'));
+        $status->setTracking($tracking);
+        $status->setPopup(1);
+        if (!empty($statusUrl)) {
+            $status->setUrl($statusUrl);
+        }
+        $result->append($status);
+
+        if ($result instanceof \Magento\Shipping\Model\Tracking\Result) {
+            $trackings = $result->getAllTrackings();
+            if ($trackings) {
+                return $trackings[0];
+            }
+        } elseif (is_string($result) && !empty($result)) {
+            return $result;
+        }
+
+        return false;
     }
 }

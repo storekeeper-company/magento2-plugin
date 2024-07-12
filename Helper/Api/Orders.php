@@ -469,7 +469,7 @@ class Orders extends AbstractHelper
 
                 $track = $this->trackFactory->create();
                 $track->setNumber($storeKeeperId);
-                $track->setCarrierCode($storeKeeperOrder['shipping_name']);
+                $track->setCarrierCode('storekeeper');
                 $track->setTitle('StoreKeeper Shipment Tracking Number');
                 $track->setDescription('Shipping ');
 
