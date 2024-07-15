@@ -99,7 +99,7 @@ class WebhookTest extends AbstractTestCase
 
         $ex = new GeneralException('The new refund has not to be created', 0);
         $ex->setApiExceptionClass('ShopModule::GeneralException');
-        $this->paymentApiClientMock->method('getNewWebPayment')->willThrowException($ex);
+        $this->paymentApiClientMock->method('newWebPayment')->willThrowException($ex);
     }
 
     /**

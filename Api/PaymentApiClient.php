@@ -41,7 +41,7 @@ class PaymentApiClient extends ApiClient
      * @return int
      * @throws \Exception
      */
-    public function getNewWebPayment(string $storeId, array $parameters = []): int
+    public function newWebPayment(string $storeId, array $parameters = []): int
     {
         return $this->getPaymentModule($storeId)->newWebPayment($parameters);
     }

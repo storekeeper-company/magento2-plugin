@@ -64,7 +64,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
             ) {
                 $order = $observer->getEvent()->getOrder();
                 $oldOrder = $this->orderRepository->get($order->getId());
-                $oldStatus = $order->getOrigData('status');
+                $oldStatus = $oldOrder->getOrigData('status');
 
                 //Send order to sync only if status is updated and exist in sk mapping list
                 if ($order->getStatus() != $oldStatus && in_array($order->getStatus(), ApiOrders::statusMapping())) {
