@@ -43,7 +43,7 @@ class ShipmentCreationTest extends AbstractTestCase
         $this->apiOrdersMock->method('getStoreKeeperOrder')->willReturn(
             ['order_items' => [0 => ['is_shipping' => false, 'id' => 999, 'quantity' => 1]]]
         );
-        $this->apiOrdersMock->method('allowShipmnetCreation')->willReturn(true);
+        $this->apiOrdersMock->method('allowShipmentCreation')->willReturn(true);
 
         $this->shipment = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Model\OrderSync\Shipment::class,

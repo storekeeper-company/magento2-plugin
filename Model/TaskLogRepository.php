@@ -108,7 +108,7 @@ class TaskLogRepository implements TaskLogRepositoryInterface
         $taskLog = $this->taskLogFactory->create();
         $this->resource->load($taskLog, $messageId, 'message_id');
         if (!$taskLog->getId()) {
-            throw new NoSuchEntityException(__('TaskLog with message id "%1" does not exist.', $taskLogId));
+            throw new NoSuchEntityException(__('TaskLog with message id "%1" does not exist.', $messageId));
         }
         return $taskLog;
     }
