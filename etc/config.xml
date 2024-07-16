@@ -224,6 +224,7 @@
             <storekeeper>
                 <model>StoreKeeper\StoreKeeper\Model\Carrier\Storekeeper</model>
                 <active>0</active>
+                <title>StoreKeeper Multi-Carrier</title>
             </storekeeper>
         </carriers>
         <csp>
