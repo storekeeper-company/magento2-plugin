@@ -40,7 +40,6 @@ class Webhook
      * @param PublisherInterface $publisher
      * @param Config $configHelper
      * @param Logger $logger
-     * @param TimezoneInterface $timezone
      * @param JsonResponse $jsonResponse
      * @param EventLogInterfaceFactory $eventLogFactory
      * @param EventLogRepository $eventLogRepository
@@ -54,7 +53,6 @@ class Webhook
         PublisherInterface $publisher,
         Config $configHelper,
         Logger $logger,
-        TimezoneInterface $timezone,
         JsonResponse $jsonResponse,
         EventLogInterfaceFactory $eventLogFactory,
         EventLogRepository $eventLogRepository,
