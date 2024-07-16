@@ -12,7 +12,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 class ShipmentCreationTest extends AbstractTestCase
 {
 
-    const SHIPMENT_ID = 1;
+    const SHIPMENT_ID = 200;
 
     const SHIPMENT_QUEUE = [
         "order_id" => "1",
@@ -23,7 +23,7 @@ class ShipmentCreationTest extends AbstractTestCase
 
     protected $shipmentFactory;
     protected $shipmentRepository;
-    protected $shipmentObserver;
+    protected $orderObserver;
     protected $json;
     protected $apiOrdersMock;
     protected $shipment;
@@ -43,7 +43,7 @@ class ShipmentCreationTest extends AbstractTestCase
         $this->apiOrdersMock->method('getStoreKeeperOrder')->willReturn(
             ['order_items' => [0 => ['is_shipping' => false, 'id' => 999, 'quantity' => 1]]]
         );
-        $this->apiOrdersMock->method('allowShipmnetCreation')->willReturn(true);
+        $this->apiOrdersMock->method('allowShipmentCreation')->willReturn(true);
 
         $this->shipment = $objectManager->getObject(
             \StoreKeeper\StoreKeeper\Model\OrderSync\Shipment::class,
@@ -54,17 +54,22 @@ class ShipmentCreationTest extends AbstractTestCase
             ]
         );
 
-        $this->shipmentObserver = $objectManager->getObject(
-            \StoreKeeper\StoreKeeper\Observers\SalesOrderShipmentSaveBefore::class,
+        $this->orderObserver = $objectManager->getObject(
+            \StoreKeeper\StoreKeeper\Observers\SalesOrderSaveBeforeObserver::class,
             [
                 'json' => $this->json,
                 'apiOrders' => $this->apiOrdersMock,
-                'shipment' => $this->shipment
+                'shipment' => $this->shipment,
+                'authHelper' => $this->authHelper,
+                'orderRepository' => $this->orderRepository
             ]
         );
     }
 
     /**
+     * @magentoConfigFixture current_store storekeeper_general/general/enabled 1
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_mode 4
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/order_shipping.php
      * @magentoDbIsolation enabled
      */
@@ -72,19 +77,16 @@ class ShipmentCreationTest extends AbstractTestCase
     {
         $existingOrder = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order::class)
             ->loadByIncrementId('100000001');
-        $shipment = $existingOrder->getShipmentsCollection()->getFirstItem();
 
-        //Mock and trigger shipment_save_after event with current order shipment record
+        //Mock and trigger order_save_before event with current order in complete state
+        $existingOrder->setOrderDetached(false);
+        $existingOrder->setStatus(\Magento\Sales\Model\Order::STATE_COMPLETE);
         $observer = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
         $observer->method('getEvent')->willReturn(new Event());
-        $observer->getEvent()->setData('shipment', $shipment);
-        $this->shipmentObserver->execute($observer);
-
-        //Reload order with fresh data
-        $existingOrder = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order::class)
-            ->loadByIncrementId('100000001');
+        $observer->getEvent()->setData('order', $existingOrder);
+        $this->orderObserver->execute($observer);
 
         //Assert that storekeeper shipment id were generated and assigned to order during consumer run
         $this->assertEquals(self::SHIPMENT_ID, $existingOrder->getStorekeeperShipmentId());

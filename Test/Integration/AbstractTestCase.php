@@ -175,7 +175,7 @@ abstract class AbstractTestCase extends TestCase
             ->willReturn([
                 'status' => 'paid'
             ]);
-        $this->paymentApiClientMock->method('getNewWebPayment')
+        $this->paymentApiClientMock->method('newWebPayment')
             ->willReturn(33);
 
         $this->apiOrders = $objectManager->getObject(

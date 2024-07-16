@@ -12,7 +12,4 @@
     <event name="sales_order_save_before">
         <observer name="storekeeper_sales_order_save_before" instance="StoreKeeper\StoreKeeper\Observers\SalesOrderSaveBeforeObserver"/>
     </event>
-    <event name="sales_order_shipment_save_before">
-        <observer name="storekeeper_sales_order_shipment_save_before" instance="StoreKeeper\StoreKeeper\Observers\SalesOrderShipmentSaveBefore" />
-    </event>
 </config>

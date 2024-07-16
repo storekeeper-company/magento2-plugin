@@ -263,7 +263,7 @@ class Orders extends AbstractHelper
             // 90             - 70                 = 20
             // in this above example we'll have to refund 20
             if ($diff > 0) {
-                $storekeeperRefundId = $this->paymentApiClient->getNewWebPayment(
+                $storekeeperRefundId = $this->paymentApiClient->newWebPayment(
                     $order->getStoreId(),
                     [
                         'amount' => round(-abs($diff), 2),
@@ -444,50 +444,48 @@ class Orders extends AbstractHelper
     {
         $storeKeeperOrder = $this->getStoreKeeperOrder($order->getStoreId(), $storeKeeperId);
 
-        if (isset($storeKeeperOrder['shipped_item_no']) && !$order->hasShipments()) {
-            $shippedItem = (int) $storeKeeperOrder['shipped_item_no'];
+        if (array_key_exists('is_shipped', $storeKeeperOrder) && $storeKeeperOrder['is_shipped'] == true  && !$order->hasShipments()) {
+            if (!$order->canShip()) {
+                throw new LocalizedException(
+                    __('You can\'t create an shipment.')
+                );
+            }
 
-            if ($shippedItem > 0) {
-                if (!$order->canShip()) {
-                    throw new LocalizedException(
-                        __('You can\'t create an shipment.')
-                    );
+            $shipment = $this->convertOrder->toShipment($order);
+
+            foreach ($order->getAllItems() as $orderItem) {
+                if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                    continue;
                 }
 
-                $shipment = $this->convertOrder->toShipment($order);
+                $qtyShipped = $orderItem->getQtyToShip();
+                $shipmentItem = $this->convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
 
-                foreach ($order->getAllItems() as $orderItem) {
-                    if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
-                        continue;
-                    }
+                $shipment->addItem($shipmentItem);
+            }
 
-                    $qtyShipped = $orderItem->getQtyToShip();
-                    $shipmentItem = $this->convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
+            $track = $this->trackFactory->create();
+            $track->setNumber($storeKeeperId);
+            $track->setCarrierCode('storekeeper');
+            $track->setTitle('StoreKeeper Shipment Tracking Number');
+            $track->setDescription('Shipping');
 
-                    $shipment->addItem($shipmentItem);
-                }
+            $shipment->addTrack($track);
 
-                $track = $this->trackFactory->create();
-                $track->setNumber($storeKeeperId);
-                $track->setCarrierCode('storekeeper');
-                $track->setTitle('StoreKeeper Shipment Tracking Number');
-                $track->setDescription('Shipping ');
+            $shipment->register();
+            $shipment->getOrder()->setIsInProcess(true);
 
-                $shipment->addTrack($track);
-
-                $shipment->register();
-                $shipment->getOrder()->setIsInProcess(true);
-
-                try {
-                    $shipment->getExtensionAttributes()->setIsStorekeeper(true);
-                    $this->shipmentRepository->save($shipment);
-                    $this->orderRepository->save($shipment->getOrder());
-                    $this->shipmentNotifier->notify($shipment);
-                } catch (\Exception $e) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __($e->getMessage())
-                    );
-                }
+            try {
+                $shipment->getExtensionAttributes()->setIsStorekeeper(true);
+                $order->setData('storekeeper_shipment_id', $storeKeeperId);
+                $this->orderResource->saveAttribute($order, 'storekeeper_shipment_id');
+                $this->shipmentRepository->save($shipment);
+                $this->orderRepository->save($shipment->getOrder());
+                $this->shipmentNotifier->notify($shipment);
+            } catch (\Exception $e) {
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __($e->getMessage())
+                );
             }
         }
     }
@@ -560,14 +558,6 @@ class Orders extends AbstractHelper
 
         try {
             if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
-                if (isset($statusMapping[$storeKeeperOrder['status']])) {
-                    if ($statusMapping[$storeKeeperOrder['status']]
-                        !== $order->getStatus() && $storeKeeperOrder['status']
-                        !== 'complete') {
-                        $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
-                    }
-                }
-
                 $paymentId = $order->getStorekeeperPaymentId();
                 if ($order->getStorekeeperPaymentId()) {
                     $this->paymentApiClient->attachPaymentIdsToOrder($order->getStoreId(), $storeKeeperId, [$paymentId]);
@@ -608,33 +598,9 @@ class Orders extends AbstractHelper
     {
         return [
             'complete' => 'complete',
-            'processing' => 'processing',
             'cancelled' => 'canceled',
             'new' => 'new'
         ];
-    }
-
-    /**
-     * Update StoreKeeper order status
-     *
-     * @param Order $order
-     * @param string $storeKeeperId
-     * @throws LocalizedException
-     * @retrun void
-     */
-    public function updateStoreKeeperOrderStatus(Order $order, string $storeKeeperId): void
-    {
-        $statusMapping = $this->statusMapping();
-
-        try {
-            if ($status = array_search($order->getStatus(), $statusMapping)) {
-                $this->orderApiClient->updateOrderStatus($order->getStoreId(), ['status' => $status], $storeKeeperId);
-            }
-        } catch (GeneralException $e) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __($e->getMessage())
-            );
-        }
     }
 
     /**
@@ -743,7 +709,7 @@ class Orders extends AbstractHelper
      * @param $order
      * @return bool
      */
-    public function allowShipmnetCreation(\Magento\Sales\Api\Data\OrderInterface $order): bool
+    public function allowShipmentCreation(\Magento\Sales\Api\Data\OrderInterface $order): bool
     {
         if ($order->getStorekeeperId() && !$order->getStorekeeperShipmentId() && !$order->getOrderDetached()) {
             return true;

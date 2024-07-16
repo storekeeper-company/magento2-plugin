@@ -47,11 +47,3 @@ $invoiceItem->setQty($orderItem->getQtyOrdered());
 /** @var \Magento\Sales\Api\InvoiceOrderInterface $invoiceOrder */
 $invoiceOrder = $objectManager->create(\Magento\Sales\Api\InvoiceOrderInterface::class);
 $invoiceOrder->execute($order->getEntityId(), false, [$invoiceItem]);
-
-/** @var \Magento\Sales\Api\Data\ShipmentItemCreationInterface $shipmentItem */
-$shipmentItem = $objectManager->create(\Magento\Sales\Api\Data\ShipmentItemCreationInterface::class);
-$shipmentItem->setOrderItemId($orderItem->getItemId());
-$shipmentItem->setQty($orderItem->getQtyOrdered());
-/** @var \Magento\Sales\Api\ShipOrderInterface $shipOrder */
-$shipOrder = $objectManager->create(\Magento\Sales\Api\ShipOrderInterface::class);
-$shipOrder->execute($order->getEntityId(), [$shipmentItem]);
