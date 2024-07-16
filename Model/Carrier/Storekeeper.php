@@ -128,7 +128,7 @@ class Storekeeper extends AbstractCarrier implements CarrierInterface
     private function getShippingPrice(int $storeId, array $apiRate, $orderTotal)
     {
         if (array_key_exists('free_from_value_wt', $apiRate['shipping_method_price_flat_strategy'])
-            && $orderTotal >= $apiRate['shipping_method_price_flat_strategy']['free_from_value_wt']) {
+            && (float)$orderTotal >= (float)$apiRate['shipping_method_price_flat_strategy']['free_from_value_wt']) {
             $shippingPrice = 0;
         } else {
             /**

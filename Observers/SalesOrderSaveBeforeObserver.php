@@ -73,7 +73,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
                         $this->json->serialize(['orderId' => $order->getIncrementId()])
                     );
 
-                    if ($order->getStatus() != $oldStatus && $order->getStatus() == Order::STATE_COMPLETE) {
+                    if ($order->getStatus() == Order::STATE_COMPLETE) {
                         $this->createShipment($order);
                     }
                 }
