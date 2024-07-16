@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace StoreKeeper\StoreKeeper\Plugin\Magento\MysqlMq\Model\ResourceModel;
 
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\MysqlMq\Model\ResourceModel\Queue as subjectQueue;
 use Magento\MysqlMq\Model\ResourceModel\MessageCollectionFactory;
 use Magento\MysqlMq\Model\ResourceModel\MessageStatusCollectionFactory;
@@ -26,7 +26,7 @@ class Queue
     private MessageStatusCollectionFactory $messageStatusCollectionFactory;
     private TaskLogRepositoryInterface $taskLogRepository;
     private TaskLogInterfaceFactory $taskLogFactory;
-    private TimezoneInterface $timezone;
+    private DateTime $dateTime;
 
     /**
      * Constructor
@@ -35,20 +35,20 @@ class Queue
      * @param MessageStatusCollectionFactory $messageStatusCollectionFactory
      * @param TaskLogInterfaceFactory $taskLogFactory
      * @param TaskLogRepositoryInterface $taskLogRepository
-     * @param TimezoneInterface $timezone
+     * @param DateTime $dateTime
      */
     public function __construct (
         MessageCollectionFactory $messageCollectionFactory,
         MessageStatusCollectionFactory $messageStatusCollectionFactory,
         TaskLogInterfaceFactory $taskLogFactory,
         TaskLogRepositoryInterface $taskLogRepository,
-        TimezoneInterface $timezone
+        DateTime $dateTime
     ) {
         $this->messageCollectionFactory = $messageCollectionFactory;
         $this->messageStatusCollectionFactory = $messageStatusCollectionFactory;
         $this->taskLogFactory = $taskLogFactory;
         $this->taskLogRepository = $taskLogRepository;
-        $this->timezone = $timezone;
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -71,7 +71,7 @@ class Queue
                         $taskLog = $this->taskLogFactory->create();
                         $taskLog->addData($message->getData());
                         $taskLog->setMessageId($message->getId());
-                        $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
+                        $taskLog->setUpdatedAt($this->dateTime->gmtDate());
 
                         $this->taskLogRepository->save($taskLog);
                     }
@@ -129,7 +129,7 @@ class Queue
                 $taskLog = $this->taskLogRepository->getByMessageId($messageId);
                 $taskLog->setTopicName($message->getTopicName());
                 $taskLog->setBody($message->getBody());
-                $taskLog->setUpdatedAt($this->timezone->date($message->getUpdatedAt())->getTimestamp());
+                $taskLog->setUpdatedAt($this->dateTime->gmtDate());
                 $taskLog->setStatus($message->getStatus());
                 $taskLog->setNumberOfTrials($message->getNumberOfTrials());
 

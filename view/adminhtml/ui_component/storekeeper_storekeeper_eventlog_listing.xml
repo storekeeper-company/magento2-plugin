@@ -78,11 +78,12 @@
 				<label translate="true">Response Code</label>
 			</settings>
 		</column>
-		<column name="date">
-			<settings>
-				<filter>text</filter>
-				<label translate="true">Date</label>
-			</settings>
-		</column>
+        <column name="date" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Date</label>
+            </settings>
+        </column>
 	</columns>
 </listing>

@@ -2,9 +2,9 @@
 namespace StoreKeeper\StoreKeeper\Api\Webhook;
 
 use Magento\Framework\MessageQueue\PublisherInterface;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Stdlib\DateTime\DateTime;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\Data\EventLogInterface;
 use StoreKeeper\StoreKeeper\Api\Data\EventLogInterfaceFactory;
@@ -24,12 +24,12 @@ class Webhook
     private PublisherInterface $publisher;
     private Config $configHelper;
     private Logger $logger;
-    private TimezoneInterface $timezone;
     private StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection;
     private JsonResponse $jsonResponse;
     private EventLogInterfaceFactory $eventLogFactory;
     private EventLogRepository $eventLogRepository;
     private Info $infoHelper;
+    private DateTime $dateTime;
 
     /**
      * Constructor
@@ -40,10 +40,11 @@ class Webhook
      * @param PublisherInterface $publisher
      * @param Config $configHelper
      * @param Logger $logger
-     * @param TimezoneInterface $timezone
      * @param JsonResponse $jsonResponse
      * @param EventLogInterfaceFactory $eventLogFactory
      * @param EventLogRepository $eventLogRepository
+     * @param Info $infoHelper
+     * @param DateTime $dateTime
      */
     public function __construct(
         Request $request,
@@ -52,11 +53,11 @@ class Webhook
         PublisherInterface $publisher,
         Config $configHelper,
         Logger $logger,
-        TimezoneInterface $timezone,
         JsonResponse $jsonResponse,
         EventLogInterfaceFactory $eventLogFactory,
         EventLogRepository $eventLogRepository,
-        Info $infoHelper
+        Info $infoHelper,
+        DateTime $dateTime
     ) {
         $this->request = $request;
         $this->authHelper = $authHelper;
@@ -64,11 +65,11 @@ class Webhook
         $this->publisher = $publisher;
         $this->configHelper = $configHelper;
         $this->logger = $logger;
-        $this->timezone = $timezone;
         $this->jsonResponse = $jsonResponse;
         $this->eventLogFactory = $eventLogFactory;
         $this->eventLogRepository = $eventLogRepository;
         $this->infoHelper = $infoHelper;
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -289,7 +290,7 @@ class Webhook
             'request_method' => $this->request->getMethod(),
             'request_action' => $action,
             'response_code' => $status,
-            'date' => $this->timezone->date()->getTimestamp()
+            'date' => $this->dateTime->gmtDate()
         ]);
 
         $this->eventLogRepository->save($eventLog);
