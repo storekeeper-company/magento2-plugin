@@ -2,9 +2,9 @@
 namespace StoreKeeper\StoreKeeper\Api\Webhook;
 
 use Magento\Framework\MessageQueue\PublisherInterface;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Stdlib\DateTime\DateTime;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\Data\EventLogInterface;
 use StoreKeeper\StoreKeeper\Api\Data\EventLogInterfaceFactory;
@@ -24,12 +24,12 @@ class Webhook
     private PublisherInterface $publisher;
     private Config $configHelper;
     private Logger $logger;
-    private TimezoneInterface $timezone;
     private StoreKeeperFailedSyncOrderCollection $storeKeeperFailedSyncOrderCollection;
     private JsonResponse $jsonResponse;
     private EventLogInterfaceFactory $eventLogFactory;
     private EventLogRepository $eventLogRepository;
     private Info $infoHelper;
+    private DateTime $dateTime;
 
     /**
      * Constructor
@@ -44,6 +44,8 @@ class Webhook
      * @param JsonResponse $jsonResponse
      * @param EventLogInterfaceFactory $eventLogFactory
      * @param EventLogRepository $eventLogRepository
+     * @param Info $infoHelper
+     * @param DateTime $dateTime
      */
     public function __construct(
         Request $request,
@@ -56,7 +58,8 @@ class Webhook
         JsonResponse $jsonResponse,
         EventLogInterfaceFactory $eventLogFactory,
         EventLogRepository $eventLogRepository,
-        Info $infoHelper
+        Info $infoHelper,
+        DateTime $dateTime
     ) {
         $this->request = $request;
         $this->authHelper = $authHelper;
@@ -64,11 +67,11 @@ class Webhook
         $this->publisher = $publisher;
         $this->configHelper = $configHelper;
         $this->logger = $logger;
-        $this->timezone = $timezone;
         $this->jsonResponse = $jsonResponse;
         $this->eventLogFactory = $eventLogFactory;
         $this->eventLogRepository = $eventLogRepository;
         $this->infoHelper = $infoHelper;
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -283,14 +286,13 @@ class Webhook
     private function addEventLog(string $action, string $status): void
     {
         $eventLog = $this->eventLogFactory->create();
-        $time = $this->timezone->date(new \DateTime());
         $eventLog->addData([
             'request_route' => $this->request->getPathInfo(),
             'request_body' => $this->request->getContent(),
             'request_method' => $this->request->getMethod(),
             'request_action' => $action,
             'response_code' => $status,
-            'date' => $time->format('Y-m-d H:i:s')
+            'date' => $this->dateTime->gmtDate()
         ]);
 
         $this->eventLogRepository->save($eventLog);
