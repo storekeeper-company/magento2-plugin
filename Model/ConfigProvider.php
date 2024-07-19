@@ -4,12 +4,13 @@ namespace StoreKeeper\StoreKeeper\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Payment\Helper\Data as PaymentHelper;
-use PHPUnit\Exception;
-use StoreKeeper\ApiWrapper\Iterator\ListCallByIdPaginatedIterator;
 use Magento\Payment\Model\Config;
 use Magento\Theme\Block\Html\Header\Logo;
-use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
 use Magento\Store\Model\StoreManagerInterface;
+use StoreKeeper\ApiWrapper\Iterator\ListCallByIdPaginatedIterator;
+use StoreKeeper\StoreKeeper\Api\PaymentApiClient;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -52,27 +53,32 @@ class ConfigProvider implements ConfigProviderInterface
     private Logo $logo;
     private PaymentApiClient $paymentApiClient;
     private StoreManagerInterface $storeManager;
+    private Auth $auth;
 
     /**
-     * ConfigProvider constructor.
+     * Constructor
+     *
      * @param PaymentHelper $paymentHelper
      * @param Config $paymentConfig
      * @param Logo $logo
      * @param PaymentApiClient $paymentApiClient
      * @param StoreManagerInterface $storeManager
+     * @param Auth $auth
      */
     public function __construct(
         PaymentHelper $paymentHelper,
         Config $paymentConfig,
         Logo $logo,
         PaymentApiClient $paymentApiClient,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        Auth $auth
     ) {
         $this->paymentHelper = $paymentHelper;
         $this->paymentConfig = $paymentConfig;
         $this->logo = $logo;
         $this->paymentApiClient = $paymentApiClient;
         $this->storeManager = $storeManager;
+        $this->auth = $auth;
     }
 
     /**
@@ -93,15 +99,17 @@ class ConfigProvider implements ConfigProviderInterface
     private function getStoreKeeperPaymentMethods(): array
     {
         $paymentMethods = [];
-        $storeKeeperPaymentMethods =  $this->paymentApiClient->getListTranslatedPaymentMethodForHooks($this->storeManager->getStore()->getId());
-        foreach ($storeKeeperPaymentMethods['data'] as $storeKeeperPaymentMethod) {
-            if ($storeKeeperPaymentMethod['eid'] != 'Web::PaymentModule') {
-                $paymentMethods[$storeKeeperPaymentMethod['id']] = [
-                    'storekeeper_payment_method_id' => $storeKeeperPaymentMethod['id'],
-                    'storekeeper_payment_method_title' => $storeKeeperPaymentMethod['title'],
-                    'storekeeper_payment_method_logo_url' => $storeKeeperPaymentMethod['image_url'] ?? $this->logo->getLogoSrc(),
-                    'storekeeper_payment_method_eId' => $storeKeeperPaymentMethod['eid']
-                ];
+        if ($this->auth->isConnected($this->storeManager->getStore()->getId())) {
+            $storeKeeperPaymentMethods =  $this->paymentApiClient->getListTranslatedPaymentMethodForHooks($this->storeManager->getStore()->getId());
+            foreach ($storeKeeperPaymentMethods['data'] as $storeKeeperPaymentMethod) {
+                if ($storeKeeperPaymentMethod['eid'] != 'Web::PaymentModule') {
+                    $paymentMethods[$storeKeeperPaymentMethod['id']] = [
+                        'storekeeper_payment_method_id' => $storeKeeperPaymentMethod['id'],
+                        'storekeeper_payment_method_title' => $storeKeeperPaymentMethod['title'],
+                        'storekeeper_payment_method_logo_url' => $storeKeeperPaymentMethod['image_url'] ?? $this->logo->getLogoSrc(),
+                        'storekeeper_payment_method_eId' => $storeKeeperPaymentMethod['eid']
+                    ];
+                }
             }
         }
 
