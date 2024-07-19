@@ -92,6 +92,8 @@ class ExportFileDataProvider extends DataProvider
             return $emptyResponse;
         }
         $result = [];
+        $result['items'] = [];
+
         foreach ($files as $file) {
             $path = $this->getPathToExportFile($this->fileIO->getPathInfo($file));
             if ($path) {
