@@ -62,6 +62,7 @@ $category = $categoryFactory->create();
 $category->isObjectNew(true);
 $category->setId(3)
     ->setName('Category 1')
+    ->setUrlKey('category-1')
     ->setParentId(2)
     ->setPath('1/2/3')
     ->setLevel(2)
@@ -80,6 +81,7 @@ $category = $categoryFactory->create();
 $category->isObjectNew(true);
 $category->setId(4)
     ->setName('Category 1.1')
+    ->setUrlKey('category-1-1')
     ->setParentId(3)
     ->setPath('1/2/3/4')
     ->setLevel(3)

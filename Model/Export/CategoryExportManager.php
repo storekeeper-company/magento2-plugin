@@ -77,7 +77,7 @@ class CategoryExportManager extends AbstractExportManager
                 $categoryName, //'path://title'
                 $currentLocale, //'path://translatable.lang'
                 'yes', //'path://is_main_lang'
-                $category->getUrl(), //'path://slug'
+                $category->getUrlKey(), //'path://slug'
                 null, //'path://summary'
                 null, //'path://icon'
                 $category->getDescription(), //'path://description'
@@ -107,7 +107,7 @@ class CategoryExportManager extends AbstractExportManager
         $result = null;
 
         if (!empty($categoryParentId)) {
-            $result = $this->categoryRepository->get($categoryParentId)->getUrl();
+            $result = $this->categoryRepository->get($categoryParentId)->getUrlKey();
         }
 
         return $result;
