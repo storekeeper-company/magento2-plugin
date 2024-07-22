@@ -10,6 +10,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Sales\Model\Order;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as ApiOrders;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Model\OrderSync\Shipment;
 
 class SalesOrderSaveBeforeObserver implements ObserverInterface
@@ -20,6 +21,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
     private OrderRepositoryInterface $orderRepository;
     private ApiOrders $apiOrders;
     private Shipment $shipment;
+    private Logger $logger;
 
     /**
      * Constructor
@@ -29,6 +31,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
      * @param PublisherInterface $publisher
      * @param OrderRepositoryInterface $orderRepository
      * @param ApiOrders $apiOrders
+     * @param Shipment $shipment
+     * @param Logger $logger
      */
     public function __construct(
         Auth $authHelper,
@@ -36,7 +40,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
         PublisherInterface $publisher,
         OrderRepositoryInterface $orderRepository,
         ApiOrders $apiOrders,
-        Shipment $shipment
+        Shipment $shipment,
+        Logger $logger
     ) {
         $this->authHelper = $authHelper;
         $this->json = $json;
@@ -44,6 +49,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
         $this->orderRepository = $orderRepository;
         $this->apiOrders = $apiOrders;
         $this->shipment = $shipment;
+        $this->logger = $logger;
     }
 
     /**
