@@ -72,7 +72,7 @@ class CategoryExportDataTest extends AbstractTestCase
                 . 'magento_small_image.jpg',
             'path://published' => NULL,
             'path://order' => '1',
-            'path://parent_slug' => 'category-1-1',
+            'path://parent_slug' => null,
             'path://protected' => NULL
         ];
     }
