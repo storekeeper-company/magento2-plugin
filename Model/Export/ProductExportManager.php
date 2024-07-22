@@ -29,6 +29,7 @@ use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
 use StoreKeeper\StoreKeeper\Logger\Logger;
+use Symfony\Component\Mime\FileinfoMimeTypeGuesser;
 
 class ProductExportManager extends AbstractExportManager
 {
@@ -205,6 +206,7 @@ class ProductExportManager extends AbstractExportManager
     private Logger $logger;
     private AttributeCollectionFactory $attributeCollectionFactory;
     private Base36Coder $base36Coder;
+    private FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -237,6 +239,7 @@ class ProductExportManager extends AbstractExportManager
      * @param Logger $logger
      * @param AttributeCollectionFactory $attributeCollectionFactory
      * @param Base36Coder $base36Coder
+     * @param FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
      */
     public function __construct(
         Resolver $localeResolver,
@@ -263,7 +266,8 @@ class ProductExportManager extends AbstractExportManager
         Config $configHelper,
         Logger $logger,
         AttributeCollectionFactory $attributeCollectionFactory,
-        Base36Coder $base36Coder
+        Base36Coder $base36Coder,
+        FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -288,6 +292,7 @@ class ProductExportManager extends AbstractExportManager
         $this->logger = $logger;
         $this->attributeCollectionFactory = $attributeCollectionFactory;
         $this->base36Coder = $base36Coder;
+        $this->fileinfoMimeTypeGuesser = $fileinfoMimeTypeGuesser;
     }
 
     public function getProductExportData(array $products): array
@@ -485,7 +490,9 @@ class ProductExportManager extends AbstractExportManager
     {
         $data = [];
         foreach ($product->getMediaGalleryImages() as $productImage) {
-            $data[] = $productImage->getUrl();
+            if ($this->isImageFormatAllowed($productImage->getPath())) {
+                $data[] = $productImage->getUrl();
+            }
         }
 
         return $data;
@@ -575,5 +582,22 @@ class ProductExportManager extends AbstractExportManager
         }
 
         return $data;
+    }
+
+    /**
+     * @param string|null $url
+     * @return bool
+     */
+    private function isImageFormatAllowed(?string $url): bool
+    {
+        $imageType = $this->fileinfoMimeTypeGuesser->guessMimeType($url);
+
+        $allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp'
+        ];
+
+        return in_array($imageType, $allowedTypes);
     }
 }
