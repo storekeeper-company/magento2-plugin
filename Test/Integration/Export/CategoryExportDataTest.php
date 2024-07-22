@@ -58,7 +58,7 @@ class CategoryExportDataTest extends AbstractTestCase
             'path://title' => 'Category 1',
             'path://translatable.lang' => 'nl',
             'path://is_main_lang' => 'yes',
-            'path://slug' => $this->store->getStore()->getBaseUrl() . 'category-1.html',
+            'path://slug' => 'category-1',
             'path://summary' => NULL,
             'path://icon' => NULL,
             'path://description' => 'Category 1 Description',
@@ -72,7 +72,7 @@ class CategoryExportDataTest extends AbstractTestCase
                 . 'magento_small_image.jpg',
             'path://published' => NULL,
             'path://order' => '1',
-            'path://parent_slug' => $this->store->getStore()->getBaseUrl() . 'catalog/category/view/s/default-category/id/2/',
+            'path://parent_slug' => null,
             'path://protected' => NULL
         ];
     }
