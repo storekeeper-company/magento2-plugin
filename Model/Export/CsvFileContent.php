@@ -122,7 +122,9 @@ class CsvFileContent
         $page = 0;
         while (true) {
             ++$page;
-            $entityCollection->setCurPage($page)->setPageSize(self::PAGE_SIZE);
+            $entityCollection->setPageSize(self::PAGE_SIZE)->setCurPage($page);
+            $entityCollection->clear();
+            $entityCollection->load();
             if ($entityCollection->count() == 0) {
                 break;
             }

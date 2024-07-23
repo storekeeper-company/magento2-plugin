@@ -62,6 +62,9 @@ class ProductExportDataTest extends AbstractTestCase
      */
     public function getTestProductExportData(): array
     {
+        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
+        $optionId = $registry->registry('_fixture/option_id');
+
         return [
             'path://product.type' => 'simple',
             'path://product.sku' => 'taxable_product',
@@ -110,12 +113,8 @@ class ProductExportDataTest extends AbstractTestCase
             'path://product.product_images.7.download_url' => NULL,
             'path://product.product_images.8.download_url' => NULL,
             'path://product.product_images.9.download_url' => NULL,
-            'path://content_vars.' . $this->base36Coder->encode('brand') . '.value' => 'Magento Inc.',
-            'path://content_vars.' . $this->base36Coder->encode('brand') . '.value_label' => 'Manufacturer',
-            'path://content_vars.' . $this->base36Coder->encode('url_key') . '.value' => 'taxable-product',
-            'path://content_vars.' . $this->base36Coder->encode('url_key') . '.value_label' => 'URL Key',
-            'path://content_vars.' . $this->base36Coder->encode('visibility') . '.value' => 'Catalog, Search',
-            'path://content_vars.' . $this->base36Coder->encode('visibility') . '.value_label' => 'Visibility'
+            'path://content_vars.encoded__' . $this->base36Coder->encode('brand') . '.value' => $optionId,
+            'path://content_vars.encoded__' . $this->base36Coder->encode('brand') . '.value_label' => 'Magento Inc.'
         ];
     }
 }
