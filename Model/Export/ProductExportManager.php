@@ -179,7 +179,18 @@ class ProductExportManager extends AbstractExportManager
         "special_to_date",
         "status",
         "tax_class_id",
-        "updated_at" //no label
+        "updated_at", //no label
+        "featured",
+        "minimal_price",
+        "msrp",
+        "swatch_image",
+        "thumbnail",
+        "tier_price",
+        "url_key",
+        "visibility",
+        "weight",
+        "dynamic_weight"
+
         //need to add url_path? it doesnt have fr label too
     ];
 
@@ -357,24 +368,15 @@ class ProductExportManager extends AbstractExportManager
                 foreach ($featuredAttributes as $key => $value) {
                     if ($value !== Attributes::NOT_MAPPED) {
                         $attributeValue = $product->getData($value);
-                        $key = $this->base36Coder->encode($key);
+                        $keyEncoded = $this->base36Coder->encode($key);
                         $attribute = $product->getResource()->getAttribute($value);
                         if ($attributeValue !== null && $attribute->usesSource()) {
                             $attributeValue = $attribute->getFrontend()->getValue($product);
                         }
 
-                        if ($attributeValue !== null) {
-                            if ($attributeValue instanceof \Magento\Framework\Phrase) {
-                                $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue->getText();
-                            } else {
-                                $result[$dataKey]['path://content_vars.' . $key . '.value'] = $attributeValue;
-                            }
+                        $result = $this->fillAttributeRow($key, $keyEncoded, $attributeValue, $product, $result, $dataKey
+                        );
 
-                            $result[$dataKey]['path://content_vars.' . $key . '.value_label'] = $attribute->getDefaultFrontendLabel();
-                        }
-
-                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value');
-                        $this->extendHeaderPaths('path://content_vars.' . $key . '.value_label');
                         $this->extendHeaderLabels($key . ' (raw)');
                         $this->extendHeaderLabels($key . ' (label)');
                         $this->extendDisallowedAttributes($value);
@@ -386,24 +388,15 @@ class ProductExportManager extends AbstractExportManager
                 $attributeCode = $productAttribute->getAttributeCode();
                 if (array_search($attributeCode, $this->getDisallowedAttributesExtended()) === false) {
                     $attributeValue = $product->getData($attributeCode);
-                    $attributeCode = $this->base36Coder->encode($attributeCode);
+                    $attributeCodeEncoded = $this->base36Coder->encode($attributeCode);
                     if ($attributeValue !== null && $productAttribute->usesSource()) {
                         $attributeValue = $productAttribute->getFrontend()->getValue($product);
                     }
-                    if ($attributeValue !== null) {
-                        if ($attributeValue instanceof \Magento\Framework\Phrase) {
-                            $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue->getText();
-                        } else {
-                            $result[$dataKey]['path://content_vars.' . $attributeCode . '.value'] = $attributeValue;
-                        }
 
-                        $result[$dataKey]['path://content_vars.' . $attributeCode . '.value_label'] = $productAttribute->getDefaultFrontendLabel();
-                    }
-
-                    $this->extendHeaderPaths('path://content_vars.' . $attributeCode . '.value');
-                    $this->extendHeaderPaths('path://content_vars.' . $attributeCode . '.value_label');
-                    $this->extendHeaderLabels($attributeCode . ' (raw)');
-                    $this->extendHeaderLabels($attributeCode . ' (label)');
+                    $result = $this->fillAttributeRow($attributeCode, $attributeCodeEncoded, $attributeValue, $product, $result, $dataKey
+                    );
+                    $this->extendHeaderLabels($productAttribute->getDefaultFrontendLabel() . ' (raw)');
+                    $this->extendHeaderLabels($productAttribute->getDefaultFrontendLabel() . ' (label)');
                 }
             }
         }
@@ -599,5 +592,32 @@ class ProductExportManager extends AbstractExportManager
         ];
 
         return in_array($imageType, $allowedTypes);
+    }
+
+    /**
+     * @param $attributeCode
+     * @param $attributeCodeEncoded
+     * @param $attributeValue
+     * @param $product
+     * @param $result
+     * @param $dataKey
+     * @return array
+     */
+    private function fillAttributeRow($attributeCode, $attributeCodeEncoded, $attributeValue, $product, $result, $dataKey)
+    {
+        if ($attributeValue !== null) {
+            if ($attributeValue instanceof \Magento\Framework\Phrase) {
+                $result[$dataKey]['path://content_vars.encoded__' . $attributeCodeEncoded . '.value_label'] = $attributeValue->getText();
+            } else {
+                $result[$dataKey]['path://content_vars.encoded__' . $attributeCodeEncoded . '.value_label'] = $attributeValue;
+            }
+
+            $result[$dataKey]['path://content_vars.encoded__' . $attributeCodeEncoded . '.value'] = $product->getData($attributeCode);
+        }
+
+        $this->extendHeaderPaths('path://content_vars.encoded__' . $attributeCodeEncoded . '.value');
+        $this->extendHeaderPaths('path://content_vars.encoded__' . $attributeCodeEncoded . '.value_label');
+
+        return $result;
     }
 }
