@@ -374,7 +374,7 @@ class ProductExportManager extends AbstractExportManager
                             $attributeValue = $attribute->getFrontend()->getValue($product);
                         }
 
-                        $result = $this->fillAttributeRow($key, $keyEncoded, $attributeValue, $product, $result, $dataKey
+                        $result = $this->fillAttributeRow($value, $keyEncoded, $attributeValue, $product, $result, $dataKey
                         );
 
                         $this->extendHeaderLabels($key . ' (raw)');
