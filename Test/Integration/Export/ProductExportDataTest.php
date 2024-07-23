@@ -62,6 +62,9 @@ class ProductExportDataTest extends AbstractTestCase
      */
     public function getTestProductExportData(): array
     {
+        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
+        $optionId = $registry->registry('_fixture/option_id');
+
         return [
             'path://product.type' => 'simple',
             'path://product.sku' => 'taxable_product',
@@ -110,7 +113,7 @@ class ProductExportDataTest extends AbstractTestCase
             'path://product.product_images.7.download_url' => NULL,
             'path://product.product_images.8.download_url' => NULL,
             'path://product.product_images.9.download_url' => NULL,
-            'path://content_vars.encoded__' . $this->base36Coder->encode('brand') . '.value' => '4',
+            'path://content_vars.encoded__' . $this->base36Coder->encode('brand') . '.value' => $optionId,
             'path://content_vars.encoded__' . $this->base36Coder->encode('brand') . '.value_label' => 'Magento Inc.'
         ];
     }

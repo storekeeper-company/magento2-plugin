@@ -55,6 +55,8 @@ $attribute = $productAttributeRepository->get('manufacturer');
 $option = $attributeOptionInterface->create(['data' => ['label' => 'Magento Inc.']]);
 
 $optionId = $attributeOptionManagement->add('manufacturer', $option);
+$registry = $objectManager->get(\Magento\Framework\Registry::class);
+$registry->register('_fixture/option_id', $optionId);
 $attribute->unsetData('option');
 $productAttributeRepository->save($attribute);
 
