@@ -2,6 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Model\Export;
 
+use Magento\Config\Model\Config\Structure;
 use Magento\Framework\Locale\Resolver;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as AttributeCollectionFactory;
@@ -24,6 +25,7 @@ use Magento\Catalog\Helper\Data as ProductHelper;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
+use Picqer\Barcode\Types\TypeEan13;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
@@ -218,6 +220,8 @@ class ProductExportManager extends AbstractExportManager
     private AttributeCollectionFactory $attributeCollectionFactory;
     private Base36Coder $base36Coder;
     private FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser;
+    private TypeEan13 $typeEan13;
+    private Structure $structure;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -251,6 +255,8 @@ class ProductExportManager extends AbstractExportManager
      * @param AttributeCollectionFactory $attributeCollectionFactory
      * @param Base36Coder $base36Coder
      * @param FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
+     * @param TypeEan13 $typeEan13
+     * @param Structure $structure
      */
     public function __construct(
         Resolver $localeResolver,
@@ -278,7 +284,9 @@ class ProductExportManager extends AbstractExportManager
         Logger $logger,
         AttributeCollectionFactory $attributeCollectionFactory,
         Base36Coder $base36Coder,
-        FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
+        FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser,
+        TypeEan13 $typeEan13,
+        Structure $structure
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -304,6 +312,8 @@ class ProductExportManager extends AbstractExportManager
         $this->attributeCollectionFactory = $attributeCollectionFactory;
         $this->base36Coder = $base36Coder;
         $this->fileinfoMimeTypeGuesser = $fileinfoMimeTypeGuesser;
+        $this->typeEan13 = $typeEan13;
+        $this->structure = $structure;
     }
 
     public function getProductExportData(array $products): array
@@ -368,7 +378,22 @@ class ProductExportManager extends AbstractExportManager
                 foreach ($featuredAttributes as $key => $value) {
                     if ($value !== Attributes::NOT_MAPPED) {
                         $attributeValue = $product->getData($value);
-                        $keyEncoded = $this->base36Coder->encode($key);
+                        //Get Label of mapped attribute from configs
+                        $attributeLabel = $this->structure->getElementByConfigPath(
+                            Config::STOREKEEPER_EXPORT_FEATURED_ATTRIBUTES_MAPPING_SECTION . '/' . $key
+                        )->getLabel();
+
+                        if ($key == 'barcode') {
+                            try{
+                                //Validate barcode by getting its data via typeEan13 instance
+                                $data = str_pad($attributeValue, 13, '0', STR_PAD_LEFT);
+                                $barcode = $this->typeEan13->getBarcodeData($data);
+                            } catch(\Throwable $e) {
+                                $attributeValue = null;
+                            }
+                        }
+
+                        $keyEncoded = $this->base36Coder->encode($attributeLabel);
                         $attribute = $product->getResource()->getAttribute($value);
                         if ($attributeValue !== null && $attribute->usesSource()) {
                             $attributeValue = $attribute->getFrontend()->getValue($product);
@@ -377,8 +402,8 @@ class ProductExportManager extends AbstractExportManager
                         $result = $this->fillAttributeRow($value, $keyEncoded, $attributeValue, $product, $result, $dataKey
                         );
 
-                        $this->extendHeaderLabels($key . ' (raw)');
-                        $this->extendHeaderLabels($key . ' (label)');
+                        $this->extendHeaderLabels($attributeLabel . ' (raw)');
+                        $this->extendHeaderLabels($attributeLabel . ' (label)');
                         $this->extendDisallowedAttributes($value);
                     }
                 }
