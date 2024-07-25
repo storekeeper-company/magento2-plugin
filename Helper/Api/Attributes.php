@@ -29,6 +29,8 @@ use Magento\Eav\Model\Entity\Attribute\OptionFactory;
 use Magento\Eav\Api\Data\AttributeOptionLabelInterface;
 use Magento\Eav\Api\AttributeOptionManagementInterface;
 use StoreKeeper\StoreKeeper\Api\AttributeApiClient;
+use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes as AttributeOptions;
 
 class Attributes extends AbstractHelper
 {
@@ -52,6 +54,7 @@ class Attributes extends AbstractHelper
     private AttributeSetFactory $attributeSetFactory;
     private AttributeManagementInterface $attributeManagement;
     private ProductRepositoryInterface $productRepository;
+    private Config $configHelper;
 
     /**
      * Constructor
@@ -73,6 +76,7 @@ class Attributes extends AbstractHelper
      * @param AttributeSetFactory $attributeSetFactory
      * @param AttributeManagementInterface $attributeManagement
      * @param ProductRepositoryInterface $productRepository
+     * @param Config $configHelper
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -91,7 +95,8 @@ class Attributes extends AbstractHelper
         AttributeApiClient $attributeApiClient,
         AttributeSetFactory $attributeSetFactory,
         AttributeManagementInterface $attributeManagement,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        Config $configHelper
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -110,6 +115,7 @@ class Attributes extends AbstractHelper
         $this->attributeSetFactory = $attributeSetFactory;
         $this->attributeManagement = $attributeManagement;
         $this->productRepository = $productRepository;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -158,6 +164,22 @@ class Attributes extends AbstractHelper
                     $attributeCode = str_replace('-', '_', $attribute['name']);
                     $attributeLabel = $attribute['label'];
                     $attributeValue = $attribute['value'];
+
+                    //Look for matching attribute among mapped featured attributes
+                    $featuredAttributes = $this->configHelper->getFeaturedAttributesMapping();
+                    if (is_array($featuredAttributes)) {
+                        foreach ($featuredAttributes as $key => $value) {
+                            if ($attributeCode === $key) {
+                                if (
+                                    $value !== AttributeOptions::NOT_MAPPED
+                                    || ($value === AttributeOptions::NOT_MAPPED && $key === 'barcode')
+                                ) {
+                                    $attributeCode = $value === AttributeOptions::NOT_MAPPED ? 'sku' : $value;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
 
                     $attributeEntity = $this->attributeRepository->get('catalog_product', $attributeCode);
 
