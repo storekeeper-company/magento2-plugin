@@ -7,7 +7,6 @@ use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Attribute\CollectionFactory as AttributeCollectionFactory;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Filesystem\Io\File;
 use Magento\Framework\File\Csv;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\StoreConfigManagerInterface;
@@ -230,7 +229,6 @@ class ProductExportManager extends AbstractExportManager
      * @param Csv $csv
      * @param Filesystem $filesystem
      * @param DirectoryList $directoryList
-     * @param File $file
      * @param StoreManagerInterface $storeManager
      * @param StoreConfigManagerInterface $storeConfigManager
      * @param StockRegistryInterface $stockRegistry
@@ -258,7 +256,6 @@ class ProductExportManager extends AbstractExportManager
         Csv $csv,
         Filesystem $filesystem,
         DirectoryList $directoryList,
-        File $file,
         StoreManagerInterface $storeManager,
         StoreConfigManagerInterface $storeConfigManager,
         StockRegistryInterface $stockRegistry,
@@ -285,7 +282,6 @@ class ProductExportManager extends AbstractExportManager
         $this->csv = $csv;
         $this->filesystem = $filesystem;
         $this->directoryList = $directoryList;
-        $this->file = $file;
         $this->storeManager = $storeManager;
         $this->stockRegistry = $stockRegistry;
         $this->taxCalculation = $taxCalculation;
@@ -368,6 +364,20 @@ class ProductExportManager extends AbstractExportManager
                 foreach ($featuredAttributes as $key => $value) {
                     if ($value !== Attributes::NOT_MAPPED) {
                         $attributeValue = $product->getData($value);
+                        //Get Label of mapped attribute from configs
+                        $attributeLabel = $this->convertToLabel($key);
+
+                        if ($key == 'barcode') {
+                            try{
+                                //Validate barcode by getting its data via typeEan13 instance
+                                $data = str_pad($attributeValue, 13, '0', STR_PAD_LEFT);
+                                $barcode = new \Picqer\Barcode\Types\TypeEan13();
+                                $barcode = $barcode->getBarcodeData($data);
+                            } catch(\Throwable $e) {
+                                $attributeValue = null;
+                            }
+                        }
+
                         $keyEncoded = $this->base36Coder->encode($key);
                         $attribute = $product->getResource()->getAttribute($value);
                         if ($attributeValue !== null && $attribute->usesSource()) {
@@ -377,8 +387,8 @@ class ProductExportManager extends AbstractExportManager
                         $result = $this->fillAttributeRow($value, $keyEncoded, $attributeValue, $product, $result, $dataKey
                         );
 
-                        $this->extendHeaderLabels($key . ' (raw)');
-                        $this->extendHeaderLabels($key . ' (label)');
+                        $this->extendHeaderLabels($attributeLabel . ' (raw)');
+                        $this->extendHeaderLabels($attributeLabel . ' (label)');
                         $this->extendDisallowedAttributes($value);
                     }
                 }
@@ -619,5 +629,17 @@ class ProductExportManager extends AbstractExportManager
         $this->extendHeaderPaths('path://content_vars.encoded__' . $attributeCodeEncoded . '.value_label');
 
         return $result;
+    }
+
+    /**
+     * @param $string
+     * @return string
+     */
+    private function convertToLabel($string): string
+    {
+        $string = str_replace('_', ' ', $string);
+        $string = ucwords($string);
+
+        return $string;
     }
 }
