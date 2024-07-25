@@ -72,6 +72,18 @@ In this case activated Payment Method(s) will appear as individual Payment Metho
 
 _Payment methods that does not have own logo will receive current store logo set in Content->Design->Configuration area of Magento admin panel_
 
+## Export
+Module allows to export such Magento entities as: Products, Customers, Categories, Attribute Sets, Attributes, Attribute Options, Blueprints (possible combinations of simple prodcuts for compose configurables).
+
+Exported data saved as csv in a format suitable for StoreKeeper backend. Generating and downloading of it available by path:
+_System->Data Transfer->**StoreKeeper Export Data**_
+
+All fields are premapped, while project-specific product attributes can be mapped via 'Featured Attributes' tab under:
+_Stores->Configuration->Storekeeper->.**Export**_
+
+_Notice_: Barcode field by default mapped to SKU attribute, and will export sku's that meets **_EAN13_** requirements as barcode mapped attribute.
+
+If your store have dedicated custom barcode attribute - fell free to map it via Featured Attributes tab.
 ## Queues
 
 This plugin uses the Magento 2 queue consumer functionality. If you want to run queues manually you can use following commands:
