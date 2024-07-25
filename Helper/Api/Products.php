@@ -905,8 +905,14 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     ): Product
     {
         $shouldUpdate = false;
-        $productPrice = $result['product_price']['ppu'];
-        $productDefaultPrice = $result['product_default_price']['ppu'];
+        if ($this->configHelper->isCatalogPricesIncludesTax($storeId)) {
+            $productPrice = $result['product_price']['ppu_wt'];
+            $productDefaultPrice = $result['product_default_price']['ppu_wt'];
+        } else {
+            $productPrice = $result['product_price']['ppu'];
+            $productDefaultPrice = $result['product_default_price']['ppu'];
+        }
+
         $title = $flat_product['title'];
         $summary = $flat_product['summary'] ?? '';
         $body = $flat_product['body'];
