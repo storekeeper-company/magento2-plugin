@@ -362,29 +362,32 @@ class ProductExportManager extends AbstractExportManager
             $dataKey = array_key_last($result);
             if (is_array($featuredAttributes)) {
                 foreach ($featuredAttributes as $key => $value) {
-                    if ($value !== Attributes::NOT_MAPPED) {
+                    if (
+                        $value !== Attributes::NOT_MAPPED || ($value === Attributes::NOT_MAPPED && $key === 'barcode')
+                    ) {
+                        $value = $value === Attributes::NOT_MAPPED ? 'sku' : $value;
                         $attributeValue = $product->getData($value);
                         //Get Label of mapped attribute from configs
                         $attributeLabel = $this->convertToLabel($key);
 
                         if ($key == 'barcode') {
-                            try{
-                                //Validate barcode by getting its data via typeEan13 instance
-                                $data = str_pad($attributeValue, 13, '0', STR_PAD_LEFT);
-                                $barcode = new \Picqer\Barcode\Types\TypeEan13();
-                                $barcode = $barcode->getBarcodeData($data);
-                            } catch(\Throwable $e) {
-                                $attributeValue = null;
-                            }
+                            $attributeValue = $this->validateBarcode($attributeValue);
                         }
 
                         $keyEncoded = $this->base36Coder->encode($key);
                         $attribute = $product->getResource()->getAttribute($value);
+
                         if ($attributeValue !== null && $attribute->usesSource()) {
                             $attributeValue = $attribute->getFrontend()->getValue($product);
                         }
 
-                        $result = $this->fillAttributeRow($value, $keyEncoded, $attributeValue, $product, $result, $dataKey
+                        $result = $this->fillAttributeRow(
+                            $value,
+                            $keyEncoded,
+                            $attributeValue,
+                            $product,
+                            $result,
+                            $dataKey
                         );
 
                         $this->extendHeaderLabels($attributeLabel . ' (raw)');
@@ -403,7 +406,13 @@ class ProductExportManager extends AbstractExportManager
                         $attributeValue = $productAttribute->getFrontend()->getValue($product);
                     }
 
-                    $result = $this->fillAttributeRow($attributeCode, $attributeCodeEncoded, $attributeValue, $product, $result, $dataKey
+                    $result = $this->fillAttributeRow(
+                        $attributeCode,
+                        $attributeCodeEncoded,
+                        $attributeValue,
+                        $product,
+                        $result,
+                        $dataKey
                     );
                     $this->extendHeaderLabels($productAttribute->getDefaultFrontendLabel() . ' (raw)');
                     $this->extendHeaderLabels($productAttribute->getDefaultFrontendLabel() . ' (label)');
@@ -641,5 +650,22 @@ class ProductExportManager extends AbstractExportManager
         $string = ucwords($string);
 
         return $string;
+    }
+
+    /**
+     * @param string $attributeValue
+     * @return string|null
+     */
+    private function validateBarcode(string $attributeValue): ?string
+    {
+        try {
+            $data = str_pad($attributeValue, 13, '0', STR_PAD_LEFT);
+            $barcode = new \Picqer\Barcode\Types\TypeEan13();
+            $barcode = $barcode->getBarcodeData($data);
+        } catch (\Throwable $e) {
+            $attributeValue = null;
+        }
+
+        return $attributeValue;
     }
 }
