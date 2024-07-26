@@ -193,6 +193,12 @@ class ProductExportManager extends AbstractExportManager
         //need to add url_path? it doesnt have fr label too
     ];
 
+    const DISALLOWED_CONTENT = [
+        '/<style\b[^>]*>([\s\S]*?)<\/style>/i',
+        '/<figure\s+data-content-type="image"[^>]*>[\s\S]*?<\/figure>/i',
+        '/{{widget[^}]*}}/i'
+    ];
+
     private CollectionFactory $productCollectionFactory;
     private Csv $csv;
     private Filesystem $filesystem;
@@ -317,13 +323,14 @@ class ProductExportManager extends AbstractExportManager
             $stockData = $this->getStockData($product);
             $taxData = $this->getTaxData($product);
             $categoryData = $this->getCategoryData($product);
+            $descriptionFormatted = $this->formatProductDescription($product->getDescription());
 
             $data = [
                 $productData['product_type'], // path://product.type
                 $product->getSku(), // path://product.sku
                 $product->getName(), // path://title
                 $product->getShortDescription(), // path://summary
-                $product->getDescription(), // path://body
+                $descriptionFormatted, // path://body
                 $product->getUrlKey(), // path://slug
                 $product->getMetaTitle(), // path://seo_title
                 $product->getMetaKeyword(), // path://seo_keywords
@@ -331,7 +338,7 @@ class ProductExportManager extends AbstractExportManager
                 $productData['is_active'], // path://product.active
                 $stockData['is_in_stock'], // path://product.product_stock.in_stock
                 $stockData['stock_qty'], // path://product.product_stock.value
-                $stockData['is_manage_stock'], // path://product.product_stock.unlimited
+                'no', // path://product.product_stock.unlimited
                 $stockData['is_backorder_enabled'], // path://shop_products.main.backorder_enabled
                 $taxData['vat_rate'] ?? null, // path://product.product_price.tax
                 $taxData['vat_iso2'] ?? null, // path://product.product_price.tax_rate.country_iso2
@@ -667,5 +674,20 @@ class ProductExportManager extends AbstractExportManager
         }
 
         return $attributeValue;
+    }
+
+    /**
+     * @param string $description
+     * @return string
+     */
+    private function formatProductDescription(string $description): string
+    {
+        foreach (self::DISALLOWED_CONTENT as $pattern) {
+            if (preg_match($pattern, $description)) {
+                $description = preg_replace($pattern, '', $description);
+            }
+        }
+
+        return $description;
     }
 }

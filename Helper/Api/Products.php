@@ -34,6 +34,7 @@ use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Model\Export\ProductExportManager;
 use Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface;
 
 /**
@@ -993,9 +994,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $parseDown = new Parsedown();
+        $parseDown->setSafeMode(true);
 
         $newDescription = $parseDown->text($body);
-        if ($target->getDescription() != $newDescription) {
+        if (
+            $target->getDescription() != $newDescription && !$this->isDisallowedContentExist($target->getDescription())
+        ) {
             $shouldUpdate = true;
             $target->setDescription($newDescription);
         }
@@ -1222,5 +1226,16 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $configurableAttributesData;
+    }
+
+    private function isDisallowedContentExist(string $description): bool
+    {
+        foreach (ProductExportManager::DISALLOWED_CONTENT as $pattern) {
+            if (preg_match($pattern, $description)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
