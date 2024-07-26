@@ -106,4 +106,9 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfigValue('tax/calculation/price_includes_tax', ScopeInterface::SCOPE_STORE, $storeId);
     }
+
+    public function getDefaultCountry($storeId)
+    {
+        return $this->getScopeConfigValue('general/country/default', ScopeInterface::SCOPE_STORE, $storeId);
+    }
 }
