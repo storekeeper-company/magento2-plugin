@@ -546,7 +546,7 @@ class ProductExportManager extends AbstractExportManager
     private function getTaxData(ProductInterface $product): array
     {
         $data = [];
-        $taxCountryId = $this->configHelper->getDefaultCountry($product->getStore()->getId());
+        $taxCountryId = $this->configHelper->getDefaultCountry();
         $taxRate = $this->getTaxRate($product->getTaxClassId(), $taxCountryId);
         if ($taxRate) {
             $data = [
