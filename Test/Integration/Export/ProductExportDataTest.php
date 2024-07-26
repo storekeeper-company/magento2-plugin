@@ -78,7 +78,7 @@ class ProductExportDataTest extends AbstractTestCase
             'path://product.active' => 'yes',
             'path://product.product_stock.in_stock' => 'yes',
             'path://product.product_stock.value' => 100,
-            'path://product.product_stock.unlimited' => 'yes',
+            'path://product.product_stock.unlimited' => 'no',
             'path://shop_products.main.backorder_enabled' => 'no',
             'path://product.product_price.tax' => 0.21,
             'path://product.product_price.tax_rate.country_iso2' => 'NL',
