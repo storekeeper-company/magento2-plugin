@@ -85,7 +85,7 @@ class CategoryExportManager extends AbstractExportManager
                 $category->getMetaKeywords(), //'path://seo_keywords'
                 $category->getMetaDescription(), //'path://seo_description'
                 $category->getImageUrl(), //'path://image_url'
-                null, //'path://published'
+                1, //'path://published'
                 $category->getPosition(), //'path://order'
                 $this->getCategoryParentUrl($category), //'path://parent_slug'
                 null, //'path://protected'

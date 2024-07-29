@@ -27,6 +27,7 @@ use Magento\Framework\App\ResourceConnection;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Helper\ProductDescription as ProductDescriptionHelper;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use Symfony\Component\Mime\FileinfoMimeTypeGuesser;
@@ -219,6 +220,7 @@ class ProductExportManager extends AbstractExportManager
     private Base36Coder $base36Coder;
     private FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser;
     private ResourceConnection $resourceConnection;
+    private ProductDescriptionHelper $productDescription;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -251,7 +253,8 @@ class ProductExportManager extends AbstractExportManager
      * @param AttributeCollectionFactory $attributeCollectionFactory
      * @param Base36Coder $base36Coder
      * @param FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param ResourceConnection $resourceConnection
+     * @param ProductDescriptionHelper $productDescription
      */
     public function __construct(
         Resolver $localeResolver,
@@ -279,7 +282,8 @@ class ProductExportManager extends AbstractExportManager
         AttributeCollectionFactory $attributeCollectionFactory,
         Base36Coder $base36Coder,
         FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        ProductDescriptionHelper $productDescription
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -305,6 +309,7 @@ class ProductExportManager extends AbstractExportManager
         $this->base36Coder = $base36Coder;
         $this->fileinfoMimeTypeGuesser = $fileinfoMimeTypeGuesser;
         $this->resourceConnection = $resourceConnection;
+        $this->productDescription = $productDescription;
     }
 
     public function getProductExportData(array $products): array
@@ -322,13 +327,14 @@ class ProductExportManager extends AbstractExportManager
             $stockData = $this->getStockData($product);
             $taxData = $this->getTaxData($product);
             $categoryData = $this->getCategoryData($product);
+            $descriptionFormatted = $this->productDescription->formatProductDescription($product->getDescription());
 
             $data = [
                 $productData['product_type'], // path://product.type
                 $product->getSku(), // path://product.sku
                 $product->getName(), // path://title
                 $product->getShortDescription(), // path://summary
-                $product->getDescription(), // path://body
+                $descriptionFormatted, // path://body
                 $product->getUrlKey(), // path://slug
                 $product->getMetaTitle(), // path://seo_title
                 $product->getMetaKeyword(), // path://seo_keywords
@@ -336,7 +342,7 @@ class ProductExportManager extends AbstractExportManager
                 $productData['is_active'], // path://product.active
                 $stockData['is_in_stock'], // path://product.product_stock.in_stock
                 $stockData['stock_qty'], // path://product.product_stock.value
-                $stockData['is_manage_stock'], // path://product.product_stock.unlimited
+                'no', // path://product.product_stock.unlimited
                 $stockData['is_backorder_enabled'], // path://shop_products.main.backorder_enabled
                 $taxData['vat_rate'] ?? null, // path://product.product_price.tax
                 $taxData['vat_iso2'] ?? null, // path://product.product_price.tax_rate.country_iso2

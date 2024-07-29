@@ -70,7 +70,7 @@ class CategoryExportDataTest extends AbstractTestCase
                 . ltrim(FileInfo::ENTITY_MEDIA_PATH, '/')
                 . '/'
                 . 'magento_small_image.jpg',
-            'path://published' => NULL,
+            'path://published' => 1,
             'path://order' => '1',
             'path://parent_slug' => null,
             'path://protected' => NULL

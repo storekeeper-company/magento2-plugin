@@ -34,6 +34,8 @@ use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Helper\ProductDescription as ProductDescriptionHelper;
+use StoreKeeper\StoreKeeper\Model\Export\ProductExportManager;
 use Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface;
 
 /**
@@ -71,6 +73,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private ConfigurableResourceModel $configurableResourceModel;
     private Configurable $configurable;
     private OptionsFactory $optionsFactory;
+    private ProductDescriptionHelper $productDescription;
     private array $_simpleProductIds = [];
 
     /**
@@ -104,6 +107,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param ConfigurableResourceModel $configurableResourceModel
      * @param Configurable $configurable
      * @param OptionsFactory $optionsFactory
+     * @param ProductDescriptionHelper $productDescription
      */
     public function __construct(
         Auth $authHelper,
@@ -133,7 +137,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         OptionFactory $optionFactory,
         ConfigurableResourceModel $configurableResourceModel,
         Configurable $configurable,
-        OptionsFactory $optionsFactory
+        OptionsFactory $optionsFactory,
+        ProductDescriptionHelper $productDescription
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -162,6 +167,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->configurableResourceModel = $configurableResourceModel;
         $this->configurable = $configurable;
         $this->optionsFactory = $optionsFactory;
+        $this->productDescription = $productDescription;
     }
 
     /**
@@ -993,9 +999,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $parseDown = new Parsedown();
+        $parseDown->setSafeMode(true);
 
         $newDescription = $parseDown->text($body);
-        if ($target->getDescription() != $newDescription) {
+        if (
+            $target->getDescription() != $newDescription
+            && !$this->productDescription->isDisallowedContentExist($target->getDescription())
+        ) {
             $shouldUpdate = true;
             $target->setDescription($newDescription);
         }
