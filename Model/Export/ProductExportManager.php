@@ -23,6 +23,7 @@ use Magento\Catalog\Helper\Data as ProductHelper;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
+use Magento\Framework\App\ResourceConnection;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
@@ -223,6 +224,7 @@ class ProductExportManager extends AbstractExportManager
     private AttributeCollectionFactory $attributeCollectionFactory;
     private Base36Coder $base36Coder;
     private FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser;
+    private ResourceConnection $resourceConnection;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -255,6 +257,7 @@ class ProductExportManager extends AbstractExportManager
      * @param AttributeCollectionFactory $attributeCollectionFactory
      * @param Base36Coder $base36Coder
      * @param FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
      */
     public function __construct(
         Resolver $localeResolver,
@@ -281,7 +284,8 @@ class ProductExportManager extends AbstractExportManager
         Logger $logger,
         AttributeCollectionFactory $attributeCollectionFactory,
         Base36Coder $base36Coder,
-        FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
+        FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser,
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -306,6 +310,7 @@ class ProductExportManager extends AbstractExportManager
         $this->attributeCollectionFactory = $attributeCollectionFactory;
         $this->base36Coder = $base36Coder;
         $this->fileinfoMimeTypeGuesser = $fileinfoMimeTypeGuesser;
+        $this->resourceConnection = $resourceConnection;
     }
 
     public function getProductExportData(array $products): array
@@ -548,17 +553,12 @@ class ProductExportManager extends AbstractExportManager
     private function getTaxData(ProductInterface $product): array
     {
         $data = [];
-
-        $taxCalculationCollection = $this->taxCalculationCollectionFactory->create();
-        $taxCalculationCollection->addFieldToFilter('product_tax_class_id', $product->getTaxClassId());
-
-        if ($taxCalculationCollection->getSize()) {
-            $taxCalculation = $taxCalculationCollection->getFirstItem();
-            $taxRateId = $taxCalculation->getData('tax_calculation_rate_id');
-            $taxRate = $this->taxRateRepository->get($taxRateId);
+        $taxCountryId = $this->configHelper->getDefaultCountry();
+        $taxRate = $this->getTaxRate($product->getTaxClassId(), $taxCountryId);
+        if ($taxRate) {
             $data = [
-                'vat_rate' => (float)($taxRate->getRate()/100),
-                'vat_iso2' => $taxRate->getTaxCountryId()
+                'vat_rate' => (float)($taxRate/100),
+                'vat_iso2' => $taxCountryId
             ];
         }
 
@@ -674,6 +674,40 @@ class ProductExportManager extends AbstractExportManager
         }
 
         return $attributeValue;
+    }
+
+    /**
+     * @param $productTaxClassId
+     * @param $taxCountryId
+     * @return mixed
+     */
+    private function getTaxRate($productTaxClassId, $taxCountryId)
+    {
+        $connection = $this->resourceConnection->getConnection();
+
+        $select = $connection->select()
+            ->from(['tc' => 'tax_calculation'], [])
+            ->join(
+                ['tcr' => 'tax_calculation_rate'],
+                'tc.tax_calculation_rate_id = tcr.tax_calculation_rate_id',
+                ['rate']
+            )
+            ->join(
+                ['tcrl' => 'tax_calculation_rule'],
+                'tc.tax_calculation_rule_id = tcrl.tax_calculation_rule_id',
+                []
+            )
+            ->join(
+                ['tcc' => 'tax_class'],
+                'tc.product_tax_class_id = tcc.class_id',
+                []
+            )
+            ->where('tc.product_tax_class_id = ?', $productTaxClassId)
+            ->where('tcr.tax_country_id = ?', $taxCountryId);
+
+        $rate = $connection->fetchOne($select);
+
+        return $rate;
     }
 
     /**
