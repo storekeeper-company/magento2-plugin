@@ -27,6 +27,7 @@ use Magento\Framework\App\ResourceConnection;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
+use StoreKeeper\StoreKeeper\Helper\ProductDescription as ProductDescriptionHelper;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use Symfony\Component\Mime\FileinfoMimeTypeGuesser;
@@ -194,12 +195,6 @@ class ProductExportManager extends AbstractExportManager
         //need to add url_path? it doesnt have fr label too
     ];
 
-    const DISALLOWED_CONTENT = [
-        '/<style\b[^>]*>([\s\S]*?)<\/style>/i',
-        '/<figure\s+data-content-type="image"[^>]*>[\s\S]*?<\/figure>/i',
-        '/{{widget[^}]*}}/i'
-    ];
-
     private CollectionFactory $productCollectionFactory;
     private Csv $csv;
     private Filesystem $filesystem;
@@ -225,6 +220,7 @@ class ProductExportManager extends AbstractExportManager
     private Base36Coder $base36Coder;
     private FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser;
     private ResourceConnection $resourceConnection;
+    private ProductDescriptionHelper $productDescription;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -257,7 +253,8 @@ class ProductExportManager extends AbstractExportManager
      * @param AttributeCollectionFactory $attributeCollectionFactory
      * @param Base36Coder $base36Coder
      * @param FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param ResourceConnection $resourceConnection
+     * @param ProductDescriptionHelper $productDescription
      */
     public function __construct(
         Resolver $localeResolver,
@@ -285,7 +282,8 @@ class ProductExportManager extends AbstractExportManager
         AttributeCollectionFactory $attributeCollectionFactory,
         Base36Coder $base36Coder,
         FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        ProductDescriptionHelper $productDescription
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -311,6 +309,7 @@ class ProductExportManager extends AbstractExportManager
         $this->base36Coder = $base36Coder;
         $this->fileinfoMimeTypeGuesser = $fileinfoMimeTypeGuesser;
         $this->resourceConnection = $resourceConnection;
+        $this->productDescription = $productDescription;
     }
 
     public function getProductExportData(array $products): array
@@ -328,7 +327,7 @@ class ProductExportManager extends AbstractExportManager
             $stockData = $this->getStockData($product);
             $taxData = $this->getTaxData($product);
             $categoryData = $this->getCategoryData($product);
-            $descriptionFormatted = $this->formatProductDescription($product->getDescription());
+            $descriptionFormatted = $this->productDescription->formatProductDescription($product->getDescription());
 
             $data = [
                 $productData['product_type'], // path://product.type
@@ -708,20 +707,5 @@ class ProductExportManager extends AbstractExportManager
         $rate = $connection->fetchOne($select);
 
         return $rate;
-    }
-
-    /**
-     * @param string $description
-     * @return string
-     */
-    private function formatProductDescription(string $description): string
-    {
-        foreach (self::DISALLOWED_CONTENT as $pattern) {
-            if (preg_match($pattern, $description)) {
-                $description = preg_replace($pattern, '', $description);
-            }
-        }
-
-        return $description;
     }
 }
