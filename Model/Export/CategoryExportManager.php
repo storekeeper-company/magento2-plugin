@@ -45,10 +45,12 @@ class CategoryExportManager extends AbstractExportManager
         'Parent slug',
         'Protected'
     ];
+    const CATEGORY_ROOT_CATALOG_NAME = 'Root Catalog';
 
     private CategoryRepositoryInterface $categoryRepository;
     private StoreManagerInterface $storeManager;
     private Auth $authHelper;
+    private $_defaultCategory;
 
     public function __construct(
         Resolver $localeResolver,
@@ -72,6 +74,11 @@ class CategoryExportManager extends AbstractExportManager
         $currentLocale = $this->getCurrentLocale();
         foreach ($categories as $category) {
             $categoryName = $category->getName();
+            $defaultCategoryId = $this->getDefaultCategoryId($category);
+
+            if ($categoryName == self::CATEGORY_ROOT_CATALOG_NAME || $category->getId() == $defaultCategoryId) {
+                continue;
+            }
 
             $data = [
                 $categoryName, //'path://title'
@@ -106,10 +113,24 @@ class CategoryExportManager extends AbstractExportManager
         $categoryParentId = $category->getParentId();
         $result = null;
 
-        if (!empty($categoryParentId)) {
+        if (!empty($categoryParentId) && $categoryParentId != $this->_defaultCategory) {
             $result = $this->categoryRepository->get($categoryParentId)->getUrlKey();
         }
 
         return $result;
+    }
+
+    /**
+     * @param CategoryInterface $category
+     * @return string|null
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getDefaultCategoryId(CategoryInterface $category): ?string
+    {
+        if (!isset($this->_defaultCategory)) {
+            $this->_defaultCategory = $category->getStore()->getRootCategoryId();
+        }
+
+        return $this->_defaultCategory;
     }
 }
