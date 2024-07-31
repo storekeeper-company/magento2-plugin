@@ -74,7 +74,6 @@ $category->setId(3)
     ->setMetaTitle('Category 1 Meta Title')
     ->setMetaKeywords('Category 1 Meta Keywords')
     ->setMetaDescription('Category 1 Meta Description')
-    ->setImage('magento_small_image.jpg')
     ->save();
 
 $category = $categoryFactory->create();

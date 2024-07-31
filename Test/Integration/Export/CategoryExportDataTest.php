@@ -65,11 +65,6 @@ class CategoryExportDataTest extends AbstractTestCase
             'path://seo_title' => 'Category 1 Meta Title',
             'path://seo_keywords' => 'Category 1 Meta Keywords',
             'path://seo_description' => 'Category 1 Meta Description',
-            'path://image_url' =>
-                $this->store->getStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
-                . ltrim(FileInfo::ENTITY_MEDIA_PATH, '/')
-                . '/'
-                . 'magento_small_image.jpg',
             'path://published' => 1,
             'path://order' => '1',
             'path://parent_slug' => null,
