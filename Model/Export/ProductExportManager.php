@@ -606,7 +606,7 @@ class ProductExportManager extends AbstractExportManager
      * @param string|null $url
      * @return bool
      */
-    private function isImageFormatAllowed(?string $url): bool
+    public function isImageFormatAllowed(?string $url): bool
     {
         $imageType = $this->fileinfoMimeTypeGuesser->guessMimeType($url);
 
