@@ -65,6 +65,7 @@ class CategoryExportDataTest extends AbstractTestCase
             'path://seo_title' => 'Category 1 Meta Title',
             'path://seo_keywords' => 'Category 1 Meta Keywords',
             'path://seo_description' => 'Category 1 Meta Description',
+            'path://image_url' => NULL,
             'path://published' => 1,
             'path://order' => '1',
             'path://parent_slug' => null,
