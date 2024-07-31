@@ -608,7 +608,11 @@ class ProductExportManager extends AbstractExportManager
      */
     public function isImageFormatAllowed(?string $url): bool
     {
-        $imageType = $this->fileinfoMimeTypeGuesser->guessMimeType($url);
+        try {
+            $imageType = $this->fileinfoMimeTypeGuesser->guessMimeType($url);
+        } catch (\Exception $e) {
+            return false;
+        }
 
         $allowedTypes = [
             'image/jpeg',
