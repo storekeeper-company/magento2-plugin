@@ -558,6 +558,15 @@ class Orders extends AbstractHelper
 
         try {
             if ($order->getStatus() != 'closed' && $storeKeeperOrder['status'] != 'canceled') {
+                if (isset($statusMapping[$storeKeeperOrder['status']])) {
+                    if (
+                        $order->getStatus() == 'canceled'
+                        && $statusMapping[$storeKeeperOrder['status']] !== $order->getStatus()
+                    ) {
+                        $this->updateStoreKeeperOrderStatus($order, $storeKeeperId);
+                    }
+                }
+
                 $paymentId = $order->getStorekeeperPaymentId();
                 if ($order->getStorekeeperPaymentId()) {
                     $this->paymentApiClient->attachPaymentIdsToOrder($order->getStoreId(), $storeKeeperId, [$paymentId]);
@@ -601,6 +610,29 @@ class Orders extends AbstractHelper
             'cancelled' => 'canceled',
             'new' => 'new'
         ];
+    }
+
+    /**
+     * Update StoreKeeper order status
+     *
+     * @param Order $order
+     * @param string $storeKeeperId
+     * @throws LocalizedException
+     * @retrun void
+     */
+    public function updateStoreKeeperOrderStatus(Order $order, string $storeKeeperId): void
+    {
+        $statusMapping = $this->statusMapping();
+
+        try {
+            if ($status = array_search($order->getStatus(), $statusMapping)) {
+                $this->orderApiClient->updateOrderStatus($order->getStoreId(), ['status' => $status], $storeKeeperId);
+            }
+        } catch (GeneralException $e) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __($e->getMessage())
+            );
+        }
     }
 
     /**

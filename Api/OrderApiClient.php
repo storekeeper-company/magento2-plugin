@@ -207,6 +207,12 @@ class OrderApiClient extends ApiClient
         return $shipmentId;
     }
 
+    /**
+     * @param string $storeId
+     * @param int $shipmentId
+     * @return void
+     * @throws \Exception
+     */
     public function markOrderShipmentDelivered(string $storeId, int $shipmentId): void
     {
         $this->getShopModule($storeId)->markOrderShipmentAsDeliveredForHook($shipmentId);
