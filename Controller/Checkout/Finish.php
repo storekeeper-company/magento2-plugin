@@ -79,7 +79,7 @@ class Finish extends Action
         }
 
         if ($payment['status'] == self::STOREKEEPER_PAYMENT_STATUS_CANCELLED) {
-            $cancelMessage = __('Payment canceled');
+            $cancelMessage = __('Order canceled');
             $this->messageManager->addNoticeMessage($cancelMessage);
             $order->setState(Order::STATE_CANCELED)->setStatus(Order::STATE_CANCELED);
             $order->save();
