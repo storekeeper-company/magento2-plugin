@@ -617,8 +617,8 @@ class Orders extends AbstractHelper
      *
      * @param Order $order
      * @param string $storeKeeperId
-     * @throws LocalizedException
-     * @retrun void
+     * @return void
+     * @throws \Exception
      */
     public function updateStoreKeeperOrderStatus(Order $order, string $storeKeeperId): void
     {
@@ -629,9 +629,7 @@ class Orders extends AbstractHelper
                 $this->orderApiClient->updateOrderStatus($order->getStoreId(), ['status' => $status], $storeKeeperId);
             }
         } catch (GeneralException $e) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __($e->getMessage())
-            );
+            throw new \Exception(__($e->getMessage()));
         }
     }
 
@@ -640,8 +638,8 @@ class Orders extends AbstractHelper
      *
      * @param Order $order
      * @param string $storeKeeperId
-     * @throws LocalizedException
-     * @retrun void
+     * @return void
+     * @throws \Exception
      */
     public function updateStoreKeeperOrder(Order $order, string $storeKeeperId): void
     {
@@ -650,9 +648,7 @@ class Orders extends AbstractHelper
         try {
             $this->orderApiClient->updateOrder($order->getStoreId(), $payload, $storeKeeperId);
         } catch (GeneralException $e) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __($e->getMessage())
-            );
+            throw new \Exception(__($e->getMessage()));
         }
     }
 
