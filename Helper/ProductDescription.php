@@ -11,14 +11,16 @@ class ProductDescription
     ];
 
     /**
-     * @param string $description
-     * @return string
+     * @param string|null $description
+     * @return string|null
      */
-    public function formatProductDescription(string $description): string
+    public function formatProductDescription(?string $description): ?string
     {
-        foreach (self::DISALLOWED_CONTENT as $pattern) {
-            if (preg_match($pattern, $description)) {
-                $description = preg_replace($pattern, '', $description);
+        if (!is_null($description)) {
+            foreach (self::DISALLOWED_CONTENT as $pattern) {
+                if (preg_match($pattern, $description)) {
+                    $description = preg_replace($pattern, '', $description);
+                }
             }
         }
 

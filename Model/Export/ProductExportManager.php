@@ -186,13 +186,13 @@ class ProductExportManager extends AbstractExportManager
         "msrp",
         "swatch_image",
         "thumbnail",
+        "thumbnail_label",
         "tier_price",
         "url_key",
+        "url_path",
         "visibility",
         "weight",
-        "dynamic_weight"
-
-        //need to add url_path? it doesnt have fr label too
+        "weight_type"
     ];
 
     private CollectionFactory $productCollectionFactory;
@@ -361,7 +361,7 @@ class ProductExportManager extends AbstractExportManager
                 null, // path://product.configurable_product.sku - Configurable product sku
                 $categoryData['category_name'] ?? null, // path://main_category.title
                 $categoryData['category_url'] ?? null, // path://main_category.slug
-                null, // path://extra_category_slugs - Extra Category slugs
+                $this->getExtraCategorySlugs($product), // path://extra_category_slugs - Extra Category slugs
                 null, // path://extra_label_slugs - Extra Label slugs
                 $productData['attribute_set_name'], // path://attribute_set_name
                 $this->formatAlias($productData['attribute_set_name']), // path://attribute_set_alias - Attribute set alias
@@ -571,16 +571,46 @@ class ProductExportManager extends AbstractExportManager
     private function getCategoryData(ProductInterface $product): array
     {
         $data = [];
+        $categoryIds = $product->getCategoryIds();
 
-        if ($product->getCategoryIds() && $categoryId = $product->getCategoryIds()[0]) {
-            $category = $this->categoryRepository->get($categoryId);
-            $data = [
-                'category_name' => $category->getName(),
-                'category_url' => $category->getUrlKey()
-            ];
+        if (count($categoryIds) > 0) {
+            $categoryId = $this->getDeepestCategoryId($categoryIds);
+            if ($categoryId) {
+                $category = $this->categoryRepository->get($categoryId);
+                $data = [
+                    'category_name' => $category->getName(),
+                    'category_url' => $category->getUrlKey()
+                ];
+            }
         }
 
         return $data;
+    }
+
+    /**
+     * @param array $categoryIds
+     * @return int|null
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getDeepestCategoryId(array $categoryIds): ?int
+    {
+        $deepestCategoryId = null;
+        $maxLevel = 0;
+
+        foreach ($categoryIds as $categoryId) {
+            $category = $this->categoryRepository->get($categoryId);
+            $defaultCategoryId = $category->getStore()->getRootCategoryId();
+            if ($categoryId != $defaultCategoryId) {
+                $level = $category->getLevel();
+
+                if ($level > $maxLevel) {
+                    $maxLevel = $level;
+                    $deepestCategoryId = $categoryId;
+                }
+            }
+        }
+
+        return $deepestCategoryId;
     }
 
     /**
@@ -711,5 +741,31 @@ class ProductExportManager extends AbstractExportManager
         $rate = $connection->fetchOne($select);
 
         return $rate;
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return string|null
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getExtraCategorySlugs(ProductInterface $product): ?string
+    {
+        $extraSlugs = NULL;
+        $categoryIds = $product->getCategoryIds();
+        $categorySlugs = [];
+
+        foreach ($categoryIds as $categoryId) {
+            $category = $this->categoryRepository->get($categoryId);
+            $defaultCategoryId = $category->getStore()->getRootCategoryId();
+            if ($categoryId != $defaultCategoryId) {
+                $categorySlugs[] = $category->getUrlKey();
+            }
+        }
+
+        if (count($categorySlugs) > 0) {
+            $extraSlugs = implode("|", $categorySlugs);
+        }
+
+        return $extraSlugs;
     }
 }

@@ -955,7 +955,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                 $target->setVisibility(Visibility::VISIBILITY_BOTH);
                 $target->setTypeId('configurable');
             }
-
         }
 
         if ($target->getName() != $title) {
