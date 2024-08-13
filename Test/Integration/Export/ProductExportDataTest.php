@@ -97,7 +97,7 @@ class ProductExportDataTest extends AbstractTestCase
             'path://product.configurable_product.sku' => NULL,
             'path://main_category.title' => 'Category 1',
             'path://main_category.slug' => 'category-1',
-            'path://extra_category_slugs' => NULL,
+            'path://extra_category_slugs' => 'category-1',
             'path://extra_label_slugs' => NULL,
             'path://attribute_set_name' => 'Default',
             'path://attribute_set_alias' => 'default',
