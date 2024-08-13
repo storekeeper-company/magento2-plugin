@@ -21,14 +21,17 @@ use StoreKeeper\StoreKeeper\Model\ResourceModel\TaxCalculation\CollectionFactory
 use Magento\Tax\Api\TaxRateRepositoryInterface;
 use Magento\Catalog\Helper\Data as ProductHelper;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory;
 use Magento\Catalog\Helper\ImageFactory;
+use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableResource;
 use Magento\Framework\App\ResourceConnection;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Base36Coder;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Helper\ProductDescription as ProductDescriptionHelper;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes;
+use StoreKeeper\StoreKeeper\Model\Export\BlueprintExportManager;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use Symfony\Component\Mime\FileinfoMimeTypeGuesser;
 
@@ -221,6 +224,9 @@ class ProductExportManager extends AbstractExportManager
     private FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser;
     private ResourceConnection $resourceConnection;
     private ProductDescriptionHelper $productDescription;
+    private ConfigurableResource $configurableResource;
+    private ProductRepositoryInterface $productRepository;
+    private BlueprintExportManager $blueprintExportManager;
     protected array $headerPathsExtended = self::HEADERS_PATHS;
     protected array $headerLabelsExtended = self::HEADERS_LABELS;
     protected array $disallowedAttributesExtended = self::DISALLOWED_ATTRIBUTES;
@@ -283,7 +289,10 @@ class ProductExportManager extends AbstractExportManager
         Base36Coder $base36Coder,
         FileinfoMimeTypeGuesser $fileinfoMimeTypeGuesser,
         ResourceConnection $resourceConnection,
-        ProductDescriptionHelper $productDescription
+        ProductDescriptionHelper $productDescription,
+        ConfigurableResource $configurableResource,
+        ProductRepositoryInterface $productRepository,
+        BlueprintExportManager $blueprintExportManager
     ) {
         parent::__construct($localeResolver, $storeManager, $storeConfigManager, $authHelper);
         $this->productCollectionFactory = $productCollectionFactory;
@@ -310,6 +319,9 @@ class ProductExportManager extends AbstractExportManager
         $this->fileinfoMimeTypeGuesser = $fileinfoMimeTypeGuesser;
         $this->resourceConnection = $resourceConnection;
         $this->productDescription = $productDescription;
+        $this->configurableResource = $configurableResource;
+        $this->productRepository = $productRepository;
+        $this->blueprintExportManager = $blueprintExportManager;
     }
 
     public function getProductExportData(array $products): array
@@ -357,8 +369,8 @@ class ProductExportManager extends AbstractExportManager
                 null, // path://product.product_bottom_price.ppu_wt - Bottom price with VAT
                 $this->productHelper->getTaxPrice($product, $productCostPrice, false), // path://product.product_cost_price.ppu - Cost price
                 $this->productHelper->getTaxPrice($product, $productCostPrice, true), // path://product.product_cost_price.ppu_wt - Cost price with VAT
-                null, // path://product.configurable_product_kind.alias - Product kind alias
-                null, // path://product.configurable_product.sku - Configurable product sku
+                $this->getConfigurableProductKindAlias($product), // path://product.configurable_product_kind.alias - Product kind alias
+                $this->getConfigurableProductSku($product), // path://product.configurable_product.sku - Configurable product sku
                 $categoryData['category_name'] ?? null, // path://main_category.title
                 $categoryData['category_url'] ?? null, // path://main_category.slug
                 $this->getExtraCategorySlugs($product), // path://extra_category_slugs - Extra Category slugs
@@ -500,6 +512,8 @@ class ProductExportManager extends AbstractExportManager
 
         if (!in_array($productType, $validProductTypes)) {
             $productType = 'simple';
+        } elseif ($productType == 'simple' && $this->configurableResource->getParentIdsByChild($product->getId())) {
+            $productType = 'configurable_assign';
         }
 
         return $productType;
@@ -767,5 +781,41 @@ class ProductExportManager extends AbstractExportManager
         }
 
         return $extraSlugs;
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return string|null
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getConfigurableProductSku(ProductInterface $product): ?string
+    {
+        $parentSku = null;
+        if ($product->getTypeId() == 'simple') {
+            $parentIds = $this->configurableResource->getParentIdsByChild($product->getId());
+            if (count($parentIds) > 0) {
+                $parentId = reset($parentIds);
+                $parentProduct = $this->productRepository->getById($parentId);
+                $parentSku = $parentProduct->getSku();
+            }
+        }
+
+        return $parentSku;
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return string|null
+     */
+    private function getConfigurableProductKindAlias(ProductInterface $product): ?string
+    {
+        if ($product->getTypeId() != 'configurable') {
+            return null;
+        }
+
+        $configurableAttributes = $product->getTypeInstance()->getConfigurableAttributesAsArray($product);
+        $blueprint = $this->blueprintExportManager->buildBlueprintData($configurableAttributes);
+
+        return  array_key_exists('alias', $blueprint) ? $blueprint['alias'] : null;
     }
 }
