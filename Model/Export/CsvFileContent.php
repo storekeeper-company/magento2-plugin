@@ -168,7 +168,7 @@ class CsvFileContent
             $entityCollection->addFieldToSelect('*');
             $entityCollection->setStoreId(Store::DEFAULT_STORE_ID);
             $entityCollection->addMediaGalleryData();
-            $entityCollection->setOrder('entity_id', 'asc');
+            $entityCollection->setOrder('type_id', 'asc');
         }
         if ($entityType == self::BLUEPRINT_ENTITY) {
             $entityCollection = $this->productCollectionFactory->create();
