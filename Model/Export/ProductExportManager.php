@@ -354,7 +354,7 @@ class ProductExportManager extends AbstractExportManager
                 $productData['is_active'], // path://product.active
                 $stockData['is_in_stock'], // path://product.product_stock.in_stock
                 $stockData['stock_qty'], // path://product.product_stock.value
-                'no', // path://product.product_stock.unlimited
+                ($product->getTypeId() == 'configurable') ? null : 'no', // path://product.product_stock.unlimited
                 $stockData['is_backorder_enabled'], // path://shop_products.main.backorder_enabled
                 $taxData['vat_rate'] ?? null, // path://product.product_price.tax
                 $taxData['vat_iso2'] ?? null, // path://product.product_price.tax_rate.country_iso2
@@ -551,9 +551,9 @@ class ProductExportManager extends AbstractExportManager
         $isManageStock = $stockItem->getManageStock() ? 'yes' : 'no';
 
         return [
-            'is_in_stock' => $isInStock,
-            'stock_qty' => $stockQty,
-            'is_backorder_enabled' => $isBackorderEnabled,
+            'is_in_stock' => ($product->getTypeId() == 'configurable') ? null : $isInStock,
+            'stock_qty' => ($product->getTypeId() == 'configurable') ? null : $stockQty,
+            'is_backorder_enabled' => ($product->getTypeId() == 'configurable') ? null : $isBackorderEnabled,
             'is_manage_stock' => $isManageStock
         ];
     }
