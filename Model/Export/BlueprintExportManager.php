@@ -80,7 +80,7 @@ class BlueprintExportManager extends AbstractExportManager
      * @param array $configurableAttributes
      * @return array
      */
-    private function buildBlueprintData(array $configurableAttributes): array
+    public function buildBlueprintData(array $configurableAttributes): array
     {
         $attributeData = [];
         $skuPattern = "{{sku}}";
