@@ -331,7 +331,7 @@ class ProductExportManager extends AbstractExportManager
         $productAttributes = $this->attributeCollectionFactory->create();
         foreach ($products as $product) {
             /** @var ProductInterface $product */
-            $productPrice = $product->getPrice();
+            $productPrice = $this->getProductPrice($product);
             $productSpecialPrice = $product->getSpecialPrice();
             $productCostPrice = $product->getCost();
 
@@ -817,5 +817,47 @@ class ProductExportManager extends AbstractExportManager
         $blueprint = $this->blueprintExportManager->buildBlueprintData($configurableAttributes);
 
         return  array_key_exists('alias', $blueprint) ? $blueprint['alias'] : null;
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @return float
+     */
+    private function getProductPrice(ProductInterface $product): float
+    {
+        if ($product->getTypeId() == 'configurable') {
+            $regularPrice = $product->getPriceInfo()->getPrice('regular_price');
+            $productPrice = $regularPrice->getMinRegularAmount()->getValue();
+
+            /**
+             * Extra step to handle out of stock products
+             * because getMinRegularAmount works only fir in stck products (salable in terms of magento
+             * */
+            if ($productPrice === 0.0) {
+                $productPrice = $this->getCheapestPrice($product);
+            }
+        } else {
+            $productPrice = $product->getPrice();
+        }
+
+        return $productPrice;
+    }
+
+    /**
+     * @param $configurableProduct
+     * @return float
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function getCheapestPrice($configurableProduct): float
+    {
+        $childProductIds = $this->configurableResource->getChildrenIds($configurableProduct->getId());
+        $simpleProductPrices = [];
+
+        foreach ($childProductIds[0] as $childProductId) {
+            $simpleProduct = $this->productRepository->getById($childProductId);
+            $simpleProductPrices[] = $simpleProduct->getPrice();
+        }
+
+        return !empty($simpleProductPrices) ? min($simpleProductPrices) : 0.00;
     }
 }
