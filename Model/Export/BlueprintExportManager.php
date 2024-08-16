@@ -172,9 +172,8 @@ class BlueprintExportManager extends AbstractExportManager
                     }
                 }
             } else{
-                $dataRow[$key] = $this->isLabelItemMatchHeader($dataRow['path://name'], $value ) ? 'yes' : 'no';
+                $dataRow[$key] = $this->isLabelItemMatchHeader($dataRow['path://name'], $value) ? 'yes' : 'no';
             }
-
         }
 
         return $dataRow;
@@ -187,6 +186,15 @@ class BlueprintExportManager extends AbstractExportManager
      */
     private function isLabelItemMatchHeader(string $labelItem, string $headerLabel): bool
     {
-        return str_starts_with($headerLabel, $labelItem) && !str_contains($headerLabel, 'Synchronized');
+        $match = false;
+        if (str_contains($headerLabel, ' (Configurable)') && !str_contains($headerLabel, ' (Synchronized)')) {
+            $modifiedLabel = str_replace(' (Configurable)', '', $headerLabel);
+
+            if ($modifiedLabel === $labelItem) {
+                $match = true;
+            }
+        }
+
+        return $match;
     }
 }
