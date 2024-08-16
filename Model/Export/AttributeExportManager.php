@@ -98,7 +98,7 @@ class AttributeExportManager extends AbstractExportManager
             if (array_search($attributeCode, $this->productExportManager->getDisallowedAttributesExtended()) === false) {
                 $hasOption = $attribute->usesSource();
                 $data = [
-                    $attributeCode, //'path://name'
+                    $this->formatAlias($attributeCode), //'path://name'
                     $attribute->getFrontendLabel(), //'path://label'
                     $this->getCurrentLocale(), //'path://translatable.lang'
                     'yes', //'path://is_main_lang'

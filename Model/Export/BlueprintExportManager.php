@@ -88,7 +88,7 @@ class BlueprintExportManager extends AbstractExportManager
 
         foreach ($configurableAttributes as $configurableAttribute) {
             $attributeData['name'][] = $configurableAttribute['label'];
-            $attributeData['alias'][] = $configurableAttribute['attribute_code'];
+            $attributeData['alias'][] = $this->formatAlias($configurableAttribute['attribute_code']);
             $skuPattern .= "-{{content_vars['{$configurableAttribute['attribute_code']}']['value']}}";
             $titlePattern .= "-{{content_vars['{$configurableAttribute['attribute_code']}']['value_label']}}";
         }
@@ -134,7 +134,7 @@ class BlueprintExportManager extends AbstractExportManager
      */
     private function getEncodedAttributePathData(string $key): array
     {
-        $encodedName = $this->base36Coder->encode($key);
+        $encodedName = $this->base36Coder->encode($this->formatAlias($key));
 
         return [
             "path://attribute.encoded__$encodedName.is_configurable",
