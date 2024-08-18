@@ -397,7 +397,7 @@ class ProductExportManager extends AbstractExportManager
                             $attributeValue = $this->validateBarcode($attributeValue);
                         }
 
-                        $keyEncoded = $this->base36Coder->encode($key);
+                        $keyEncoded = $this->base36Coder->encode($this->formatAlias($key));
                         $attribute = $product->getResource()->getAttribute($value);
 
                         if ($attributeValue !== null && $attribute->usesSource()) {
@@ -424,7 +424,7 @@ class ProductExportManager extends AbstractExportManager
                 $attributeCode = $productAttribute->getAttributeCode();
                 if (array_search($attributeCode, $this->getDisallowedAttributesExtended()) === false) {
                     $attributeValue = $product->getData($attributeCode);
-                    $attributeCodeEncoded = $this->base36Coder->encode($attributeCode);
+                    $attributeCodeEncoded = $this->base36Coder->encode($this->formatAlias($attributeCode));
                     if ($attributeValue !== null && $productAttribute->usesSource()) {
                         $attributeValue = $productAttribute->getFrontend()->getValue($product);
                     }
