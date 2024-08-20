@@ -122,9 +122,13 @@ class CsvFileContent
         $page = 0;
         while (true) {
             ++$page;
-            $entityCollection->setPageSize(self::PAGE_SIZE)->setCurPage($page);
-            $entityCollection->clear();
-            $entityCollection->load();
+            if ($entityType == self::CATALOG_PRODUCT_ENTITY) {
+                $entityCollection->addMediaGalleryData();
+            } else {
+                $entityCollection->setPageSize(self::PAGE_SIZE)->setCurPage($page);
+                $entityCollection->clear();
+                $entityCollection->load();
+            }
             if ($entityCollection->count() == 0) {
                 break;
             }
@@ -167,8 +171,7 @@ class CsvFileContent
             $entityCollection = $this->productCollectionFactory->create();
             $entityCollection->addFieldToSelect('*');
             $entityCollection->setStoreId(Store::DEFAULT_STORE_ID);
-            $entityCollection->addMediaGalleryData();
-            $entityCollection->setOrder('type_id', 'asc')->getSelect()->group('e.sku');
+            $entityCollection->setOrder('type_id', 'asc')->getSelect()->group('e.entity_id');
         }
         if ($entityType == self::BLUEPRINT_ENTITY) {
             $entityCollection = $this->productCollectionFactory->create();
