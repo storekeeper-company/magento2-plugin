@@ -816,7 +816,7 @@ class ProductExportManager extends AbstractExportManager
         $configurableAttributes = $product->getTypeInstance()->getConfigurableAttributesAsArray($product);
         $blueprint = $this->blueprintExportManager->buildBlueprintData($configurableAttributes);
 
-        return  array_key_exists('alias', $blueprint) ? $blueprint['alias'] : null;
+        return  array_key_exists('path://alias', $blueprint) ? $blueprint['path://alias'] : null;
     }
 
     /**
