@@ -49,27 +49,17 @@ class BlueprintExportManager extends AbstractExportManager
         foreach ($configurableProducts as $product) {
             $configurableAttributes = $product->getTypeInstance()->getConfigurableAttributesAsArray($product);
 
-            if (count($configurableAttributes) > 1) {
+            $kind = $this->buildBlueprintData($configurableAttributes);
+            if (count($configurableAttributes) === 1) {
+                $result[self::ADD_HEADER_FLAG . $kind['path://alias']] = $kind;
+            } else {
                 foreach ($configurableAttributes as $configurableAttribute) {
-                    $attributeCode = $configurableAttribute['attribute_code'];
+                    $attributeCode = $this->formatAlias($configurableAttribute['attribute_code']);
                     if (!isset($result[$attributeCode])) {
-                        $result[self::ADD_HEADER_FLAG . $attributeCode] = array_combine(self::HEADERS_PATHS, $this->buildBlueprintData([$configurableAttribute]));
-                        $result[self::ADD_HEADER_FLAG . $attributeCode]['ignore_row'] = true;
+                        $result[self::ADD_HEADER_FLAG . $attributeCode] = $this->buildBlueprintData([$configurableAttribute]);
                     }
                 }
-                $blueprint = $this->buildBlueprintData($configurableAttributes);
-                $compoundAlias = $blueprint['alias'];
-
-                if (!isset($result[$compoundAlias])) {
-                    $result[$compoundAlias] = array_combine(self::HEADERS_PATHS, $blueprint);
-                }
-            } else {
-                $configurableAttribute = current($configurableAttributes);
-                $attributeCode = $configurableAttribute['attribute_code'];
-
-                if (!isset($result[$attributeCode])) {
-                    $result[self::ADD_HEADER_FLAG . $attributeCode] = array_combine(self::HEADERS_PATHS, $this->buildBlueprintData([$configurableAttribute]));
-                }
+                $result[ $kind['path://alias']] = $kind;
             }
         }
 
@@ -83,25 +73,32 @@ class BlueprintExportManager extends AbstractExportManager
     public function buildBlueprintData(array $configurableAttributes): array
     {
         $attributeData = [];
+        $extra_result = [];
         $skuPattern = "{{sku}}";
         $titlePattern = "{{title}}";
 
         foreach ($configurableAttributes as $configurableAttribute) {
             $attributeData['name'][] = $configurableAttribute['label'];
-            $attributeData['alias'][] = $this->formatAlias($configurableAttribute['attribute_code']);
-            $skuPattern .= "-{{content_vars['{$configurableAttribute['attribute_code']}']['value']}}";
-            $titlePattern .= "-{{content_vars['{$configurableAttribute['attribute_code']}']['value_label']}}";
+            $attributeData['alias'][] = $alias = $this->formatAlias($configurableAttribute['attribute_code']);
+            $skuPattern .= "-{{content_vars['{$alias}']['value']}}";
+            $titlePattern .= "-{{content_vars['{$alias}']['value_label']}}";
+
+            $encodedName = $this->base36Coder->encode($alias);
+            $extra_result["path://attribute.encoded__$encodedName.is_configurable"] = 'yes';
+            $extra_result["path://attribute.encoded__$encodedName.is_synchronized"] = 'no';
         }
 
         $name = implode(' & ', $attributeData['name']);
         $alias = implode('-', $attributeData['alias']);
 
-        return [
-            'name' => $name,
-            'alias' => $alias,
-            'sku_pattern' => $skuPattern,
-            'title_pattern' => $titlePattern
+        $result = [
+            'path://name' => $name,
+            'path://alias' => $alias,
+            'path://sku_pattern' => $skuPattern,
+            'path://title_pattern' => $titlePattern
         ];
+
+        return $result + $extra_result;
     }
 
     /**
@@ -148,45 +145,24 @@ class BlueprintExportManager extends AbstractExportManager
      */
     private function getLabelData(string $label): array
     {
-                return [
-                    "$label (Configurable)",
-                    "$label (Synchronized)"
-                ];
+        return [
+            "$label (Configurable)",
+            "$label (Synchronized)"
+        ];
     }
 
     /**
-     * @param array $labels
+     * @param array $paths
      * @param array $dataRow
      * @return array
      */
-    public function getBlueprintRow(array $labels, array $dataRow): array
+    public function getBlueprintRow(array $paths, array $dataRow): array
     {
-        $diff = array_diff_key($labels, $dataRow);
-        foreach ($diff as $key => $value) {
-            if (mb_substr_count($dataRow['path://sku_pattern'], 'content_vars') > 1) {
-                $compoundLabelData = explode('&', $dataRow['path://name']);
-                foreach ($compoundLabelData as $compoundLabelItem) {
-                    $dataRow[$key] = $this->isLabelItemMatchHeader(trim($compoundLabelItem), $value) ? 'yes' : 'no';
-                    if ($dataRow[$key] =='yes') {
-                        break;
-                    }
-                }
-            } else{
-                $dataRow[$key] = $this->isLabelItemMatchHeader($dataRow['path://name'], $value ) ? 'yes' : 'no';
-            }
-
+        $row  = [];
+        foreach ($paths as $path) {
+            $row[$path] = $dataRow[$path] ?? 'no';
         }
 
-        return $dataRow;
-    }
-
-    /**
-     * @param string $labelItem
-     * @param string $headerLabel
-     * @return bool
-     */
-    private function isLabelItemMatchHeader(string $labelItem, string $headerLabel): bool
-    {
-        return str_starts_with($headerLabel, $labelItem) && !str_contains($headerLabel, 'Synchronized');
+        return $row;
     }
 }
