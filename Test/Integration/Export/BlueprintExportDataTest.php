@@ -79,6 +79,30 @@ class BlueprintExportDataTest extends AbstractTestCase
                 'Storekeeper Shoe Size (Synchronized)'
             ],
             2 => [
+                'Storekeeper Color',
+                'sk_color',
+                "{{sku}}-{{content_vars['sk_color']['value']}}",
+                "{{title}}-{{content_vars['sk_color']['value_label']}}",
+                'yes',
+                'no',
+                'no',
+                'no',
+                'no',
+                'no'
+            ],
+            3 => [
+                'Storekeeper Size',
+                'sk_size',
+                "{{sku}}-{{content_vars['sk_size']['value']}}",
+                "{{title}}-{{content_vars['sk_size']['value_label']}}",
+                'no',
+                'no',
+                'yes',
+                'no',
+                'no',
+                'no'
+            ],
+            4 => [
                 'Storekeeper Color & Storekeeper Size',
                 'sk_color-sk_size',
                 "{{sku}}-{{content_vars['sk_color']['value']}}-{{content_vars['sk_size']['value']}}",
@@ -90,7 +114,7 @@ class BlueprintExportDataTest extends AbstractTestCase
                 'no',
                 'no'
             ],
-            3 => [
+            5 => [
                 'Storekeeper Shoe Size',
                 'sk_shoe_size',
                 "{{sku}}-{{content_vars['sk_shoe_size']['value']}}",

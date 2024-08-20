@@ -57,7 +57,6 @@ class BlueprintExportManager extends AbstractExportManager
                     $attributeCode = $this->formatAlias($configurableAttribute['attribute_code']);
                     if (!isset($result[$attributeCode])) {
                         $result[self::ADD_HEADER_FLAG . $attributeCode] = $this->buildBlueprintData([$configurableAttribute]);
-                        $result[self::ADD_HEADER_FLAG . $attributeCode]['ignore_row'] = true;
                     }
                 }
                 $result[ $kind['path://alias']] = $kind;
