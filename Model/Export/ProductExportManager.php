@@ -869,18 +869,16 @@ class ProductExportManager extends AbstractExportManager
      */
     private function isActive(ProductInterface $product, string $productType): string
     {
-        $isActive = 'no';
-        if ($productType == 'configurable_assign') {
+        $isActive = $product->getStatus() == 1;
+        if ($isActive && $productType == 'configurable_assign') {
             $parentIds = $this->configurableResource->getParentIdsByChild($product->getId());
             if (count($parentIds) > 0) {
                 $parentId = reset($parentIds);
                 $parentProduct = $this->productRepository->getById($parentId);
-                $isActive = ($parentProduct->getStatus() == 1) ? 'yes' : 'no';
+                $isActive = $parentProduct->getStatus() == 1;
             }
-        } else {
-            $isActive = ($product->getStatus() == 1) ? 'yes' : 'no';
         }
 
-        return $isActive;
+        return $isActive  ? 'yes' : 'no';
     }
 }
