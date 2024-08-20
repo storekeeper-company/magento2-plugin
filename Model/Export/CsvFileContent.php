@@ -137,7 +137,9 @@ class CsvFileContent
             }
             foreach ($exportData as $dataRow) {
                 if ($entityType == self::BLUEPRINT_ENTITY) {
-                    $dataRow = $this->blueprintExportManager->getBlueprintRow($headerColsData['cols'], $dataRow);
+                    if (!array_key_exists('ignore_row', $dataRow)) {
+                        $dataRow = $this->blueprintExportManager->getBlueprintRow($headerColsData['cols'], $dataRow);
+                    }
                 }
                 if ($entityType == self::ATTRIBUTE_ENTITY) {
                     $dataRow = $this->attributeExportManager->getAttributeRow($headerColsData['labels'], $dataRow);

@@ -53,6 +53,13 @@ class BlueprintExportManager extends AbstractExportManager
             if (count($configurableAttributes) === 1) {
                 $result[self::ADD_HEADER_FLAG . $kind['path://alias']] = $kind;
             } else {
+                foreach ($configurableAttributes as $configurableAttribute) {
+                    $attributeCode = $this->formatAlias($configurableAttribute['attribute_code']);
+                    if (!isset($result[$attributeCode])) {
+                        $result[self::ADD_HEADER_FLAG . $attributeCode] = $this->buildBlueprintData([$configurableAttribute]);
+                        $result[self::ADD_HEADER_FLAG . $attributeCode]['ignore_row'] = true;
+                    }
+                }
                 $result[ $kind['path://alias']] = $kind;
             }
         }
@@ -158,24 +165,5 @@ class BlueprintExportManager extends AbstractExportManager
         }
 
         return $row;
-    }
-
-    /**
-     * @param string $labelItem
-     * @param string $headerLabel
-     * @return bool
-     */
-    private function isLabelItemMatchHeader(string $labelItem, string $headerLabel): bool
-    {
-        $match = false;
-        if (str_contains($headerLabel, ' (Configurable)') && !str_contains($headerLabel, ' (Synchronized)')) {
-            $modifiedLabel = str_replace(' (Configurable)', '', $headerLabel);
-
-            if ($modifiedLabel === $labelItem) {
-                $match = true;
-            }
-        }
-
-        return $match;
     }
 }
