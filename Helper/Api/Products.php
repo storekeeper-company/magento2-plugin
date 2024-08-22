@@ -26,6 +26,7 @@ use Magento\Eav\Model\Entity\TypeFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem\Io\File;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
@@ -74,6 +75,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private Configurable $configurable;
     private OptionsFactory $optionsFactory;
     private ProductDescriptionHelper $productDescription;
+    private ResourceConnection $resourceConnection;
     private array $_simpleProductIds = [];
 
     /**
@@ -108,6 +110,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param Configurable $configurable
      * @param OptionsFactory $optionsFactory
      * @param ProductDescriptionHelper $productDescription
+     * @param ResourceConnection $resourceConnection
      */
     public function __construct(
         Auth $authHelper,
@@ -138,7 +141,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         ConfigurableResourceModel $configurableResourceModel,
         Configurable $configurable,
         OptionsFactory $optionsFactory,
-        ProductDescriptionHelper $productDescription
+        ProductDescriptionHelper $productDescription,
+        ResourceConnection $resourceConnection
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -168,6 +172,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->configurable = $configurable;
         $this->optionsFactory = $optionsFactory;
         $this->productDescription = $productDescription;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -752,7 +757,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $imageTypes = [];
 
         if ($mainImage) {
-            $imageTypes = ['image', 'small_image', 'thumbnail'];
+            $imageTypes = ['image', 'small_image', 'thumbnail', 'swatch_image'];
         }
 
         if ($result) {
@@ -1024,7 +1029,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $target->setWebsiteIds($websiteIds);
         }
 
-        $shouldUpdate = $this->processImages($flat_product, $target, $shouldUpdate);
+        $target = $this->processImages($flat_product, $target, $shouldUpdate);
 
         if ($this->updateProductLinks($storeId, $target, 'getUpsellShopProductIds', 'upsell')) {
             $shouldUpdate = true;
@@ -1087,65 +1092,58 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      * @param array $flat_product
      * @param Product $target
      * @param bool $shouldUpdate
-     * @return bool
+     * @return Product
      */
-    private function processImages(array $flat_product, Product $target, bool $shouldUpdate): bool
+    private function processImages(array $flat_product, Product $target, bool $shouldUpdate): Product
     {
-        if (isset($flat_product['main_image'])) {
-            $existingImage = null;
-
-            if ($target->getImage()) {
-                $existingImage = $this->getImageName($target->getImage());
-            }
-
-            if ($existingImage) {
-                $newImageName = $this->getImageName($flat_product['main_image']['big_url']);
-
-                if (
-                    $existingImage == 'no_selection'
-                    || !preg_match("/^{$newImageName}\_[0-9]+/", $existingImage)
-                ) {
-                    $shouldUpdate = $this->setGalleryImage(
-                        $flat_product['main_image']['big_url'],
-                        $target,
-                        true
-                    );
-                }
-            } else {
-                $shouldUpdate = $this->setGalleryImage(
-                    $flat_product['main_image']['big_url'],
-                    $target,
-                    true
-                );
-            }
-        }
-
-        $galleryImages = $target->getMediaGalleryImages()->getItems();
+        $galleryImages = $target->getMediaGalleryEntries();
         $existingImagesArray = [];
-        foreach ($galleryImages as $image) {
-            $imageName = pathinfo($this->getImageName($image->getFile()));
-            $existingImagesArray[] = $imageName;
+        foreach ($galleryImages as $entryId => $image) {
+            $mediaGalleryImage = $target->getMediaGalleryImages()->getItemById($image->getId());
+            if ($mediaGalleryImage) {
+                $skImageId = $mediaGalleryImage->getStorekeeperImageId();
+                $skImageIds = array_column($flat_product['product_images'], 'id');
+                /**
+                 * Look for storekeeper image id of current gallery image in array of images from SK backoffice
+                 * if current product does not match id or id is missing - remove gallery image
+                 */
+                if (!in_array($skImageId, $skImageIds)) {
+                    unset($galleryImages[$entryId]);
+                    $target->setMediaGalleryEntries($galleryImages);
+
+                    $shouldUpdate = true;
+                } else {
+                    $existingImagesArray[$skImageId] = $image;
+                }
+            }
         }
 
         if (isset($flat_product['product_images'])) {
-            $mainImageName = $this->getImageName($flat_product['main_image']['big_url']);
             foreach ($flat_product['product_images'] as $product_image) {
-                $newImageName = pathinfo($this->getImageName($product_image['big_url']));
+                $imageId = $product_image['id'];
 
-                $countDuplicates = count(preg_grep("/^{$newImageName}\_[0-9]+/", $existingImagesArray));
-
-                if (
-                    $newImageName !== $mainImageName
-                    && !preg_match("/^{$newImageName}\_[0-9]+/", $mainImageName)
-                ) {
-                    if (!in_array($newImageName, $existingImagesArray) && $countDuplicates <= 0) {
-                        $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, false);
+                if (!isset($existingImagesArray[$imageId])) {
+                    $mainImage = false;
+                    // If current image matches id with main image - assign it as main image for magento
+                    if (isset($flat_product['main_image']) && $flat_product['main_image']['id'] == $imageId) {
+                        $mainImage = true;
+                    }
+                    $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, $mainImage);
+                    if ($shouldUpdate) {
+                        // Product repo save to trigger gallery images collection to built properly
+                        $this->productRepository->save($target);
+                    }
+                    $target = $this->productRepository->get($target->getSku());
+                    $galleryImage = $target->getMediaGalleryImages()->getLastItem();
+                    if ($galleryImage->getId()) {
+                        // Assign SK image id for newly created M2 gallery image
+                        $this->setStorekeeperImageId($galleryImage->getId(), $imageId);
                     }
                 }
             }
         }
 
-        return $shouldUpdate;
+        return $target;
     }
 
     /**
@@ -1231,5 +1229,21 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $configurableAttributesData;
+    }
+
+    /**
+     * @param string $galleryImageId
+     * @param int $skImageId
+     * @return void
+     */
+    private function setStorekeeperImageId(string $galleryImageId, int $skImageId): void
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $tableName = $this->resourceConnection->getTableName(
+            \Magento\Catalog\Model\ResourceModel\Product\Gallery::GALLERY_TABLE
+        );
+        $data = ['storekeeper_image_id' => $skImageId];
+        $where = ['value_id = ?' => $galleryImageId];
+        $connection->update($tableName, $data, $where);
     }
 }
