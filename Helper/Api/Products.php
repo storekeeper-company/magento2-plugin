@@ -1135,10 +1135,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     }
                     $target = $this->productRepository->get($target->getSku());
                     $galleryImage = $target->getMediaGalleryImages()->getLastItem();
-                    if ($galleryImage->getId()) {
-                        // Assign SK image id for newly created M2 gallery image
-                        $this->setStorekeeperImageId($galleryImage->getId(), $imageId);
-                    }
+                    // Assign SK image id for newly created M2 gallery image
+                    $this->setStorekeeperImageId($galleryImage->getId(), $imageId);
                 }
             }
         }
