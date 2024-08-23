@@ -76,6 +76,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     private OptionsFactory $optionsFactory;
     private ProductDescriptionHelper $productDescription;
     private ResourceConnection $resourceConnection;
+    private ProductExportManager $productExportManager;
     private array $_simpleProductIds = [];
 
     /**
@@ -142,7 +143,8 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         Configurable $configurable,
         OptionsFactory $optionsFactory,
         ProductDescriptionHelper $productDescription,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        ProductExportManager $productExportManager
     ) {
         $this->authHelper = $authHelper;
         $this->productFactory = $productFactory;
@@ -173,6 +175,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $this->optionsFactory = $optionsFactory;
         $this->productDescription = $productDescription;
         $this->resourceConnection = $resourceConnection;
+        $this->productExportManager = $productExportManager;
     }
 
     /**
@@ -1107,7 +1110,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                  * Look for storekeeper image id of current gallery image in array of images from SK backoffice
                  * if current product does not match id or id is missing - remove gallery image
                  */
-                if (!in_array($skImageId, $skImageIds)) {
+                if (
+                    !in_array($skImageId, $skImageIds)
+                    && $this->productExportManager->isImageFormatAllowed($mediaGalleryImage->getPath())
+                ) {
                     unset($galleryImages[$entryId]);
                     $target->setMediaGalleryEntries($galleryImages);
 
