@@ -1114,14 +1114,15 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     !in_array($skImageId, $skImageIds)
                     && $this->productExportManager->isImageFormatAllowed($mediaGalleryImage->getPath())
                 ) {
-                    unset($galleryImages[$entryId]);
-                    $target->setMediaGalleryEntries($galleryImages);
-
                     $shouldUpdate = true;
                 } else {
                     $existingImagesArray[$skImageId] = $image;
                 }
             }
+        }
+
+        if ($shouldUpdate) {
+            $target->setMediaGalleryEntries($existingImagesArray);
         }
 
         if (isset($flat_product['product_images'])) {
@@ -1136,15 +1137,27 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     }
                     $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, $mainImage);
                     if ($shouldUpdate) {
-                        // Product repo save to trigger gallery images collection to built properly
+                        /**
+                         * Save product via repository fo any given image
+                         * Otherwise new gallery item will not be available
+                         */
                         $this->productRepository->save($target);
+                        $shouldUpdate = false;
                     }
                     $target = $this->productRepository->get($target->getSku());
+                    /**
+                     * Load product item with latest id
+                     * because framework does not allow to receive gallery item via addImageToMediaGallery() call
+                     */
                     $galleryImage = $target->getMediaGalleryImages()->getLastItem();
                     // Assign SK image id for newly created M2 gallery image
                     $this->setStorekeeperImageId($galleryImage->getId(), $imageId);
                 }
             }
+        }
+
+        if ($shouldUpdate) {
+            $this->productRepository->save($target);
         }
 
         return $target;
