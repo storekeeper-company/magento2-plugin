@@ -57,6 +57,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Catalog\Model\ResourceModel\Product\Gallery">
+        <plugin name="afterCreateBatchBaseSelect" type="StoreKeeper\StoreKeeper\Plugin\Product\Gallery" sortOrder="10" disabled="false"/>
+    </type>
 
     <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
