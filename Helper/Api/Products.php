@@ -1149,6 +1149,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     /**
                      * Load product item with latest id
                      * because framework does not allow to receive gallery item via addImageToMediaGallery() call
+                     * there is nothing to match against, the file path is changed when saving
                      */
                     $galleryImage = $target->getMediaGalleryImages()->getLastItem();
                     // Assign SK image id for newly created M2 gallery image
