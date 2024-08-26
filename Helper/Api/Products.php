@@ -1135,11 +1135,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                     if (isset($flat_product['main_image']) && $flat_product['main_image']['id'] == $imageId) {
                         $mainImage = true;
                     }
-                    $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, $mainImage);
+                    $shouldUpdate = $this->setGalleryImage($product_image['big_url'], $target, $mainImage)
+                        || $shouldUpdate;
                     if ($shouldUpdate) {
                         /**
                          * Save product via repository fo any given image
-                         * Otherwise new gallery item will not be available
+                         * Otherwise new gallery item will not be available, we only get the id after saving to storage
                          */
                         $this->productRepository->save($target);
                         $shouldUpdate = false;
