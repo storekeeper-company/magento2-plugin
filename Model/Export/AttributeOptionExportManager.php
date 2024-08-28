@@ -75,7 +75,7 @@ class AttributeOptionExportManager extends AbstractExportManager
                     'yes', //'path://is_main_lang'
                     $attribute->getDefaultValue() == $attributeOptionId ? 'yes' : 'no', //path://is_default'
                     $this->getSwatchImage($attributeOptionId), //'path://image_url'
-                    $attribute->getAttributeCode(), //'path://attribute.name'
+                    $this->formatAlias($attribute->getAttributeCode()), //'path://attribute.name'
                     $attribute->getFrontendLabel() //'path://attribute.label'
                 ];
                 $result[] = array_combine(self::HEADERS_PATHS, $data);
