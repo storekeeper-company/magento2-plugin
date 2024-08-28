@@ -491,7 +491,7 @@ class ProductExportManager extends AbstractExportManager
         $productType = $this->getProductType($product);
         $attributeSetName = $this->attributeSetFactory->create()->load($product->getAttributeSetId())->getAttributeSetName();
         $isActive = $this->isActive($product, $productType);
-        $isSalable = $product->isSalable() ? 'yes' : 'no';
+        $isSalable = $this->isSalable($product, $productType);
 
         return [
             'product_type' => $productType,
@@ -880,5 +880,26 @@ class ProductExportManager extends AbstractExportManager
         }
 
         return $isActive  ? 'yes' : 'no';
+    }
+
+    /**
+     * @param ProductInterface $product
+     * @param string $productType
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function isSalable(ProductInterface $product, string $productType): string
+    {
+        $isSalable = $product->isSalable() == 1;
+        if ($isSalable && $productType == 'configurable_assign') {
+            $parentIds = $this->configurableResource->getParentIdsByChild($product->getId());
+            if (count($parentIds) > 0) {
+                $parentId = reset($parentIds);
+                $parentProduct = $this->productRepository->getById($parentId);
+                $isSalable = $parentProduct->isSalable() == 1;
+            }
+        }
+
+        return $isSalable  ? 'yes' : 'no';
     }
 }
