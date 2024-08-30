@@ -499,7 +499,8 @@ class Orders extends AbstractHelper
     public function getOrderByStoreKeeperId(string $storeKeeperId): ?Order
     {
         $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('storekeeper_id', $storeKeeperId, 'eq')->create();
+            ->addFilter('storekeeper_id', $storeKeeperId, 'eq')
+            ->addFilter('order_detached', false)->create();
 
         return current($this->orderRepository->getList($searchCriteria)->getItems());
     }
