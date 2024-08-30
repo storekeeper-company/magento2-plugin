@@ -33,7 +33,9 @@ class DisableStockReservations
     public function aroundExecute(
         PlaceReservationsForSalesEventInterface $subject,
         callable $proceed,
-        array $reservations
+        array $items,
+        \Magento\InventorySalesApi\Api\Data\SalesChannelInterface $salesChannel,
+        \Magento\InventorySalesApi\Api\Data\SalesEventInterface $salesEvent
     ) {
         $storeId = $this->authHelper->getStoreId();
         if (
@@ -42,7 +44,7 @@ class DisableStockReservations
         ) {
             return;
         } else {
-            return $proceed($reservations);
+            return $proceed($items, $salesChannel, $salesEvent);
         }
     }
 }
