@@ -14,6 +14,7 @@ use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Api\AttributeSetRepositoryInterface;
 use Magento\Eav\Api\AttributeGroupRepositoryInterface;
 use Magento\Eav\Api\Data\AttributeSetInterface;
+use Magento\Eav\Model\Entity\Attribute\Source\Boolean;
 use Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory as AttributeSetFactory;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory as OptionCollectionFactory;
@@ -206,7 +207,10 @@ class Attributes extends AbstractHelper
                  */
 
                 if ($target->getTypeId() != 'configurable') {
-                    if ($this->attributeIsVisualColorSwatch($attribute) || $this->attributeIsSelect($attribute)) {
+                    if (
+                        ($this->attributeIsVisualColorSwatch($attribute) || $this->attributeIsSelect($attribute))
+                        && !$this->isBoolean($attributeEntity->getSourceModel())
+                    ) {
                         //In case product attribute is Swatch or Select with options - handle options first
                         //then - add/update existing value
                         if ($attributeEntity->usesSource()) {
@@ -247,7 +251,9 @@ class Attributes extends AbstractHelper
                                 }
                             }
                         }
-                    } else if ($this->attributeIsText($attribute)) {
+                    } else if (
+                        $this->attributeIsText($attribute) || $this->isBoolean($attributeEntity->getSourceModel())
+                    ) {
                         //In case product attribute is String/Text - add/update existing value
                         if ($target->getData($attributeCode) != $attributeValue) {
                             $target->setData($attributeCode, $attributeValue);
@@ -564,5 +570,14 @@ class Attributes extends AbstractHelper
             return isset($subArray[$field]) && $subArray[$field] == $value;
         }));
         return reset($array);
+    }
+
+    /**
+     * @param string $sourceModel
+     * @return bool
+     */
+    private function isBoolean(string $sourceModel): bool
+    {
+        return ($sourceModel == Boolean::class) ? true : false;
     }
 }
