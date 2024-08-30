@@ -3,6 +3,8 @@ namespace StoreKeeper\StoreKeeper\Plugin\Magento\InventorySalesApi\Api;
 
 use Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface;
 use Magento\InventorySalesApi\Api\Data\ReservationInterface;
+use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
+use Magento\InventorySalesApi\Api\Data\SalesEventInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Config;
 
@@ -34,8 +36,8 @@ class DisableStockReservations
         PlaceReservationsForSalesEventInterface $subject,
         callable $proceed,
         array $items,
-        \Magento\InventorySalesApi\Api\Data\SalesChannelInterface $salesChannel,
-        \Magento\InventorySalesApi\Api\Data\SalesEventInterface $salesEvent
+        SalesChannelInterface $salesChannel,
+        SalesEventInterface $salesEvent
     ) {
         $storeId = $this->authHelper->getStoreId();
         if (
