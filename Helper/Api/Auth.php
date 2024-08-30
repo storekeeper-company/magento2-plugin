@@ -201,6 +201,18 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->storeManager->getStore()->getBaseUrl();
     }
 
+
+    /**
+     * Get Store Id
+     *
+     * @return string
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getStoreId(): string
+    {
+        return $this->storeManager->getStore()->getId();
+    }
+
     /**
      * Get ShopName config value
      *
