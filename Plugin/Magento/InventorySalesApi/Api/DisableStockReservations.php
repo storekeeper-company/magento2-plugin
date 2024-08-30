@@ -41,6 +41,8 @@ class DisableStockReservations
             && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)
         ) {
             return;
+        } else {
+            return $proceed($reservations);
         }
     }
 }
