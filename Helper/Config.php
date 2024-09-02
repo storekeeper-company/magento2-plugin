@@ -111,4 +111,9 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfigValue('tax/defaults/country', ScopeInterface::SCOPE_STORE);
     }
+
+    public function isProductImagesSyncActive($storeId)
+    {
+        return $this->getScopeConfigValue('storekeeper_import/import_data/sync_product_images', ScopeInterface::SCOPE_STORE, $storeId);
+    }
 }

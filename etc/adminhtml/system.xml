@@ -118,7 +118,7 @@
                 </field>
             </group>
         </section>
-        <section id="storekeeper_payment_methods" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+        <section id="storekeeper_payment_methods" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Payment Methods</label>
             <tab>storekeeper</tab>
             <resource>StoreKeeper_StoreKeeper::configuration</resource>
@@ -130,7 +130,7 @@
             </group>
             <include path="StoreKeeper_StoreKeeper::paymentmethods.xml" />
         </section>
-        <section id="storekeeper_export" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+        <section id="storekeeper_export" translate="label" type="text" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Export</label>
             <tab>storekeeper</tab>
             <resource>StoreKeeper_StoreKeeper::configuration</resource>
@@ -151,6 +151,17 @@
                 <field id="season" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Season</label>
                     <source_model>StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes</source_model>
+                </field>
+            </group>
+        </section>
+        <section id="storekeeper_import" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Import</label>
+            <tab>storekeeper</tab>
+            <resource>StoreKeeper_StoreKeeper::configuration</resource>
+            <group id="import_data" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="sync_product_images" type="select" sortOrder="10" showInWebsite="1" showInStore="1" showInDefault="1" translate="label">
+                    <label>Sync Product Images</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
         </section>

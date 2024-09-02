@@ -237,5 +237,10 @@
                 </admin>
             </mode>
         </csp>
+        <storekeeper_import>
+            <import_data>
+                <sync_product_images>0</sync_product_images>
+            </import_data>
+        </storekeeper_import>
     </default>
 </config>
