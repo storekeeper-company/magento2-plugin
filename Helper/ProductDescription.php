@@ -7,6 +7,7 @@ class ProductDescription
     const DISALLOWED_CONTENT = [
         '/<style\b[^>]*>([\s\S]*?)<\/style>/i',
         '/<figure\s+data-content-type="image"[^>]*>[\s\S]*?<\/figure>/i',
+        '/<img\s+src="\{\{media\s+url=[^"]+\}\}"[^>]*\/?>/',
         '/{{widget[^}]*}}/i'
     ];
 
