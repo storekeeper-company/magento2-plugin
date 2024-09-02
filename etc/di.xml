@@ -60,6 +60,9 @@
     <type name="Magento\Catalog\Model\ResourceModel\Product\Gallery">
         <plugin name="afterCreateBatchBaseSelect" type="StoreKeeper\StoreKeeper\Plugin\Product\Gallery" sortOrder="10" disabled="false"/>
     </type>
+    <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
+        <plugin name="storekeeperm2plugin_disable_stock_reservations_plugin" type="StoreKeeper\StoreKeeper\Plugin\Magento\InventorySalesApi\Api\DisableStockReservations" />
+    </type>
 
     <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
         <arguments>
