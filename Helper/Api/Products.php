@@ -1032,7 +1032,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $target->setWebsiteIds($websiteIds);
         }
 
-        $target = $this->processImages($flat_product, $target, $shouldUpdate);
+
+        if ($this->configHelper->isProductImagesSyncActive($storeId)) {
+            $target = $this->processImages($flat_product, $target, $shouldUpdate);
+        }
 
         if ($this->updateProductLinks($storeId, $target, 'getUpsellShopProductIds', 'upsell')) {
             $shouldUpdate = true;
