@@ -425,9 +425,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     )
     {
         $storekeeperProductId = $target->getStorekeeperProductId();
-        if (empty($storeKeeperProductId)) {
-            $storekeeperProductId = $target->getData('storekeeper_product_id');
-        }
 
         if (empty($storekeeperProductId)) {
             throw new \Exception("Missing 'storekeeper_product_id' for {$target->getSku()}");
@@ -848,31 +845,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Set product to use Default Values
-     *
-     * @param $target
-     * @param $storeId
-     * @return void
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
-     */
-    private function setProductToUseDefaultValues($target, $storeId)
-    {
-        $target->setStoreId($storeId);
-        $productData = $target->getData();
-        $productData['name'] = null;
-        $productData['description'] = false;
-        $productData['short_description'] = false;
-        $productData['meta_title'] = false;
-        $productData['meta_description'] = false;
-        $productData['url_key'] = false;
-
-        $target->setData($productData);
-        $this->productRepository->save($target);
-    }
-
-    /**
      * @return void
      */
     public function cleanProductStorekeeperId(string $storeId): void
@@ -1037,14 +1009,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $target = $this->processImages($flat_product, $target, $shouldUpdate);
         }
 
-        if ($this->updateProductLinks($storeId, $target, 'getUpsellShopProductIds', 'upsell')) {
-            $shouldUpdate = true;
-        }
-
-        if ($this->updateProductLinks($storeId, $target,'getCrossSellShopProductIds', 'crosssell')) {
-            $shouldUpdate = true;
-        }
-
         /**
          * Load/create attribute set in Magento basned on SK attributes et name
          * If it differs from currentl product attribute set - assign it
@@ -1059,16 +1023,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             }
         } else {
             $attributeSetId = $target->getAttributeSetId();
-        }
-
-        if ($shouldUpdate) {
-            $this->productRepository->save($target);
-
-            if ($update) {
-                if ($language == ' ') {
-                    $this->setProductToUseDefaultValues($target, $storeId);
-                }
-            }
         }
 
         /**
@@ -1104,28 +1058,32 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $galleryImages = $target->getMediaGalleryEntries();
         $existingImagesArray = [];
-        foreach ($galleryImages as $entryId => $image) {
-            $mediaGalleryImage = $target->getMediaGalleryImages()->getItemById($image->getId());
-            if ($mediaGalleryImage) {
-                $skImageId = $mediaGalleryImage->getStorekeeperImageId();
-                $skImageIds = array_column($flat_product['product_images'], 'id');
-                /**
-                 * Look for storekeeper image id of current gallery image in array of images from SK backoffice
-                 * if current product does not match id or id is missing - remove gallery image
-                 */
-                if (
-                    !in_array($skImageId, $skImageIds)
-                    && $this->productExportManager->isImageFormatAllowed($mediaGalleryImage->getPath())
-                ) {
-                    $shouldUpdate = true;
-                } else {
-                    $existingImagesArray[$skImageId] = $image;
+        if (array_key_exists('product_images', $flat_product)) {
+            foreach ($galleryImages as $entryId => $image) {
+                $mediaGalleryImage = $target->getMediaGalleryImages()->getItemById($image->getId());
+                if ($mediaGalleryImage) {
+                    $skImageId = $mediaGalleryImage->getStorekeeperImageId();
+                    $skImageIds = array_column($flat_product['product_images'], 'id');
+                    /**
+                     * Look for storekeeper image id of current gallery image in array of images from SK backoffice
+                     * if current product does not match id or id is missing - remove gallery image
+                     */
+                    if (
+                        !in_array($skImageId, $skImageIds)
+                        && $this->productExportManager->isImageFormatAllowed($mediaGalleryImage->getPath())
+                    ) {
+                        $shouldUpdate = true;
+                    } else {
+                        $existingImagesArray[$skImageId] = $image;
+                    }
                 }
             }
-        }
 
-        if ($shouldUpdate) {
-            $target->setMediaGalleryEntries($existingImagesArray);
+            if ($shouldUpdate) {
+                $target->setMediaGalleryEntries($existingImagesArray);
+            }
+        } else {
+            $shouldUpdate = false;
         }
 
         if (isset($flat_product['product_images'])) {
