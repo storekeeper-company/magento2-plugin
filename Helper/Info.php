@@ -87,7 +87,8 @@ class Info
         $composerJson = $this->json->unserialize($composerFile);
         $capabilities = [
             'b2s_payment_method', // has the capability to use the payment method from backoffice
-            's2b_report_system_status' // display failed order and other(?) report stats on dashboard
+            's2b_report_system_status', // display failed order and other(?) report stats on dashboard
+            's2b_report_product_state' // send magento product status sync, store url and admin url links
         ];
 
         $sync_mode = null;
