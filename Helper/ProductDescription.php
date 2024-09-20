@@ -29,14 +29,16 @@ class ProductDescription
     }
 
     /**
-     * @param string $description
+     * @param string|null $description
      * @return bool
      */
-    public function isDisallowedContentExist(string $description): bool
+    public function isDisallowedContentExist(?string $description): bool
     {
-        foreach (self::DISALLOWED_CONTENT as $pattern) {
-            if (preg_match($pattern, $description)) {
-                return true;
+        if ($description !== null) {
+            foreach (self::DISALLOWED_CONTENT as $pattern) {
+                if (preg_match($pattern, $description)) {
+                    return true;
+                }
             }
         }
 

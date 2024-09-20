@@ -1025,6 +1025,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $attributeSetId = $target->getAttributeSetId();
         }
 
+        if ($this->configHelper->isProductImagesSyncActive($storeId)) {
+            $target = $this->processImages($flat_product, $target, $shouldUpdate);
+        }
+
         /**
          * Process custom attributes AFTER product save, in case of changed attribute set
          */
@@ -1058,27 +1062,29 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $galleryImages = $target->getMediaGalleryEntries();
         $existingImagesArray = [];
-        foreach ($galleryImages as $entryId => $image) {
-            $mediaGalleryImage = $target->getMediaGalleryImages()->getItemById($image->getId());
-            if ($mediaGalleryImage) {
-                $skImageId = $mediaGalleryImage->getStorekeeperImageId();
-                if (array_key_exists('product_images', $flat_product)) {
-                    $skImageIds = array_column($flat_product['product_images'], 'id');
-                } else {
-                    $skImageIds = [];
-                }
+        if ($galleryImages !== null) {
+            foreach ($galleryImages as $entryId => $image) {
+                $mediaGalleryImage = $target->getMediaGalleryImages()->getItemById($image->getId());
+                if ($mediaGalleryImage) {
+                    $skImageId = $mediaGalleryImage->getStorekeeperImageId();
+                    if (array_key_exists('product_images', $flat_product)) {
+                        $skImageIds = array_column($flat_product['product_images'], 'id');
+                    } else {
+                        $skImageIds = [];
+                    }
 
-                /**
-                 * Look for storekeeper image id of current gallery image in array of images from SK backoffice
-                 * if current product does not match id or id is missing - remove gallery image
-                 */
-                if (
-                    !in_array($skImageId, $skImageIds)
-                    && $this->productExportManager->isImageFormatAllowed($mediaGalleryImage->getPath())
-                ) {
-                    $shouldUpdate = true;
-                } else {
-                    $existingImagesArray[$skImageId] = $image;
+                    /**
+                     * Look for storekeeper image id of current gallery image in array of images from SK backoffice
+                     * if current product does not match id or id is missing - remove gallery image
+                     */
+                    if (
+                        !in_array($skImageId, $skImageIds)
+                        && $this->productExportManager->isImageFormatAllowed($mediaGalleryImage->getPath())
+                    ) {
+                        $shouldUpdate = true;
+                    } else {
+                        $existingImagesArray[$skImageId] = $image;
+                    }
                 }
             }
         }
