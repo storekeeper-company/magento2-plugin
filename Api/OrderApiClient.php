@@ -217,4 +217,33 @@ class OrderApiClient extends ApiClient
     {
         $this->getShopModule($storeId)->markOrderShipmentAsDeliveredForHook($shipmentId);
     }
+
+    /**
+     * Get list translated category for hooks
+     *
+     * @param $storeId
+     * @param $language
+     * @param int $offset
+     * @param int $limit
+     * @param array $order
+     * @param array $filters
+     * @return mixed
+     * @throws \Exception
+     */
+    public function listTranslatedCategoryForHooks(
+        $storeId,
+        $language,
+        int $offset,
+        int $limit,
+        array $order,
+        array $filters
+    ) {
+        return $this->getShopModule($storeId)->listTranslatedCategoryForHooks(
+            $language,
+            $offset,
+            $limit,
+            $order,
+            $filters
+        );
+    }
 }

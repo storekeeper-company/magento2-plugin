@@ -6,12 +6,12 @@ use Magento\Catalog\Model\CategoryFactory;
 use Magento\Catalog\Model\CategoryRepository;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use Parsedown;
+use StoreKeeper\StoreKeeper\Api\OrderApiClient;
+use StoreKeeper\StoreKeeper\Helper\ProductDescription as DescriptionHelper;
 
-/**
- * @depracated
- */
 class Categories extends AbstractHelper
 {
     private Auth $authHelper;
@@ -19,6 +19,8 @@ class Categories extends AbstractHelper
     private CategoryRepository $categoryRepository;
     private CollectionFactory $categoryCollectionFactory;
     private StoreManagerInterface $storeManager;
+    private OrderApiClient $orderApiClient;
+    private DescriptionHelper $descriptionHelper;
 
     /**
      * Constructor
@@ -28,19 +30,24 @@ class Categories extends AbstractHelper
      * @param CategoryRepository $categoryRepository
      * @param CollectionFactory $categoryCollectionFactory
      * @param StoreManagerInterface $storeManager
+     * @param DescriptionHelper $descriptionHelper
      */
     public function __construct(
         Auth $authHelper,
         CategoryFactory $categoryFactory,
         CategoryRepository $categoryRepository,
         CollectionFactory $categoryCollectionFactory,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        OrderApiClient $orderApiClient,
+        DescriptionHelper $descriptionHelper
     ) {
         $this->authHelper = $authHelper;
         $this->categoryFactory = $categoryFactory;
         $this->categoryRepository = $categoryRepository;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->storeManager = $storeManager;
+        $this->orderApiClient = $orderApiClient;
+        $this->descriptionHelper = $descriptionHelper;
     }
 
     /**
@@ -55,35 +62,6 @@ class Categories extends AbstractHelper
     }
 
     /**
-     * Get list translated category for hooks
-     *
-     * @param $storeId
-     * @param $language
-     * @param int $offset
-     * @param int $limit
-     * @param array $order
-     * @param array $filters
-     * @return mixed
-     * @throws \Exception
-     */
-    public function listTranslatedCategoryForHooks(
-        $storeId,
-        $language,
-        int $offset,
-        int $limit,
-        array $order,
-        array $filters
-    ) {
-        return $this->authHelper->getModule('ShopModule', $storeId)->listTranslatedCategoryForHooks(
-            $language,
-            $offset,
-            $limit,
-            $order,
-            $filters
-        );
-    }
-
-    /**
      * Update Category by Id
      *
      * @param $storeId
@@ -95,7 +73,8 @@ class Categories extends AbstractHelper
     {
         $language = $this->authHelper->getLanguageForStore($storeId);
 
-        $results = $this->authHelper->getModule('ShopModule', $storeId)->listTranslatedCategoryForHooks(
+        $results = $this->orderApiClient->listTranslatedCategoryForHooks(
+            $storeId,
             $language,
             0,
             1,
@@ -137,13 +116,25 @@ class Categories extends AbstractHelper
     {
         $storekeeper_id = $this->getResultStoreKeeperId($result);
         $collection = $this->categoryCollectionFactory->create();
-        $collection
-            ->addAttributeToSelect('*')
+        $collection->addAttributeToSelect('*')
             ->addAttributeToFilter('storekeeper_category_id', $storekeeper_id)
             ->setFlag('has_stock_status_filter', false);
 
         if ($collection->count() > 0) {
             return $collection->getFirstItem();
+        }
+
+        $storekeeperSlug = $this->getCategorySlug($result);
+
+        if (!is_null($storekeeperSlug)) {
+            $collection = $this->categoryCollectionFactory->create();
+            $collection->addAttributeToSelect('*')
+                ->addAttributeToFilter('url_key', $storekeeperSlug)
+                ->setFlag('has_stock_status_filter', false);
+
+            if ($collection->count() > 0) {
+                return $collection->getFirstItem();
+            }
         }
 
         return false;
@@ -210,29 +201,6 @@ class Categories extends AbstractHelper
     }
 
     /**
-     * On created
-     *
-     * @param $storeId
-     * @param $targetId
-     * @return void
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function onCreated($storeId, $targetId)
-    {
-        if ($target = $this->exists($storeId, [
-            'id' => $targetId
-        ])) {
-            $this->storeManager->setCurrentStore($storeId);
-            $target->setStoreId($storeId);
-            $target->setIsActive(true);
-            $this->categoryRepository->save($target);
-        } else {
-            $this->updateById($storeId, $targetId);
-        }
-    }
-
-    /**
      * Update category
      *
      * @param $storeId
@@ -244,20 +212,20 @@ class Categories extends AbstractHelper
      */
     public function update($storeId, $target = null, array $result = [])
     {
+        $this->storeManager->setCurrentStore($storeId);
         $language = $this->authHelper->getLanguageForStore($storeId);
         $shouldUpdate = false;
         $storekeeper_id = $this->getResultStoreKeeperId($result);
         $update = !is_null($target);
         $create = !$update;
         if ($update) {
-            $target = $this->categoryFactory->create()->load($target->getId());
+            $target = $this->categoryRepository->get($target->getId(), $storeId);
         } else {
             $shouldUpdate = true;
             $target = $this->categoryFactory->create();
         }
 
         $title = $result['title'] ?? null;
-        $slug = $result['slug'] ?? null;
         $description = '';
 
         if (isset($result['description'])) {
@@ -273,9 +241,6 @@ class Categories extends AbstractHelper
             }
         }
 
-        $target->setStoreId($storeId);
-        $this->storeManager->setCurrentStore($storeId);
-
         if ($target->getName() != $title) {
             $shouldUpdate = true;
             $target->setName($title);
@@ -284,30 +249,12 @@ class Categories extends AbstractHelper
         $parseDown = new Parsedown();
         $newDescription = $parseDown->text($description);
 
-        $newDescription = <<<HTML
-<style>
-  #html-body [data-pb-style=H1A4J0C] {
-    justify-content:flex-start;
-    display:flex;
-    flex-direction:column;
-    background-position:left top;
-    background-size:cover;
-    background-repeat:no-repeat;
-    background-attachment:scroll
-  }
-</style>
-<div data-content-type="row" data-appearance="contained" data-element="main">
-  <div data-enable-parallax="0" data-parallax-speed="0.5" data-background-images="{}" data-background-type="image" data-video-loop="true" data-video-play-only-visible="true" data-video-lazy-load="true" data-video-fallback-src="" data-element="inner" data-pb-style="H1A4J0C">
-    <div data-content-type="text" data-appearance="default" data-element="main">
-      $newDescription
-    </div>
-  </div>
-</div>
-HTML;
-
-        if ($target->getDescription() != $newDescription) {
+        if (
+            $target->getDescription() != $newDescription
+            && !$this->descriptionHelper->isDisallowedContentExist($target->getDescription())
+        ) {
             $shouldUpdate = true;
-            $target->setDescription($newDescription);
+            $target->setCustomAttribute('description', $newDescription);
         }
 
         $published = $result['published'] ?? false;
@@ -346,19 +293,19 @@ HTML;
         $seo_title = $result['seo_title'] ?? null;
         if ($target->getMetaTitle() != $seo_title) {
             $shouldUpdate = true;
-            $target->setMetaTitle($seo_title);
+            $target->setCustomAttribute('meta_title', $seo_title);
         }
 
         $seo_description = $result['seo_description'] ?? null;
         if ($target->getMetaDescription() != $seo_description) {
             $shouldUpdate = true;
-            $target->setMetaDescription($seo_description);
+            $target->setCustomAttribute('meta_description', $seo_description);
         }
 
         $seo_keywords = $result['seo_keywords'] ?? null;
         if ($target->getMetaKeywords() != $seo_keywords) {
             $shouldUpdate = true;
-            $target->setMetaKeyswords($seo_keywords);
+            $target->setCustomAttribute('meta_keywords', $seo_keywords);
         }
 
         if ($shouldUpdate) {
@@ -378,10 +325,6 @@ HTML;
                     $target->move($parent->getId(), null);
                     $target = $this->categoryRepository->save($target);
                 }
-            }
-
-            if ($update && $language == ' ') {
-                $this->setCategoryToUseDefaultValues($target, $storeId);
             }
         }
     }
@@ -409,23 +352,11 @@ HTML;
     }
 
     /**
-     * Set category to use Default Values
-     *
-     * @param $target
-     * @param $storeId
-     * @return void
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @param array $result
+     * @return string|null
      */
-    private function setCategoryToUseDefaultValues($target, $storeId)
+    private function getCategorySlug(array $result): ?string
     {
-        $this->storeManager->setCurrentStore(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
-        $target->setStoreId($storeId);
-        $productData = $target->getData();
-        $productData['name'] = null;
-        $productData['description'] = false;
-
-        $target->setData($productData);
-        $target->save();
-        $this->categoryRepository->save($target);
+        return (array_key_exists('slug', $result)) ? $result['slug'] : null;
     }
 }
