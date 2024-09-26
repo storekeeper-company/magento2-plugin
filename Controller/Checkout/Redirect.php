@@ -131,8 +131,7 @@ class Redirect extends Action
                 'Error while processing payment info during order sync',
                 [
                     'error' =>  $this->logger->buildReportData($e),
-                    'payload' =>  $payload,
-                    'storeId' =>  $storeId
+                    'payload' =>  $payload
                 ]
             );
 
