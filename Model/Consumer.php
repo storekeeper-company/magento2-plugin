@@ -81,15 +81,11 @@ class Consumer
             } elseif ($type == "deactivated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->onDeactivate($storeId, $value);
-                } elseif ($entity == 'Category') {
-                    $this->categoriesHelper->onDeactivate($storeId, $value);
                 }
             } elseif ($type == "activated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->activate($storeId, $value);
                     $this->productsHelper->updateStock($storeId, $value);
-                } elseif ($entity == 'Category') {
-                    $this->categoriesHelper->activate($storeId, $value);
                 }
             } elseif ($type == "deleted") {
                 if ($entity == 'Category') {
@@ -97,7 +93,7 @@ class Consumer
                 }
             } elseif ($type == "created") {
                 if ($entity == 'Category') {
-                    $this->categoriesHelper->onCreated($storeId, $value);
+                    $this->categoriesHelper->updateById($storeId, $value);
                 } elseif ($entity == "ShopProduct") {
                     $this->productsHelper->updateById($storeId, $value);
                 }
