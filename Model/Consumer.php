@@ -85,6 +85,7 @@ class Consumer
             } elseif ($type == "activated") {
                 if ($entity == "ShopProduct") {
                     $this->productsHelper->activate($storeId, $value);
+                    $this->productsHelper->updateStock($storeId, $value);
                 }
             } elseif ($type == "deleted") {
                 if ($entity == 'Category') {

@@ -30,6 +30,7 @@ use Magento\Eav\Model\Entity\Attribute\OptionFactory;
 use Magento\Eav\Api\Data\AttributeOptionLabelInterface;
 use Magento\Eav\Api\AttributeOptionManagementInterface;
 use StoreKeeper\StoreKeeper\Api\AttributeApiClient;
+use StoreKeeper\StoreKeeper\Api\ProductApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Model\Config\Source\Product\Attributes as AttributeOptions;
 
@@ -56,6 +57,7 @@ class Attributes extends AbstractHelper
     private AttributeManagementInterface $attributeManagement;
     private ProductRepositoryInterface $productRepository;
     private Config $configHelper;
+    private ProductApiClient $productApiClient;
 
     /**
      * Constructor
@@ -78,6 +80,7 @@ class Attributes extends AbstractHelper
      * @param AttributeManagementInterface $attributeManagement
      * @param ProductRepositoryInterface $productRepository
      * @param Config $configHelper
+     * @param ProductApiClient $productApiClient
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -97,7 +100,8 @@ class Attributes extends AbstractHelper
         AttributeSetFactory $attributeSetFactory,
         AttributeManagementInterface $attributeManagement,
         ProductRepositoryInterface $productRepository,
-        Config $configHelper
+        Config $configHelper,
+        ProductApiClient $productApiClient
     ) {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -117,6 +121,7 @@ class Attributes extends AbstractHelper
         $this->attributeManagement = $attributeManagement;
         $this->productRepository = $productRepository;
         $this->configHelper = $configHelper;
+        $this->productApiClient = $productApiClient;
     }
 
     /**
@@ -143,6 +148,10 @@ class Attributes extends AbstractHelper
         $attributeIds = array_column($flat_product['content_vars'], 'attribute_id');
         $attributesArray = $this->attributeApiClient->getAttributesByIds($storeId, $attributeIds);
         foreach ($flat_product['content_vars'] as $attribute) {
+            if (array_key_exists('attribute_published', $attribute) && $attribute['attribute_published'] === false)
+            {
+                continue;
+            }
             if (array_key_exists('attribute_id', $attribute)
                 && array_key_exists('name', $attribute)
                 && array_key_exists('label', $attribute)
@@ -214,6 +223,12 @@ class Attributes extends AbstractHelper
                         //In case product attribute is Swatch or Select with options - handle options first
                         //then - add/update existing value
                         if ($attributeEntity->usesSource()) {
+                            if (
+                                (!array_key_exists('value', $attribute) || $attribute['value'] == '0.00')
+                                && !array_key_exists('value_label', $attribute)
+                            ) {
+                                continue;
+                            }
                             $option_id = $attributeEntity->getSource()->getOptionId($attribute['value_label']);
                             //If option id exist - compare it to existing product attribute value
                             if ($option_id) {
@@ -270,9 +285,22 @@ class Attributes extends AbstractHelper
          * Save modified attributes
          */
         if (!empty($attributesToSave)) {
-            $this->productRepository->save($target);
+            try {
+                $this->productRepository->save($target);
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
+                $exceptionData = [
+                    'last_error_message' => $e->getMessage(),
+                    'last_error_details' => $e->getTraceAsString()
+                ];
+                $this->productApiClient->setShopProductObjectSyncStatusForHook(
+                    $storeId,
+                    (string)$flat_product['product_id'],
+                    $target,
+                    ProductApiClient::PRODUCT_UPDATE_STATUS_ERROR,
+                    $exceptionData
+                );
+            }
         }
-
 
         return $target;
     }
@@ -407,14 +435,17 @@ class Attributes extends AbstractHelper
     }
 
     /**
-     * Check if SK attribute is Text ('String' type for SK naming convention)
+     * Check if SK attribute is Text ('String' of float type for SK naming convention)
      *
      * @param array $attributeArray
      * @return bool
      */
     private function attributeIsText(array $attributeArray): bool
     {
-        if ($attributeArray['type'] == 'string' && $attributeArray['is_options'] == false) {
+        if (
+            ($attributeArray['type'] == 'string' || $attributeArray['type'] == 'float(precision=2)')
+            && $attributeArray['is_options'] == false
+        ) {
             return true;
         } else {
             return false;
