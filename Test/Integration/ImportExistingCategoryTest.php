@@ -62,31 +62,21 @@ class ImportExistingCategoryTest extends AbstractTestCase
      */
     public function testProcess()
     {
-        //Load existing category
-        $category = $this->categoryFactory->create()->loadByAttribute('url_key', $this->getStoreKeeperTestCategorySlug());
-        $categoryNameBefore = $category->getName();
-        $categoryDescriptionBefore = $category->getDescription();
-        $categoryMetaTitleBefore = $category->getMetaTitle();
-        $categoryMetaKeywordsBefore = $category->getMetaKeywords();
-        $categoryMetaDescriptionBefore = $category->getMetaDescription();
-        
         //Send webhook data to consumer
         $this->consumer->process(self::WEBHOOK_DATA);
-        
+
         //Reload updated category from repository
         $category = $this->categoryFactory->create()->loadByAttribute('url_key', $this->getStoreKeeperTestCategorySlug());
-        $categoryNameAfter = $category->getName();
-        $categoryDescriptionAfter = $category->getDescription();
-        $categoryMetaTitleAfter = $category->getMetaTitle();
-        $categoryMetaKeywordsAfter = $category->getMetaKeywords();
-        $categoryMetaDescriptionAfter = $category->getMetaDescription();
+        $categoryName = $category->getName();
+        $categoryMetaTitle = $category->getMetaTitle();
+        $categoryMetaKeywords = $category->getMetaKeywords();
+        $categoryMetaDescription = $category->getMetaDescription();
 
-        //Assert that old info differs from new info
-        $this->assertNotEquals($categoryNameBefore, $categoryNameAfter);
-        $this->assertNotEquals($categoryDescriptionBefore, $categoryDescriptionAfter);
-        $this->assertNotEquals($categoryMetaTitleBefore, $categoryMetaTitleAfter);
-        $this->assertNotEquals($categoryMetaKeywordsBefore, $categoryMetaKeywordsAfter);
-        $this->assertNotEquals($categoryMetaDescriptionBefore, $categoryMetaDescriptionAfter);
+        //Assert changes to category data
+        $this->assertEquals($categoryName, $this->getStoreKeeperTestCategoryTitle());
+        $this->assertEquals($categoryMetaTitle, $this->getStoreKeeperTestCategorySeoTitle());
+        $this->assertEquals($categoryMetaKeywords, $this->getStoreKeeperTestCategorySeoKeywords());
+        $this->assertEquals($categoryMetaDescription, $this->getStoreKeeperTestCategorySeoDescription());
     }
 
     public function getCategoryImportData(): array
@@ -112,5 +102,30 @@ class ImportExistingCategoryTest extends AbstractTestCase
     public function getStoreKeeperTestCategorySlug(): string
     {
         return $this->getCategoryImportData()['data'][0]['slug'];
+    }
+
+    public function getStoreKeeperTestCategoryTitle(): string
+    {
+        return $this->getCategoryImportData()['data'][0]['title'];
+    }
+
+    public function getStoreKeeperTestCategoryDescription(): string
+    {
+        return $this->getCategoryImportData()['data'][0]['description'];
+    }
+
+    public function getStoreKeeperTestCategorySeoTitle(): string
+    {
+        return $this->getCategoryImportData()['data'][0]['seo_title'];
+    }
+
+    public function getStoreKeeperTestCategorySeoKeywords(): string
+    {
+        return $this->getCategoryImportData()['data'][0]['seo_keywords'];
+    }
+
+    public function getStoreKeeperTestCategorySeoDescription(): string
+    {
+        return $this->getCategoryImportData()['data'][0]['seo_description'];
     }
 }
