@@ -73,10 +73,10 @@ class ImportExistingCategoryTest extends AbstractTestCase
         $categoryMetaDescription = $category->getMetaDescription();
 
         //Assert changes to category data
-        $this->assertEquals($categoryName, $this->getStoreKeeperTestCategoryTitle());
-        $this->assertEquals($categoryMetaTitle, $this->getStoreKeeperTestCategorySeoTitle());
-        $this->assertEquals($categoryMetaKeywords, $this->getStoreKeeperTestCategorySeoKeywords());
-        $this->assertEquals($categoryMetaDescription, $this->getStoreKeeperTestCategorySeoDescription());
+        $this->assertEquals($this->getStoreKeeperTestCategoryTitle(), $categoryName);
+        $this->assertEquals($this->getStoreKeeperTestCategorySeoTitle(), $categoryMetaTitle);
+        $this->assertEquals($this->getStoreKeeperTestCategorySeoKeywords(), $categoryMetaKeywords);
+        $this->assertEquals($this->getStoreKeeperTestCategorySeoDescription(), $categoryMetaDescription);
     }
 
     public function getCategoryImportData(): array
