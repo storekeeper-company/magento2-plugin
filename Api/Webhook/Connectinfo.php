@@ -32,7 +32,7 @@ class Connectinfo implements InfoWebhookInterface
      */
     public function getExecute(): void
     {
-        $storeId = $this->request->getQuery('storeId');
+        $storeId = $this->authHelper->getStoreId($this->request->getQuery('storeId'));
         $token = $this->request->getQuery('token');
         $infoHookData = $this->authHelper->generateInfoHookData($storeId);
 

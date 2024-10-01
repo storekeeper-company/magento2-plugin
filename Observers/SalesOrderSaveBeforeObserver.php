@@ -10,6 +10,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Sales\Model\Order;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as ApiOrders;
+use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Model\OrderSync\Shipment;
 
 class SalesOrderSaveBeforeObserver implements ObserverInterface
@@ -20,6 +21,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
     private OrderRepositoryInterface $orderRepository;
     private ApiOrders $apiOrders;
     private Shipment $shipment;
+    private Logger $logger;
 
     /**
      * Constructor
@@ -29,6 +31,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
      * @param PublisherInterface $publisher
      * @param OrderRepositoryInterface $orderRepository
      * @param ApiOrders $apiOrders
+     * @param Shipment $shipment
+     * @param Logger $logger
      */
     public function __construct(
         Auth $authHelper,
@@ -36,7 +40,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
         PublisherInterface $publisher,
         OrderRepositoryInterface $orderRepository,
         ApiOrders $apiOrders,
-        Shipment $shipment
+        Shipment $shipment,
+        Logger $logger
     ) {
         $this->authHelper = $authHelper;
         $this->json = $json;
@@ -44,6 +49,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
         $this->orderRepository = $orderRepository;
         $this->apiOrders = $apiOrders;
         $this->shipment = $shipment;
+        $this->logger = $logger;
     }
 
     /**
@@ -55,11 +61,12 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
+        $storeId = $this->authHelper->getStoreId($order->getStoreId());
 
         if ($order->getId()) {
             if (
-                $this->authHelper->isConnected($order->getStoreId())
-                && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
+                $this->authHelper->isConnected($storeId)
+                && $this->authHelper->isOrderSyncEnabled($storeId)
                 && !$order->getOrderDetached()
             ) {
                 $order = $observer->getEvent()->getOrder();
@@ -74,7 +81,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
                     );
 
                     if ($order->getStatus() == Order::STATE_COMPLETE) {
-                        $this->createShipment($order);
+                        $this->createShipment($order, $storeId);
                     }
                 }
             }
@@ -83,10 +90,10 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
 
     /**
      * @param OrderInterface $order
+     * @param $storeId
      * @return void
-     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function createShipment(OrderInterface $order): void
+    private function createShipment(OrderInterface $order, $storeId): void
     {
         $storekeeperId = $order->getStorekeeperId();
 
@@ -94,8 +101,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
             $shipmentData = [
                 'order_id' => $order->getId(),
                 'storekeeper_id' => $storekeeperId,
-                'store_id' => $order->getStoreId(),
-                'items' => $this->getShipmentsItems($order->getStoreId(), $storekeeperId)
+                'store_id' => $storeId,
+                'items' => $this->getShipmentsItems($storeId, $storekeeperId)
             ];
 
             try {
@@ -113,7 +120,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
                 );
 
                 //Trigger exception in order to stop shipment creation and display message to admin
-                throw new \Magento\Framework\Exception\LocalizedException(__($message));
+                //UPD: do not trigger exception one order item problem duting shipment placement not resolved on SK side
+                //throw new \Magento\Framework\Exception\LocalizedException(__($message));
             }
         }
     }

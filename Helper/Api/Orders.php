@@ -592,8 +592,8 @@ class Orders extends AbstractHelper
                 'Error while onCreate order sync method',
                 [
                     'error' =>  $this->logger->buildReportData($e),
-                    'payload' =>  $payload,
-                    'storeId' =>  $storeId
+                    'orderId' =>  $order->getIncrementId(),
+                    'StoreKeeperId' =>  $storeKeeperId
                 ]
             );
         }

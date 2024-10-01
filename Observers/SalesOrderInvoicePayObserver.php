@@ -52,10 +52,12 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
         if ($invoice->getState() == \Magento\Sales\Model\Order\Invoice::STATE_PAID) {
             $order = $invoice->getOrder();
             $storekeeperId = $order->getStorekeeperId();
+            $storeId = $this->authHelper->getStoreId($order->getStoreId());
+
             if (
-                $this->authHelper->isConnected($order->getStoreId())
+                $this->authHelper->isConnected($storeId)
                 && !$this->paymentApiClient->isStorekeeperPayment($order->getPayment()->getMethod())
-                && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
+                && $this->authHelper->isOrderSyncEnabled($storeId)
                 && !$order->getOrderDetached()
             ) {
                 $storekeeperPaymentId = $this->paymentApiClient->newWebPayment(
@@ -68,7 +70,7 @@ class SalesOrderInvoicePayObserver implements ObserverInterface
 
                 if ($storekeeperId) {
                     $this->paymentApiClient->attachPaymentIdsToOrder(
-                        $order->getStoreId(),
+                        $storeId,
                         $storekeeperId,
                         [
                             $storekeeperPaymentId

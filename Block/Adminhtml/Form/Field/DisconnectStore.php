@@ -28,6 +28,7 @@ class DisconnectStore extends AbstractElement
      * @param Random|null $random
      * @param Auth $authHelper
      * @param Url $backendUrlManager
+     * @param StoreManagerInterface $storeManager
      * @param $data
      */
     public function __construct(
@@ -54,7 +55,7 @@ class DisconnectStore extends AbstractElement
      */
     public function getElementHtml()
     {
-        $storeId = $this->storeManager->getStore()->getId();
+        $storeId = $this->authHelper->getStoreId($this->storeManager->getStore()->getId());
         if ($this->authHelper->isConnected($storeId)) {
             $url = $this->backendUrlManager->getUrl('storekeeper/index/disconnect', ['storeId' => $storeId]);
             return "<a href='{$url}' class='action-default'>" . __("Disconnect from StoreKeeper") . "</a>";

@@ -50,7 +50,7 @@ class AuthKey extends AbstractElement
      */
     public function getElementHtml(): string
     {
-        $storeId = $this->storeManager->getStore()->getId();
+        $storeId = $this->authHelper->getStoreId($this->storeManager->getStore()->getId());
 
         return "<span style='word-break: break-all'>" . $this->authHelper->authCheck($storeId) . "</span>";
     }

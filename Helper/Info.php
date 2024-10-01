@@ -195,9 +195,11 @@ class Info
     private function getLastOrderDateTime(): string
     {
         $orderCollection = $this->orderCollectionFactory->create()
-            ->addAttributeToSort('created_at', 'desc');
+            ->addAttributeToSort('created_at', 'desc')
+            ->setPageSize(1)
+            ->setCurPage(1);
         $lastOrder = $orderCollection->getFirstItem();
-        $lastOrderDateTime = $this->timezone->date($lastOrder->getCreatedAt())
+        $lastOrderDateTime = $this->timezone->date(strtotime($lastOrder->getCreatedAt()))
             ->format(\StoreKeeper\StoreKeeper\Api\Webhook\Webhook::DATE_TIME_FORMAT);
 
         return $lastOrderDateTime;
@@ -209,7 +211,9 @@ class Info
     private function getLastSynchronizedOrderDateTime(): string
     {
         $orderCollection = $this->orderCollectionFactory->create()
-            ->addAttributeToSort('storekeeper_order_last_sync', 'desc');
+            ->addAttributeToSort('storekeeper_order_last_sync', 'desc')
+            ->setPageSize(1)
+            ->setCurPage(1);
         $lastSynchronizedOrder = $orderCollection->getFirstItem();
         $lastSynchronizedOrderDateTime = $this->timezone->date($lastSynchronizedOrder
             ->getData('storekeeper_order_last_sync'))
@@ -227,7 +231,7 @@ class Info
             ->addFieldToFilter('is_failed', 1)
             ->addOrder('updated_at');
         $lastFailedOrder = $failedOrders->getFirstItem();
-        $lastFailedOrderDateTime = $this->timezone->date($lastFailedOrder->getData('updated_at'))
+        $lastFailedOrderDateTime = $this->timezone->date(strtotime($lastFailedOrder->getData('updated_at')))
             ->format(\StoreKeeper\StoreKeeper\Api\Webhook\Webhook::DATE_TIME_FORMAT);
 
         return $lastFailedOrderDateTime;

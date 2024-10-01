@@ -593,4 +593,21 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_ALL);
     }
+
+    /**
+     * @param $storeId
+     * @return string
+     */
+    public  function getStoreId($storeId): string
+    {
+        /*
+         * Return admin store scope if store is in single-store mode or have only 1 storeview
+         * Mitigates issues with configs and attributes scope
+         */
+        if ($this->storeManager->isSingleStoreMode() || count($this->storeManager->getStores()) == 1) {
+            $storeId = \Magento\Store\Model\Store::DEFAULT_STORE_ID;
+        }
+
+        return $storeId;
+    }
 }
