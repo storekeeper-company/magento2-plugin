@@ -39,9 +39,9 @@ class OrderWithInvoiceCreationTest extends AbstractTestCase
 
     /**
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/order.php
-     * @magentoConfigFixture current_store storekeeper_general/general/enabled 1
-     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
-     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_mode 4
+     * @magentoConfigFixture admin_store storekeeper_general/general/enabled 1
+     * @magentoConfigFixture admin_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
+     * @magentoConfigFixture admin_store storekeeper_general/general/storekeeper_sync_mode 4
      */
     public function testOrderCreation()
     {
