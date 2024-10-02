@@ -23,19 +23,6 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="sales_order_grid_data_source" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\Order\Grid\Collection</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Vendor\Module\Model\ResourceModel\Order\Grid\Collection">
-        <arguments>
-            <argument name="mainTable" xsi:type="string">sales_order_grid</argument>
-            <argument name="resourceModel" xsi:type="string">Magento\Sales\Model\ResourceModel\Order</argument>
-        </arguments>
-    </type>
-    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
-        <arguments>
-            <argument name="collections" xsi:type="array">
                 <item name="storekeeper_storekeeper_eventlog_listing_data_source" xsi:type="string">StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Grid\Collection</item>
             </argument>
         </arguments>
@@ -59,6 +46,9 @@
     </type>
     <type name="Magento\Catalog\Model\ResourceModel\Product\Gallery">
         <plugin name="afterCreateBatchBaseSelect" type="StoreKeeper\StoreKeeper\Plugin\Product\Gallery" sortOrder="10" disabled="false"/>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <plugin name="sk_after_get_report" type="StoreKeeper\StoreKeeper\Plugin\DataProviderCollection" sortOrder="1" />
     </type>
 
     <virtualType name="StoreKeeper\StoreKeeper\Model\ResourceModel\EventLog\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
