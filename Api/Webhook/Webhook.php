@@ -88,7 +88,7 @@ class Webhook
     public function postExecute(string $storeId)
     {
         try {
-            $response = $this->postExecuteWithResponse($storeId);
+            $response = $this->postExecuteWithResponse($this->authHelper->getStoreId($storeId));
             return $this->response($response->getContent(), $response->getStatusCode());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));

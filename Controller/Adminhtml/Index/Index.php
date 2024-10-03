@@ -76,7 +76,7 @@ class Index extends Action implements HttpGetActionInterface
      */
     public function execute()
     {
-        $storeId = $this->storeManager->getStore()->getId();
+        $storeId = $this->getRequest()->getParam('storeId');
         if ($this->authHelper->isConnected($storeId)) {
             try {
                 $storeInformation = $this->orderApiClient->getStoreInformation($storeId);

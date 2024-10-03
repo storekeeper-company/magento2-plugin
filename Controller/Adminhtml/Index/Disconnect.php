@@ -76,7 +76,7 @@ class Disconnect extends Action implements HttpGetActionInterface
     public function execute()
     {
         try {
-            $storeId = $this->storeManager->getStore()->getId();
+            $storeId = $this->getRequest()->getParam('storeId');
             $message = [
                 "type" => "disconnect",
                 "storeId" => $storeId

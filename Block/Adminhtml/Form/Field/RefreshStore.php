@@ -11,6 +11,7 @@ use Magento\Framework\Math\Random;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Store\Model\StoreManagerInterface;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
+use StoreKeeper\StoreKeeper\Helper\Config;
 
 class RefreshStore extends AbstractElement
 {
@@ -50,7 +51,7 @@ class RefreshStore extends AbstractElement
 
     public function getElementHtml()
     {
-        $storeId = $this->storeManager->getStore()->getId();
+        $storeId = $this->authHelper->getStoreId($this->storeManager->getStore()->getId());
 
         if ($this->authHelper->isConnected($storeId)) {
             $url = $this->backendUrlManager->getUrl('storekeeper/index/index', ['storeId' => $storeId]);

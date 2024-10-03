@@ -40,11 +40,12 @@ class SalesOrderCreditMemoSaveAfterObserver implements ObserverInterface
     {
         $creditmemo = $observer->getEvent()->getCreditmemo();
         $order = $creditmemo->getOrder();
+        $storeId = $this->authHelper->getStoreId($order->getStoreId());
 
         if (
-            $this->authHelper->isConnected($order->getStoreId())
+            $this->authHelper->isConnected($storeId)
             && $order->getStorekeeperOrderPendingSync() == 0
-            && $this->authHelper->isOrderSyncEnabled($order->getStoreId())
+            && $this->authHelper->isOrderSyncEnabled($storeId)
             && !$order->getOrderDetached()
         ) {
 

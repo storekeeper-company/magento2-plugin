@@ -59,12 +59,12 @@ class Connect extends Field
     /**
      * Get SK connect url
      *
+     * @param $storeId
      * @return string
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function getConnectUrl(): string
+    public function getConnectUrl($storeId): string
     {
-        $storeId = $this->storeManager->getStore()->getId();
         $token = $this->authHelper->generateToken($storeId);
         $redirectUrl = $this->authHelper->getInitializeUrl($storeId, $token);
         return $redirectUrl;
@@ -77,7 +77,7 @@ class Connect extends Field
      */
     public function getButtonHtml()
     {
-        $storeId = $this->storeManager->getStore()->getId();
+        $storeId = $this->authHelper->getStoreId($this->storeManager->getStore()->getId());
         if ($this->authHelper->isConnected($storeId)) {
             $button = $this->getLayout()->createBlock('Magento\Backend\Block\Widget\Button')->setData(
                 ['id' => 'connect_button',
@@ -86,7 +86,7 @@ class Connect extends Field
                 ]
             );
         } else {
-            $url = $this->getConnectUrl();
+            $url = $this->getConnectUrl($storeId);
             $button = $this->getLayout()->createBlock('Magento\Backend\Block\Widget\Button')->setData(
                 [
                     'id' => 'connect_button',

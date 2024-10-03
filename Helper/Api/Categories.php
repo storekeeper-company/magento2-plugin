@@ -213,7 +213,6 @@ class Categories extends AbstractHelper
     public function update($storeId, $target = null, array $result = [])
     {
         $this->storeManager->setCurrentStore($storeId);
-        $language = $this->authHelper->getLanguageForStore($storeId);
         $shouldUpdate = false;
         $storekeeper_id = $this->getResultStoreKeeperId($result);
         $update = !is_null($target);

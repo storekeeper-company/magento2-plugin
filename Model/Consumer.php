@@ -7,7 +7,6 @@ use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
 use StoreKeeper\StoreKeeper\Helper\Api\Products;
 use StoreKeeper\StoreKeeper\Helper\Api\Auth;
-use StoreKeeper\StoreKeeper\Helper\Config;
 
 /**
  * Class Consumer used to process OperationInterface messages.
@@ -19,7 +18,6 @@ class Consumer
     private Products $productsHelper;
     private Categories $categoriesHelper;
     private Orders $ordersHelper;
-    private Config $configHelper;
     private Logger $logger;
     private Auth $authHelper;
 
@@ -57,7 +55,7 @@ class Consumer
         $data = json_decode($request, true);
 
         try {
-            $storeId = $data['storeId'] ?? null;
+            $storeId = array_key_exists('storeId', $data) ? $this->authHelper->getStoreId($data['storeId']) : null;
             $type = $data['type'] ?? null;
             $module = $data['module'] ?? null;
             $entity = $data['entity'] ?? null;
@@ -100,8 +98,8 @@ class Consumer
             } elseif ($type == 'stock_change') {
                 $this->productsHelper->updateStock($storeId, $value);
             } elseif ($type == 'disconnect') {
-                $this->productsHelper->cleanProductStorekeeperId($data['storeId']);
-                $this->authHelper->disconnectStore($data['storeId']);
+                $this->productsHelper->cleanProductStorekeeperId($storeId);
+                $this->authHelper->disconnectStore($storeId);
             }
         } catch (\Exception $e) {
             $this->logger->error(
