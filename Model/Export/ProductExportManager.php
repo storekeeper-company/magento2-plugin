@@ -413,8 +413,8 @@ class ProductExportManager extends AbstractExportManager
                             $dataKey
                         );
 
-                        $this->extendHeaderLabels($attributeLabel . ' (raw)');
-                        $this->extendHeaderLabels($attributeLabel . ' (label)');
+                        $this->extendHeaderLabels($value . '_r', $attributeLabel . ' (raw)');
+                        $this->extendHeaderLabels($value . '_l', $attributeLabel . ' (label)');
                         $this->extendDisallowedAttributes($value);
                     }
                 }
@@ -437,8 +437,12 @@ class ProductExportManager extends AbstractExportManager
                         $result,
                         $dataKey
                     );
-                    $this->extendHeaderLabels($productAttribute->getDefaultFrontendLabel() . ' (raw)');
-                    $this->extendHeaderLabels($productAttribute->getDefaultFrontendLabel() . ' (label)');
+                    $this->extendHeaderLabels(
+                        $attributeCode . '_r', $productAttribute->getDefaultFrontendLabel() . ' (raw)'
+                    );
+                    $this->extendHeaderLabels(
+                        $attributeCode . '_l', $productAttribute->getDefaultFrontendLabel() . ' (label)'
+                    );
                 }
             }
         }
@@ -468,10 +472,10 @@ class ProductExportManager extends AbstractExportManager
         }
     }
 
-    protected function extendHeaderLabels(string $key)
+    protected function extendHeaderLabels(string $key, $value)
     {
-        if (array_search($key, $this->headerLabelsExtended) === false) {
-            $this->headerLabelsExtended[] = $key;
+        if (array_key_exists($key, $this->headerLabelsExtended) === false) {
+            $this->headerLabelsExtended[$key] = $value;
         }
     }
 
