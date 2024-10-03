@@ -5,6 +5,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\MessageQueue\PublisherInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Sales\Model\Order;
@@ -22,6 +23,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
     private ApiOrders $apiOrders;
     private Shipment $shipment;
     private Logger $logger;
+    private ManagerInterface $messageManager;
 
     /**
      * Constructor
@@ -33,6 +35,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
      * @param ApiOrders $apiOrders
      * @param Shipment $shipment
      * @param Logger $logger
+     * @param ManagerInterface $messageManager
      */
     public function __construct(
         Auth $authHelper,
@@ -41,7 +44,8 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
         OrderRepositoryInterface $orderRepository,
         ApiOrders $apiOrders,
         Shipment $shipment,
-        Logger $logger
+        Logger $logger,
+        ManagerInterface $messageManager
     ) {
         $this->authHelper = $authHelper;
         $this->json = $json;
@@ -50,6 +54,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
         $this->apiOrders = $apiOrders;
         $this->shipment = $shipment;
         $this->logger = $logger;
+        $this->messageManager = $messageManager;
     }
 
     /**
@@ -110,7 +115,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
                 $this->shipment->process($serializedData);
                 $order->setStorekeeperShipmentId($storekeeperId);
             } catch (\Exception $e) {
-                $message = 'Error while creating shipment, storekeeper order number: ' . $storekeeperId;
+                $message = 'Error synchronizing shipment to StoreKeeper! Storekeeper order number: ' . $storekeeperId;
                 $this->logger->error(
                     $message,
                     [
@@ -119,9 +124,7 @@ class SalesOrderSaveBeforeObserver implements ObserverInterface
                     ]
                 );
 
-                //Trigger exception in order to stop shipment creation and display message to admin
-                //UPD: do not trigger exception one order item problem duting shipment placement not resolved on SK side
-                //throw new \Magento\Framework\Exception\LocalizedException(__($message));
+                $this->messageManager->addNoticeMessage(__($message));
             }
         }
     }
