@@ -25,7 +25,7 @@ class ProductApiClient extends ApiClient
     private ProductUrl $productUrl;
     private BackendUrl $backendUrl;
     private DateTime $dateTime;
-    private AuthHelper $authHelper;
+    protected AuthHelper $authHelper;
 
     public function __construct(
         ScopeConfigInterface $scopeConfig,
