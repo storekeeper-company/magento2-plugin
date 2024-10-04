@@ -12,19 +12,17 @@ use StoreKeeper\StoreKeeper\Console\Command\Sync\Orders;
 use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders as OrdersHelper;
 use StoreKeeper\StoreKeeper\Logger\Logger;
+use StoreKeeper\StoreKeeper\Model\OrderSync\Shipment;
 use StoreKeeper\StoreKeeper\Model\ResourceModel\StoreKeeperFailedSyncOrder as StoreKeeperFailedSyncOrderResourceModel;
 
 class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterface
 {
     private Orders $syncOrders;
-
     private Config $configHelper;
-
     private OrdersHelper $ordersHelper;
-
     private Logger $logger;
-
     private StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource;
+    private Shipment $shipment;
 
     /**
      * MassSyncOrders constructor
@@ -37,6 +35,7 @@ class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterfa
      * @param OrdersHelper $ordersHelper
      * @param Logger $logger
      * @param StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
+     * @param Shipment $shipment
      */
     public function __construct(
         Context $context,
@@ -46,7 +45,8 @@ class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterfa
         Config $configHelper,
         OrdersHelper $ordersHelper,
         Logger $logger,
-        StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource
+        StoreKeeperFailedSyncOrderResourceModel $storeKeeperFailedSyncOrderResource,
+        Shipment $shipment
     ) {
         parent::__construct($context, $filter);
         $this->collectionFactory = $collectionFactory;
@@ -55,6 +55,7 @@ class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterfa
         $this->ordersHelper = $ordersHelper;
         $this->logger = $logger;
         $this->storeKeeperFailedSyncOrderResource = $storeKeeperFailedSyncOrderResource;
+        $this->shipment = $shipment;
     }
 
     /**
@@ -78,6 +79,9 @@ class MassSyncOrders extends AbstractMassAction implements HttpPostActionInterfa
                 }
                 if ($storeKeeperId = $this->ordersHelper->exists($order)) {
                     $this->ordersHelper->update($order, $storeKeeperId);
+                    if ($order->getStatus() == \Magento\Sales\Model\Order::STATE_COMPLETE) {
+                        $this->shipment->createShipment($order, $order->getStoreId());
+                    }
                 } else {
                     $this->ordersHelper->onCreate($order);
                 }

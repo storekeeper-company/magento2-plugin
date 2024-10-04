@@ -8,12 +8,14 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
 use StoreKeeper\ApiWrapper\Auth;
 use StoreKeeper\StoreKeeper\Logger\Logger;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth as AuthHelper;
 
 class ApiClient
 {
     protected ScopeConfigInterface $scopeConfig;
     protected Logger $logger;
     protected ?Auth $auth = null;
+    protected AuthHelper $authHelper;
 
     /**
      * ApiClient constructor.
@@ -22,10 +24,12 @@ class ApiClient
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
-        Logger $logger
+        Logger $logger,
+        AuthHelper $authHelper
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->logger = $logger;
+        $this->authHelper = $authHelper;
     }
 
     /**
@@ -58,6 +62,7 @@ class ApiClient
      */
     protected function getModule(string $module, string $storeId): ModuleApiWrapperInterface
     {
+        $storeId = $this->authHelper->getStoreId($storeId);
         $api = new ApiWrapper($this->getAdapter($storeId), $this->getAuthWrapper($storeId));
         return $api->getModule($module);
     }
