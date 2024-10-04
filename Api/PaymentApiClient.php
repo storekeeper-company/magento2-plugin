@@ -10,11 +10,11 @@ use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
 use StoreKeeper\ApiWrapper\Exception\GeneralException;
 use StoreKeeper\StoreKeeper\Logger\Logger;
+use StoreKeeper\StoreKeeper\Helper\Api\Auth as AuthHelper;
 
 class PaymentApiClient extends ApiClient
 {
     private const STOREKEEPER_PAYMENT_MODULE_NAME = 'PaymentModule';
-
     private OrderApiClient $orderApiClient;
 
     /**
@@ -24,9 +24,10 @@ class PaymentApiClient extends ApiClient
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         Logger $logger,
-        OrderApiClient $orderApiClient
+        OrderApiClient $orderApiClient,
+        AuthHelper $authHelper
     ) {
-        parent::__construct($scopeConfig, $logger);
+        parent::__construct($scopeConfig, $logger, $authHelper);
         $this->orderApiClient = $orderApiClient;
     }
 

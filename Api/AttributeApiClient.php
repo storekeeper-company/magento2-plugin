@@ -7,7 +7,7 @@ namespace StoreKeeper\StoreKeeper\Api;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use StoreKeeper\ApiWrapper\ModuleApiWrapperInterface;
 use StoreKeeper\StoreKeeper\Logger\Logger;
-
+use StoreKeeper\StoreKeeper\Helper\Api\Auth as AuthHelper;
 /**
  * ApiWrapper for SK ShopModule which will provide access to attribute type and options in future
  */
@@ -20,12 +20,14 @@ class AttributeApiClient extends ApiClient
      *
      * @param ScopeConfigInterface $scopeConfig
      * @param Logger $logger
+     * @param AuthHelper $authHelper
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
-        Logger $logger
+        Logger $logger,
+        AuthHelper $authHelper
     ) {
-        parent::__construct($scopeConfig, $logger);
+        parent::__construct($scopeConfig, $logger, $authHelper);
     }
 
     /**
