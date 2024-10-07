@@ -152,7 +152,8 @@ abstract class AbstractTestCase extends TestCase
                                     'sku' => 'simple-2'
                                 ]
                             ],
-                            'product_id' => 7
+                            'product_id' => 7,
+                            'orderable_stock_value' => self::UPDATED_STOCK_ITEM_VALUE
                         ]
                     ]
                 ]
