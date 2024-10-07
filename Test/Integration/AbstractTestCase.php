@@ -147,7 +147,8 @@ abstract class AbstractTestCase extends TestCase
                             'flat_product' => [
                                 'product' => [
                                     'product_stock' => [
-                                        'value' => self::UPDATED_STOCK_ITEM_VALUE
+                                        'value' => self::UPDATED_STOCK_ITEM_VALUE,
+                                        'unlimited' => false
                                     ],
                                     'sku' => 'simple-2'
                                 ]

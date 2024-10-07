@@ -250,7 +250,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
             try {
                 if ($product = $this->exists($storeId, $result)) {
-                    $this->processStock($result, $result['flat_product'], $product->getSku());
+                    $this->processStock($result, $result['flat_product']['product'], $product->getSku());
                     $status = ProductApiClient::PRODUCT_UPDATE_STATUS_SUCCESS;
                 } else {
                     throw new \Exception("Product with StoreKeerep ID: {$storeKeeperId} does not exist in Magento");
