@@ -25,8 +25,19 @@ class ProductApiClient extends ApiClient
     private ProductUrl $productUrl;
     private BackendUrl $backendUrl;
     private DateTime $dateTime;
-    private AuthHelper $authHelper;
+    protected AuthHelper $authHelper;
 
+    /**
+     * Constructor
+     *
+     * @param ScopeConfigInterface $scopeConfig
+     * @param \StoreKeeper\StoreKeeper\Api\OrderApiClient $orderApiClient
+     * @param ProductUrl $productUrl
+     * @param BackendUrl $backendUrl
+     * @param DateTime $dateTime
+     * @param AuthHelper $authHelper
+     * @param Logger $logger
+     */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         OrderApiClient $orderApiClient,
@@ -36,7 +47,7 @@ class ProductApiClient extends ApiClient
         AuthHelper $authHelper,
         Logger $logger
     ) {
-        parent::__construct($scopeConfig, $logger);
+        parent::__construct($scopeConfig, $logger, $authHelper);
         $this->orderApiClient = $orderApiClient;
         $this->productUrl = $productUrl;
         $this->backendUrl = $backendUrl;

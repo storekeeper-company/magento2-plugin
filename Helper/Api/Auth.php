@@ -9,7 +9,6 @@ use Magento\Framework\Math\Random;
 use Magento\Framework\Module\ModuleList;
 use Magento\Store\Model\StoreManagerInterface;
 use Ramsey\Uuid\Generator\PeclUuidRandomGenerator;
-use StoreKeeper\StoreKeeper\Api\OrderApiClient;
 use StoreKeeper\StoreKeeper\Helper\Config;
 
 class Auth extends \Magento\Framework\App\Helper\AbstractHelper
@@ -29,7 +28,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
     private PeclUuidRandomGenerator $uuidRandomGenerator;
     private ProductMetadataInterface $productMetadata;
     private ModuleList $moduleList;
-    private OrderApiClient $orderApiClient;
     private Config $configHelper;
 
     /**
@@ -43,7 +41,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
      * @param PeclUuidRandomGenerator $uuidRandomGenerator
      * @param ProductMetadataInterface $productMetadata
      * @param ModuleList $moduleList
-     * @param OrderApiClient $orderApiClient
      * @param Config $configHelper
      */
     public function __construct(
@@ -55,7 +52,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         PeclUuidRandomGenerator $uuidRandomGenerator,
         ProductMetadataInterface $productMetadata,
         ModuleList $moduleList,
-        OrderApiClient $orderApiClient,
         Config $configHelper
     ) {
         $this->scopeConfig = $scopeConfig;
@@ -66,7 +62,6 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
         $this->uuidRandomGenerator = $uuidRandomGenerator;
         $this->productMetadata = $productMetadata;
         $this->moduleList = $moduleList;
-        $this->orderApiClient = $orderApiClient;
         $this->configHelper = $configHelper;
     }
 

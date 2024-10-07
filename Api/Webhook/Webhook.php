@@ -92,10 +92,12 @@ class Webhook
             return $this->response($response->getContent(), $response->getStatusCode());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
-            return $this->response([
+            $response = $this->jsonResponse->setData([
                 'success' => false,
                 'message' => "An error occurred: {$e->getMessage()}"
             ]);
+
+            return $this->response($response->getContent(), $response->getStatusCode());
         }
     }
 

@@ -50,7 +50,9 @@ class ShipmentCreationTest extends AbstractTestCase
             [
                 'orderApiClient' => $this->orderApiClientMock,
                 'orderRepository' => $this->orderRepository,
-                'orderResource' => $this->orderResource
+                'orderResource' => $this->orderResource,
+                'apiOrders' => $this->apiOrdersMock,
+                'json' => $this->json
             ]
         );
 
@@ -58,7 +60,6 @@ class ShipmentCreationTest extends AbstractTestCase
             \StoreKeeper\StoreKeeper\Observers\SalesOrderSaveBeforeObserver::class,
             [
                 'json' => $this->json,
-                'apiOrders' => $this->apiOrdersMock,
                 'shipment' => $this->shipment,
                 'authHelper' => $this->authHelper,
                 'orderRepository' => $this->orderRepository

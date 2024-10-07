@@ -198,9 +198,13 @@ class Info
             ->addAttributeToSort('created_at', 'desc')
             ->setPageSize(1)
             ->setCurPage(1);
-        $lastOrder = $orderCollection->getFirstItem();
-        $lastOrderDateTime = $this->timezone->date(strtotime($lastOrder->getCreatedAt()))
-            ->format(\StoreKeeper\StoreKeeper\Api\Webhook\Webhook::DATE_TIME_FORMAT);
+        if ($orderCollection->count() > 0) {
+            $lastOrder = $orderCollection->getFirstItem();
+            $lastOrderDateTime = $this->timezone->date(strtotime($lastOrder->getCreatedAt()))
+                ->format(\StoreKeeper\StoreKeeper\Api\Webhook\Webhook::DATE_TIME_FORMAT);
+        } else {
+            $lastOrderDateTime = '';
+        }
 
         return $lastOrderDateTime;
     }
@@ -230,9 +234,13 @@ class Info
         $failedOrders = $this->storeKeeperFailedSyncOrderCollectionFactory->create()
             ->addFieldToFilter('is_failed', 1)
             ->addOrder('updated_at');
-        $lastFailedOrder = $failedOrders->getFirstItem();
-        $lastFailedOrderDateTime = $this->timezone->date(strtotime($lastFailedOrder->getData('updated_at')))
-            ->format(\StoreKeeper\StoreKeeper\Api\Webhook\Webhook::DATE_TIME_FORMAT);
+        if ($failedOrders->count() > 0) {
+            $lastFailedOrder = $failedOrders->getFirstItem();
+            $lastFailedOrderDateTime = $this->timezone->date(strtotime($lastFailedOrder->getData('updated_at')))
+                ->format(\StoreKeeper\StoreKeeper\Api\Webhook\Webhook::DATE_TIME_FORMAT);
+        } else {
+            $lastFailedOrderDateTime = '';
+        }
 
         return $lastFailedOrderDateTime;
     }
