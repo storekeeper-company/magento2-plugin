@@ -245,15 +245,12 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
-            $product_stock = (array_key_exists('orderable_stock_value', $result)) ?
-                $result['orderable_stock_value'] :
-                null;
-
             $status = '';
             $exceptionData = [];
+
             try {
                 if ($product = $this->exists($storeId, $result)) {
-                    $this->updateProductStock($storeId, $product, $product_stock);
+                    $this->processStock($result, $result['flat_product'], $product->getSku());
                     $status = ProductApiClient::PRODUCT_UPDATE_STATUS_SUCCESS;
                 } else {
                     throw new \Exception("Product with StoreKeerep ID: {$storeKeeperId} does not exist in Magento");
@@ -275,49 +272,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             );
         } else {
             throw new \Exception("Product {$storeKeeperId} does not exist in StoreKeeper");
-        }
-    }
-
-    /**
-     * Update product stock
-     *
-     * @throws \Magento\Framework\Validation\ValidationException
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Exception
-     */
-    private function updateProductStock($storeId, $product, $product_stock)
-    {
-        $stockItem = $this->stockRegistry->getStockItem($product->getId());
-        if ($stockItem) {
-            if ($stockItem->getManageStock()) {
-                $stockItem->setData('is_in_stock', $product_stock > 0);
-                $stockItem->setData('qty', $product_stock);
-                $stockItem->setData('use_config_notify_stock_qty', 1);
-                $stockItem->save();
-
-                $product->setStockData(
-                    ['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]
-                );
-                $product->setQuantityAndStockStatus(
-                    ['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]
-                );
-                $product->save();
-            }
-        // in some rare cases it can occur that a stock item doesn't exist in Magento 2
-        // if there's no existing stock item, we'll create it
-        } else {
-            $stockItem->setData('is_in_stock', $product_stock > 0);
-            $stockItem->setData('qty', $product_stock);
-            $stockItem->setData('manage_stock', true);
-            $stockItem->setData('use_config_notify_stock_qty', 1);
-            $stockItem->save();
-
-            $product->setStockData(['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]);
-            $product->setQuantityAndStockStatus(
-                ['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]
-            );
-            $product->save();
         }
     }
 
