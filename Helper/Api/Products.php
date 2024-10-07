@@ -245,7 +245,9 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
         if (isset($results['data']) && count($results['data']) > 0) {
             $result = $results['data'][0];
-            $product_stock = $result['flat_product']['product']['product_stock'];
+            $product_stock = (array_key_exists('orderable_stock_value', $result)) ?
+                $result['orderable_stock_value'] :
+                null;
 
             $status = '';
             $exceptionData = [];
@@ -289,31 +291,31 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $stockItem = $this->stockRegistry->getStockItem($product->getId());
         if ($stockItem) {
             if ($stockItem->getManageStock()) {
-                $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
-                $stockItem->setData('qty', $product_stock['value']);
+                $stockItem->setData('is_in_stock', $product_stock > 0);
+                $stockItem->setData('qty', $product_stock);
                 $stockItem->setData('use_config_notify_stock_qty', 1);
                 $stockItem->save();
 
                 $product->setStockData(
-                    ['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]
+                    ['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]
                 );
                 $product->setQuantityAndStockStatus(
-                    ['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]
+                    ['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]
                 );
                 $product->save();
             }
         // in some rare cases it can occur that a stock item doesn't exist in Magento 2
         // if there's no existing stock item, we'll create it
         } else {
-            $stockItem->setData('is_in_stock', $product_stock['value'] > 0);
-            $stockItem->setData('qty', $product_stock['value']);
+            $stockItem->setData('is_in_stock', $product_stock > 0);
+            $stockItem->setData('qty', $product_stock);
             $stockItem->setData('manage_stock', true);
             $stockItem->setData('use_config_notify_stock_qty', 1);
             $stockItem->save();
 
-            $product->setStockData(['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]);
+            $product->setStockData(['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]);
             $product->setQuantityAndStockStatus(
-                ['qty' => $product_stock['value'], 'is_in_stock' => $product_stock['value'] > 0]
+                ['qty' => $product_stock, 'is_in_stock' => $product_stock > 0]
             );
             $product->save();
         }
