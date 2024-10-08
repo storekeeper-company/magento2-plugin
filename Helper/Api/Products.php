@@ -475,9 +475,21 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if ($target = $this->exists($storeId, [
             'id' => $targetId
         ])) {
-            if (in_array($websiteId, $target->getWebsiteIds())) {
-                $target->setWebsiteIds(array_diff($target->getWebsiteIds(), [$websiteId]));
-                $this->productRepository->save($target);
+            if (!$this->authHelper->isSingleStore()) {
+                if (in_array($websiteId, $target->getWebsiteIds())) {
+                    $target->setWebsiteIds(array_diff($target->getWebsiteIds(), [$websiteId]));
+                    $this->productRepository->save($target);
+                }
+            } else {
+                /**
+                 * Use product status enable/disable to sctivate/deactivate product
+                 * Because 'Product in Websites' tab not available on admin panel for Single store shops
+                 */
+                $this->productAction->updateAttributes(
+                    [$target->getId()],
+                    ['status' => Status::STATUS_DISABLED],
+                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                );
             }
         } else {
             $this->updateById($storeId, $targetId);
@@ -501,11 +513,23 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         if ($target = $this->exists($storeId, [
             'id' => $targetId
         ])) {
-            $websiteIds = $target->getWebsiteIds();
-            if (!in_array($websiteId, $websiteIds)) {
-                $websiteIds[] = $websiteId;
-                $target->setWebsiteIds($websiteIds);
-                $target = $this->productRepository->save($target);
+            if (!$this->authHelper->isSingleStore()) {
+                $websiteIds = $target->getWebsiteIds();
+                if (!in_array($websiteId, $websiteIds)) {
+                    $websiteIds[] = $websiteId;
+                    $target->setWebsiteIds($websiteIds);
+                    $target = $this->productRepository->save($target);
+                }
+            } else {
+                /**
+                 * Use product status enable/disable to sctivate/deactivate product
+                 * Because 'Product in Websites' tab not available on admin panel for Single store shops
+                 */
+                $this->productAction->updateAttributes(
+                    [$target->getId()],
+                    ['status' => Status::STATUS_ENABLED],
+                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                );
             }
         } else {
             $this->updateById($websiteId, $targetId);

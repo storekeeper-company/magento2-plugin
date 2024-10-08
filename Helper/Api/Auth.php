@@ -599,10 +599,18 @@ class Auth extends \Magento\Framework\App\Helper\AbstractHelper
          * Return admin store scope if store is in single-store mode or have only 1 storeview
          * Mitigates issues with configs and attributes scope
          */
-        if ($this->storeManager->isSingleStoreMode() || count($this->storeManager->getStores()) == 1) {
+        if ($this->isSingleStore()) {
             $storeId = \Magento\Store\Model\Store::DEFAULT_STORE_ID;
         }
 
         return $storeId;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSingleStore(): bool
+    {
+        return ($this->storeManager->isSingleStoreMode() || count($this->storeManager->getStores()) == 1) ?? false;
     }
 }
