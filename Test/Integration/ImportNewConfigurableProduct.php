@@ -71,7 +71,7 @@ class ImportNewConfigurableProduct extends AbstractTestCase
                     ],
                     'content_vars' => self::CONTENT_VARS
                 ],
-                'product_id' => 7,
+                'id' => 7,
                 'orderable_stock_value' => self::UPDATED_STOCK_ITEM_VALUE
             ]
         ]
@@ -103,7 +103,6 @@ class ImportNewConfigurableProduct extends AbstractTestCase
                     ],
                     'content_vars' => self::CONTENT_VARS
                 ],
-                'product_id' => 113,
                 'id' => 213,
                 'orderable_stock_value' => self::UPDATED_STOCK_ITEM_VALUE
 
