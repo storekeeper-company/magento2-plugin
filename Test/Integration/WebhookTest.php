@@ -41,6 +41,9 @@ class WebhookTest extends AbstractTestCase
     protected $productsHelper;
     protected $eventLogFactory;
     protected $timezoneMock;
+    protected $sourceItemsProcessor;
+    protected $configHelper;
+    protected $defaultSourceItemBySku;
 
     protected function setUp(): void
     {
@@ -52,6 +55,9 @@ class WebhookTest extends AbstractTestCase
         $this->jsonResponse = Bootstrap::getObjectManager()->create(\Symfony\Component\HttpFoundation\JsonResponse::class);
         $this->eventLogFactory = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Api\Data\EventLogInterfaceFactory::class);
         $this->timezoneMock = $this->createMock(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::class);
+        $this->defaultSourceItemBySku = Bootstrap::getObjectManager()->create(\Magento\InventoryCatalog\Model\GetDefaultSourceItemBySku::class);
+        $this->sourceItemsProcessor = Bootstrap::getObjectManager()->create(\Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface::class);
+        $this->configHelper = Bootstrap::getObjectManager()->create(\StoreKeeper\StoreKeeper\Helper\Config::class);
 
         $this->requestMock->method('getBodyParams')
             ->willReturn(self::PAYLOAD);
@@ -84,7 +90,9 @@ class WebhookTest extends AbstractTestCase
                 'authHelper' => $this->authHelper,
                 'productCollectionFactory' => $this->productCollectionFactory,
                 'stockRegistry' => $this->stockRegistry,
-                'productApiClient' => $this->productApiClientMock
+                'productApiClient' => $this->productApiClientMock,
+                'sourceItemsProcessor' => $this->sourceItemsProcessor,
+                'configHelper' => $this->configHelper
             ]
         );
         $this->consumer = $objectManager->getObject(
@@ -134,14 +142,15 @@ class WebhookTest extends AbstractTestCase
     /**
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/product_simple_without_custom_options.php
      * @magentoDataFixture StoreKeeper_StoreKeeper::Test/Integration/_files/customer.php
+     * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_stock_source default
      * @magentoConfigFixture current_store storekeeper_general/general/enabled 1
      * @magentoConfigFixture current_store storekeeper_general/general/storekeeper_sync_auth {"rights":"subuser","mode":"apikey","account":"centroitbv","subaccount":"64537ca6-18ae-41e5-a6a9-20b803f97117","user":"sync","apikey":"REDACTED"}
      */
     public function testSendProductInformation()
     {
         $this->consumer->process(self::QUEUE_MESSAGE_STOCK_CHANGE);
-        $product = $this->getProductRepository()->getById('22');
-        $this->assertEquals($product->getExtensionAttributes()->getStockItem()->getQty(), self::UPDATED_STOCK_ITEM_VALUE);
+        $sourceItem = $this->defaultSourceItemBySku->execute(self::SIMPLE_PRODUCT_SKU);
+        $this->assertEquals(self::UPDATED_STOCK_ITEM_VALUE, $sourceItem->getQuantity());
     }
 
     /**
