@@ -326,7 +326,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $storekeeperLinkSkus = [];
 
         foreach ($storekeeperLinkIds as $storekeeperLinkId) {
-            if ($linkedProduct = $this->exists($storeId, ['product_id' => $storekeeperLinkId])) {
+            if ($linkedProduct = $this->exists($storeId, ['id' => $storekeeperLinkId])) {
                 $storekeeperLinkSkus[] = $linkedProduct->getSku();
             }
         }
@@ -473,7 +473,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
         $websiteId = $this->getStoreWebsiteId($storeId);
 
         if ($target = $this->exists($storeId, [
-            'product_id' => $targetId
+            'id' => $targetId
         ])) {
             if (in_array($websiteId, $target->getWebsiteIds())) {
                 $target->setWebsiteIds(array_diff($target->getWebsiteIds(), [$websiteId]));
@@ -499,7 +499,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $websiteId = $this->getStoreWebsiteId($storeId);
         if ($target = $this->exists($storeId, [
-            'product_id' => $targetId
+            'id' => $targetId
         ])) {
             $websiteIds = $target->getWebsiteIds();
             if (!in_array($websiteId, $websiteIds)) {
@@ -700,7 +700,7 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
      */
     private function getResultStoreKeeperId($result)
     {
-        return $result['product_id'];
+        return $result['id'];
     }
 
     /**

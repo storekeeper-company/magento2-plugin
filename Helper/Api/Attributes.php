@@ -294,7 +294,7 @@ class Attributes extends AbstractHelper
                 ];
                 $this->productApiClient->setShopProductObjectSyncStatusForHook(
                     $storeId,
-                    (string)$flat_product['product_id'],
+                    (string)$flat_product['id'],
                     $target,
                     ProductApiClient::PRODUCT_UPDATE_STATUS_ERROR,
                     $exceptionData
