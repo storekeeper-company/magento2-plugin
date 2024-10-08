@@ -154,6 +154,7 @@ abstract class AbstractTestCase extends TestCase
                                 ]
                             ],
                             'product_id' => 7,
+                            'id' => 7,
                             'orderable_stock_value' => self::UPDATED_STOCK_ITEM_VALUE
                         ]
                     ]
