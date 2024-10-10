@@ -47,7 +47,7 @@ class Available
         ] : [
             [
                 'value' => 0,
-                'label' => __('Not available, you can enable this in StoreKeeper admin')
+                'label' => __('Not available, you can enable this in StoreKeeper Backoffice')
             ]
         ];
 

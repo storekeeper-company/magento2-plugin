@@ -447,7 +447,7 @@ class Orders extends AbstractHelper
         if (array_key_exists('is_shipped', $storeKeeperOrder) && $storeKeeperOrder['is_shipped'] == true  && !$order->hasShipments()) {
             if (!$order->canShip()) {
                 throw new LocalizedException(
-                    __('You can\'t create an shipment.')
+                    __('You can\'t create a shipment.')
                 );
             }
 

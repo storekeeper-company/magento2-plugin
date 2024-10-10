@@ -6,7 +6,7 @@
                 <argument name="data" xsi:type="array">
                     <item name="config" xsi:type="array">
                         <item name="type" xsi:type="string">resync_failed_orders</item>
-                        <item name="label" xsi:type="string" translate="true">Sent Orders to StoreKeeper</item>
+                        <item name="label" xsi:type="string" translate="true">Send Orders to StoreKeeper</item>
                         <item name="url" xsi:type="url" path="storekeeper/order/massSyncOrders"/>
                     </item>
                 </argument>
