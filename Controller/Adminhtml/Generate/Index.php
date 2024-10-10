@@ -54,7 +54,7 @@ class Index extends Action implements HttpGetActionInterface
             );
         } catch (\Exception $e) {
             $this->logger->critical($e->getMessage());
-            $this->messageManager->addErrorMessage(__('Please correct the data sent value.'));
+            $this->messageManager->addErrorMessage(__('Error during generating export data'));
         }
 
         /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
