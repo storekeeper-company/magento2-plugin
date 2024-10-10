@@ -90,3 +90,4 @@ TruckDelivery,Truck Delivery
 "Upadted At","Updated At"
 "Status","Status"
 "Number of trials","Number of trials"
+"Skipped exporting customer due to missing address data, customer id: %1","Skipped exporting customer due to missing address data, customer id: %1"

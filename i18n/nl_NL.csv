@@ -94,3 +94,4 @@ TruckDelivery,Truck Delivery
 "Upadted At","Geupdate op"
 "Status","Status"
 "Number of trials","Aantal pogingen"
+"Skipped exporting customer due to missing address data, customer id: %1","Exporteren van klant overgeslagen vanwege ontbrekende adresgegevens, klant-id: %1"
