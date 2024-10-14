@@ -920,11 +920,6 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
             $target->setWebsiteIds($websiteIds);
         }
 
-
-        if ($this->configHelper->isProductImagesSyncActive($storeId)) {
-            $target = $this->processImages($flat_product, $target, $shouldUpdate);
-        }
-
         /**
          * Load/create attribute set in Magento basned on SK attributes et name
          * If it differs from currentl product attribute set - assign it
@@ -943,6 +938,10 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
 
         if ($this->configHelper->isProductImagesSyncActive($storeId)) {
             $target = $this->processImages($flat_product, $target, $shouldUpdate);
+        }
+
+        if ($shouldUpdate) {
+            $this->productRepository->save($target);
         }
 
         /**
