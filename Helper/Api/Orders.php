@@ -517,9 +517,7 @@ class Orders extends AbstractHelper
                     $this->orderRepository->save($shipment->getOrder());
                     $this->shipmentNotifier->notify($shipment);
                 } catch (\Exception $e) {
-                    throw new \Magento\Framework\Exception\LocalizedException(
-                        __($e->getMessage())
-                    );
+                    throw new \Exception($e->getMessage());
                 }
             }
         }
