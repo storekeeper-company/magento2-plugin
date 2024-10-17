@@ -451,41 +451,74 @@ class Orders extends AbstractHelper
                 );
             }
 
-            $shipment = $this->convertOrder->toShipment($order);
+            $shipmentData = $this->orderApiClient->getListOrderShipmentsWithDetailsForHook(
+                $order->getStoreId(),
+                $storeKeeperId
+            );
 
-            foreach ($order->getAllItems() as $orderItem) {
-                if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
-                    continue;
+            foreach ($shipmentData as $shipmentSk) {
+                $shipment = $this->convertOrder->toShipment($order);
+                $shipmentItems = $shipmentSk['shipment']['shipment_items'];
+
+                foreach ($order->getAllItems() as $orderItem) {
+                    $orderItemSk = $this->getOrderItemById($storeKeeperOrder['order_items'], $orderItem->getId());
+
+                    /**
+                     * Match StoreKeeper order item by order_item_id from extra
+                     * If extra not presented - fill order items in old way (for legacy orders palced before extra was added to order payload)
+                     */
+                    if ($orderItemSk) {
+                        $shipmentItemArray = $this->getShipmentItemById($shipmentItems, $orderItemSk['id']);
+                        if ($shipmentItemArray) {
+                            $qtyShipped = $shipmentItemArray['quantity'];
+                            $shipmentItem = $this->convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
+
+                            $shipment->addItem($shipmentItem);
+                        }
+                    } else {
+                        if ($orderItem->getProductType() != self::CONFIGURABLE_TYPE) {
+                            if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                                continue;
+                            }
+
+                            $qtyShipped = $orderItem->getQtyToShip();
+                            $shipmentItem = $this->convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
+                            $shipment->addItem($shipmentItem);
+                        }
+                    }
                 }
 
-                $qtyShipped = $orderItem->getQtyToShip();
-                $shipmentItem = $this->convertOrder->itemToShipmentItem($orderItem)->setQty($qtyShipped);
+                if (array_key_exists('parcels', $shipmentSk)) {
+                    foreach ($shipmentSk['parcels'] as $parcel) {
+                        $track = $this->trackFactory->create();
+                        if (array_key_exists('tracking_number', $parcel)) {
+                            $track->setNumber($parcel['tracking_number']);
+                        } else {
+                            $track->setNumber($storeKeeperId);
+                        }
 
-                $shipment->addItem($shipmentItem);
-            }
+                        $track->setCarrierCode('storekeeper');
+                        $track->setTitle(
+                            $parcel['carrier_type'] ? $parcel['carrier_type']['alias'] : 'Tracking Number'
+                        );
+                        $track->setDescription('Shipping');
 
-            $track = $this->trackFactory->create();
-            $track->setNumber($storeKeeperId);
-            $track->setCarrierCode('storekeeper');
-            $track->setTitle('StoreKeeper Shipment Tracking Number');
-            $track->setDescription('Shipping');
+                        $shipment->addTrack($track);
+                        $shipment->register();
+                        $shipment->getOrder()->setIsInProcess(true);
+                    }
+                }
 
-            $shipment->addTrack($track);
-
-            $shipment->register();
-            $shipment->getOrder()->setIsInProcess(true);
-
-            try {
-                $shipment->getExtensionAttributes()->setIsStorekeeper(true);
-                $order->setData('storekeeper_shipment_id', $storeKeeperId);
-                $this->orderResource->saveAttribute($order, 'storekeeper_shipment_id');
-                $this->shipmentRepository->save($shipment);
-                $this->orderRepository->save($shipment->getOrder());
-                $this->shipmentNotifier->notify($shipment);
-            } catch (\Exception $e) {
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __($e->getMessage())
-                );
+                try {
+                    $shipment->getExtensionAttributes()->setIsStorekeeper(true);
+                    $order->setData('storekeeper_shipment_id', $storeKeeperId);
+                    $this->orderResource->saveAttribute($order, 'storekeeper_shipment_id');
+                    $this->shipmentRepository->save($shipment);
+                    $this->orderRepository->save($shipment->getOrder());
+                    $this->shipmentNotifier->notify($shipment);
+                } catch (\Exception $e) {
+                    throw new \Exception($e->getMessage());
+                }
             }
         }
     }
@@ -832,7 +865,8 @@ class Orders extends AbstractHelper
                     'options' => [
                         'option' => $bundleItemData['option_label']
                     ],
-                    'parent_product' => $parentProduct
+                    'parent_product' => $parentProduct,
+                    'order_item_id' => $item->getId()
                 ]
             ];
 
@@ -912,6 +946,9 @@ class Orders extends AbstractHelper
                 'quantity' => $item->getQtyOrdered(),
                 'name' => $item->getName(),
                 'shop_product_id' => $shopProductId,
+                'extra' => [
+                    'order_item_id' => $item->getId()
+                ]
             ];
         }
         if (((float)$item->getTaxAmount()) > 0) {
@@ -1047,7 +1084,8 @@ class Orders extends AbstractHelper
                 'extra' => [
                     'external_id' => $configurableProductOption->getProductId(),
                     'options' => $productConfigurableAttributes,
-                    'parent_product' => $this->getParentProductData($item)
+                    'parent_product' => $this->getParentProductData($item),
+                    'order_item_id' => $configurableProductOption->getId()
                 ]
             ];
 
@@ -1359,5 +1397,38 @@ class Orders extends AbstractHelper
         $ruleSku = implode('_', $rules);
 
         return $ruleSku;
+    }
+
+    /**
+     * @param array $order_items
+     * @param $order_item_id
+     * @return array|null
+     */
+    private function getOrderItemById(array $order_items, $order_item_id): ?array
+    {
+        foreach ($order_items as $item) {
+            if (isset($item['extra']['order_item_id']) && $item['extra']['order_item_id'] == $order_item_id) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    private function getShipmentItemById($shipmentItems, $id)
+    {
+        foreach ($shipmentItems as $item) {
+            if (isset($item['backref'])) {
+                if (preg_match('/OrderItem\(id=(\d+)\)/', $item['backref'], $matches)) {
+                    $backrefId = $matches[1];
+
+                    if ($backrefId == $id) {
+                        return $item;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 }

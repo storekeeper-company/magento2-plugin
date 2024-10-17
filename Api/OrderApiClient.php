@@ -263,4 +263,27 @@ class OrderApiClient extends ApiClient
             $filters
         );
     }
+
+    /**
+     * @param string $storeId
+     * @param string $orderId
+     * @return array|null
+     * @throws \Exception
+     */
+    public function getListOrderShipmentsWithDetailsForHook(string $storeId, string $orderId): ?array
+    {
+        $shipmentData =  $this->getShopModule($storeId)->listOrderShipmentWithDetailsForHook(
+            0,
+            20,
+            null,
+            [
+                [
+                    'name' => 'order_id__=',
+                    'val' => $orderId
+                ]
+            ]
+        );
+
+        return $shipmentData['data'] ?? null;
+    }
 }
