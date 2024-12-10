@@ -1034,9 +1034,13 @@ class Products extends \Magento\Framework\App\Helper\AbstractHelper
                      * because framework does not allow to receive gallery item via addImageToMediaGallery() call
                      * there is nothing to match against, the file path is changed when saving
                      */
-                    $galleryImage = $target->getMediaGalleryImages()->getLastItem();
-                    // Assign SK image id for newly created M2 gallery image
-                    $this->setStorekeeperImageId($galleryImage->getId(), $imageId);
+                    $galleryImagesIds = $target->getMediaGalleryImages()->getAllIds();
+                    if ($galleryImagesIds) {
+                        $latestId = max($galleryImagesIds);
+                        $galleryImage = $target->getMediaGalleryImages()->getItemById($latestId);
+                        // Assign SK image id for newly created M2 gallery image
+                        $this->setStorekeeperImageId($galleryImage->getId(), $imageId);
+                    }
                 }
             }
         }
