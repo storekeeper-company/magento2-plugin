@@ -100,7 +100,7 @@ class Consumer
             } catch(\Exception $e) {
                 $this->logger->error($e->getMessage(), $this->logger->buildReportData($e));
                 if (!$storeKeeperFailedSyncOrder->hasData('order_id')) {
-                    $storeKeeperFailedSyncOrder->setOrderId((int)$orderId);
+                    $storeKeeperFailedSyncOrder->setOrderId($order->getId());
                     $storeKeeperFailedSyncOrder->setIsFailed(1);
                     $storeKeeperFailedSyncOrder->setExceptionMessage($e->getMessage());
                     $order->setStorekeeperOrderLastSync(time());

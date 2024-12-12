@@ -695,6 +695,7 @@ class Orders extends AbstractHelper
      */
     public function onCreate(Order $order): void
     {
+        $payload = [];
         try {
             $storeId = $order->getStoreid();
             $payload = $this->prepareOrder($order, false);
