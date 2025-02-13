@@ -155,7 +155,7 @@ class Webhook
                         } else {
                             $messages[] = "Processing event \"stock_change\"";
                         }
-                    } elseif ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                    } elseif ($entity == "ShopProduct" && $this->configHelper->hasMode($storeId, Config::SYNC_ORDERS | Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                         $messages[] = "Processing entity \"ShopProduct\"";
                     } elseif ($entity == "Category" && $this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
                         $messages[] = "Processing entity \"Category\"";
