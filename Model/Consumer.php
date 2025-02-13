@@ -2,6 +2,7 @@
 
 namespace StoreKeeper\StoreKeeper\Model;
 
+use StoreKeeper\StoreKeeper\Helper\Config;
 use StoreKeeper\StoreKeeper\Logger\Logger;
 use StoreKeeper\StoreKeeper\Helper\Api\Categories;
 use StoreKeeper\StoreKeeper\Helper\Api\Orders;
@@ -20,6 +21,7 @@ class Consumer
     private Orders $ordersHelper;
     private Logger $logger;
     private Auth $authHelper;
+    private Config $configHelper;
 
     /**
      * Constructor
@@ -29,19 +31,22 @@ class Consumer
      * @param Orders $ordersHelper
      * @param Logger $logger
      * @param Auth $authHelper
+     * @param Config $configHelper
      */
     public function __construct(
         Products $productsHelper,
         Categories $categoriesHelper,
         Orders $ordersHelper,
         Logger $logger,
-        Auth $authHelper
+        Auth $authHelper,
+        Config $configHelper
     ) {
         $this->productsHelper = $productsHelper;
         $this->categoriesHelper = $categoriesHelper;
         $this->ordersHelper = $ordersHelper;
         $this->logger = $logger;
         $this->authHelper = $authHelper;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -57,9 +62,7 @@ class Consumer
         try {
             $storeId = array_key_exists('storeId', $data) ? $this->authHelper->getStoreId($data['storeId']) : null;
             $type = $data['type'] ?? null;
-            $module = $data['module'] ?? null;
             $entity = $data['entity'] ?? null;
-            $key = $data['key'] ?? null;
             $value = $data['value'] ?? null;
             $refund = $data['refund'] ?? false;
 
@@ -69,7 +72,9 @@ class Consumer
 
             if ($type == "updated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->updateById($storeId, $value);
+                    if($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        $this->productsHelper->updateById($storeId, $value);
+                    }
                     $this->productsHelper->updateStock($storeId, $value);
                 } elseif ($entity == 'Category') {
                     $this->categoriesHelper->updateById($storeId, $value);
