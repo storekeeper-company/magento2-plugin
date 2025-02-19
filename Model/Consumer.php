@@ -83,12 +83,16 @@ class Consumer
                 }
             } elseif ($type == "deactivated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->onDeactivate($storeId, $value);
+                    if($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        $this->productsHelper->onDeactivate($storeId, $value);
+                    }
                 }
             } elseif ($type == "activated") {
                 if ($entity == "ShopProduct") {
-                    $this->productsHelper->activate($storeId, $value);
-                    $this->productsHelper->updateStock($storeId, $value);
+                    if($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        $this->productsHelper->activate($storeId, $value);
+                        $this->productsHelper->updateStock($storeId, $value);
+                    }
                 }
             } elseif ($type == "deleted") {
                 if ($entity == 'Category') {
@@ -98,7 +102,9 @@ class Consumer
                 if ($entity == 'Category') {
                     $this->categoriesHelper->updateById($storeId, $value);
                 } elseif ($entity == "ShopProduct") {
-                    $this->productsHelper->updateById($storeId, $value);
+                    if($this->configHelper->hasMode($storeId, Config::SYNC_PRODUCTS | Config::SYNC_ALL)) {
+                        $this->productsHelper->updateById($storeId, $value);
+                    }
                 }
             } elseif ($type == 'stock_change') {
                 $this->productsHelper->updateStock($storeId, $value);
