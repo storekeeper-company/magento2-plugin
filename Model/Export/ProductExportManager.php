@@ -714,12 +714,16 @@ class ProductExportManager extends AbstractExportManager
      * @param string $attributeValue
      * @return string|null
      */
-    private function validateBarcode(string $attributeValue): ?string
+    private function validateBarcode(?string $attributeValue): ?string
     {
+        if (empty($attributeValue)) {
+            return null;
+        }
+
         try {
             $data = str_pad($attributeValue, 13, '0', STR_PAD_LEFT);
             $barcode = new \Picqer\Barcode\Types\TypeEan13();
-            $barcode = $barcode->getBarcodeData($data);
+            $barcode->getBarcodeData($data);
         } catch (\Throwable $e) {
             $attributeValue = null;
         }
